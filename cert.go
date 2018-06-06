@@ -62,15 +62,13 @@ type RevokedCertificateT struct {
 }
 
 func (lcerts *TBSCertListT) SetAppropriateVersion() {
-	if lcerts.Version != 0 {
-		lcerts.Version = 2
-	}
+	lcerts.Version = 0
 	if lcerts.CRLExtensions != nil && len(lcerts.CRLExtensions) > 0 {
-		lcerts.Version = 2
+		lcerts.Version = 1
 	}
 	for _, rev := range lcerts.RevokedCertificates {
 		if rev.CRLEntryExtensions != nil && len(rev.CRLEntryExtensions) > 0 {
-			lcerts.Version = 2
+			lcerts.Version = 1
 			return
 		}
 	}
