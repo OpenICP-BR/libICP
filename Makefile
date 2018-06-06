@@ -1,5 +1,5 @@
-all: libicp
+all: libicp.a
 
-libicp: *.go
+libicp.a: *.go
 	go fmt
-	go build -o libicp
+	go build -o libicp.a
