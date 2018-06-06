@@ -13,6 +13,7 @@ type CertificateT struct {
 }
 
 type TBSCertificateT struct {
+	RawContent           asn1.RawContent
 	Version              int `asn:"tag:0"`
 	SerialNumber         int
 	Signature            AlgorithmIdentifierT
@@ -30,7 +31,7 @@ func (cert *TBSCertificateT) SetAppropriateVersion() {
 		cert.Version = 3
 		return
 	}
-	if cert.IssuerUniqueID != 0 || cert.SubjectUniqueID != 0 {
+	if cert.IssuerUniqueID.BitLength != 0 || cert.SubjectUniqueID.BitLength != 0 {
 		cert.Version = 2
 		return
 	}
@@ -38,32 +39,41 @@ func (cert *TBSCertificateT) SetAppropriateVersion() {
 }
 
 type CertificateListT struct {
+	RawContent         asn1.RawContent
 	TBSCertList        TBSCertListT
 	SignatureAlgorithm AlgorithmIdentifierT
 	Signature          asn1.BitString
 }
 
-// type TBSCertListT  struct  {
-//      version                 Version `asn1:"optional,omitempty"`
-//      signature               AlgorithmIdentifierT
-//      issuer                  NameT
-//      thisUpdate              time.Time
-//      nextUpdate              time.Time `asn1:"optional,omitempty"`,
-//      revokedCertificates     SEQUENCE OF SEQUENCE  {
-//           userCertificate         CertificateSerialNumber,
-//           revocationDate          Time,
-//           crlEntryExtensions      Extensions OPTIONAL
-//                                          -- if present, MUST be v2
-//                                }  OPTIONAL,
-//                                          -- if present, MUST be v2
-//      CRLExtensions           []ExtensionT `asn1:"optional,omitempty,tag:0"` }
-// }
+type TBSCertListT struct {
+	RawContent          asn1.RawContent
+	Version             int `asn1:"optional,omitempty"`
+	Signature           AlgorithmIdentifierT
+	Issuer              NameT
+	ThisUpdate          time.Time
+	NextUpdate          time.Time             `asn1:"optional,omitempty"`
+	RevokedCertificates []RevokedCertificateT `asn1:"optional,omitempty"`
+	CRLExtensions       []ExtensionT          `asn1:"optional,omitempty,tag:0"`
+}
 
-func (lcerts *TBSCertificateT) SetAppropriateVersion() {
+type RevokedCertificateT struct {
+	RawContent         asn1.RawContent
+	UserCertificate    int
+	RevocationDate     time.Time
+	CRLEntryExtensions []ExtensionT `asn1:"optional,omitempty"`
+}
+
+func (lcerts *TBSCertListT) SetAppropriateVersion() {
 	if lcerts.Version != 0 {
 		lcerts.Version = 2
 	}
-	if cert.CRLExtensions != nil && len(cert.CRLExtensions) > 0 {
-		cert.Version = 2
+	if lcerts.CRLExtensions != nil && len(lcerts.CRLExtensions) > 0 {
+		lcerts.Version = 2
+	}
+	for _, rev := range lcerts.RevokedCertificates {
+		if rev.CRLEntryExtensions != nil && len(rev.CRLEntryExtensions) > 0 {
+			lcerts.Version = 2
+			return
+		}
 	}
 }

@@ -13,7 +13,7 @@ type SignerInfoT struct {
 	Sid                interface{}            `asn1:"tag:end_choice"`
 	DigestAlgorithm    DigestAlgorithmIdentifierT
 	SignedAttrs        []Attribute `asn1:"tag:0,set,optional"`
-	SignatureAlgorithm SignatureAlgorithmIdentifierT
+	SignatureAlgorithm AlgorithmIdentifierT
 	Signature          SignatureValueT
 	UnsignedAttrs      []Attribute `asn1:"tag:1,set,optional"`
 }

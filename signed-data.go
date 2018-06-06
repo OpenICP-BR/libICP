@@ -11,14 +11,14 @@ type SignedDataT struct {
 	RawContent       asn1.RawContent
 	Version          CMSVersionT
 	DigestAlgorithms []DigestAlgorithmIdentifierT `asn1:set`
-	EncapContentInfo EncapsulatedContentInfoT     `asn1:`
-	Certificates     []CertificateChoicesT        `asn1:"tag:0,optional,set"`
-	Crls             []RevocationInfoChoiceT      `asn1:"tag:1,optional"`
-	SignerInfos      []SignerInfoT                `asn1:set`
+	EncapContentInfo EncapsulatedContentInfoT
+	Certificates     []CertificateChoicesT   `asn1:"tag:0,optional,set"`
+	Crls             []RevocationInfoChoiceT `asn1:"tag:1,optional"`
+	SignerInfos      []SignerInfoT           `asn1:set`
 }
 
-func (sd *SignerInfosT) SetAppropriateVersion() {
-	// algorith in rfc5625 section 5.1 page 10
+func (sd *SignedDataT) SetAppropriateVersion() {
+	// algorith in rfc5625 section 5.1 page 9
 }
 
 type IssuerAndSerialNumberT struct {
