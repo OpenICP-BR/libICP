@@ -8,5 +8,5 @@ libicp.a: *.go
 	go fmt
 	go build -o libicp.a
 
-coverage.out: libicp.a
+coverage.out: *.go
 	go test -cover -coverprofile=coverage.out	

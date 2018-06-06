@@ -14,7 +14,7 @@ type CertificateT struct {
 
 type TBSCertificateT struct {
 	RawContent           asn1.RawContent
-	Version              int `asn:"tag:0"`
+	Version              int `asn:"tag:0,explicit"`
 	SerialNumber         int
 	Signature            AlgorithmIdentifierT
 	Issuer               NameT
@@ -27,15 +27,13 @@ type TBSCertificateT struct {
 }
 
 func (cert *TBSCertificateT) SetAppropriateVersion() {
-	if cert.Extensions != nil && len(cert.Extensions) > 0 {
-		cert.Version = 3
-		return
-	}
+	cert.Version = 0
 	if cert.IssuerUniqueID.BitLength != 0 || cert.SubjectUniqueID.BitLength != 0 {
-		cert.Version = 2
-		return
+		cert.Version = 1
 	}
-	cert.Version = 1
+	if cert.Extensions != nil && len(cert.Extensions) > 0 {
+		cert.Version = 2
+	}
 }
 
 type CertificateListT struct {

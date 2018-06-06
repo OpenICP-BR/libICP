@@ -41,14 +41,6 @@ type AttributeCertificateInfoV1_T struct {
 	Extensions            []ExtensionT   `asn1:"optional"`
 }
 
-func AttributeCertificateInfoV1_T_DefaultVersion() int {
-	return 0
-}
-
-func (attr_cert *AttributeCertificateInfoV1_T) SetDefaultVersion() {
-	attr_cert.Version = AttributeCertificateInfoV1_T_DefaultVersion()
-}
-
 // Also known as AttributeCertificate
 type AttributeCertificateV2_T struct {
 	RawContent         asn1.RawContent
@@ -71,8 +63,8 @@ type AttributeCertificateInfoT struct {
 	Extensions             []ExtensionT   `asn1:"optional,omitempty"`
 }
 
-func (acert *AttributeCertificateInfoT) Init() {
-	acert.Version = 2
+func (acert *AttributeCertificateInfoT) SetAppropriateVersion() {
+	acert.Version = 1
 }
 
 type V2FormT struct {
