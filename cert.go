@@ -1,6 +1,9 @@
 package icp
 
-import "encoding/asn1"
+import (
+	"encoding/asn1"
+	"time"
+)
 
 type CertificateT struct {
 	RawContent         asn1.RawContent
@@ -22,7 +25,7 @@ type TBSCertificateT struct {
 	Extensions           []ExtensionT   `asn:"tag:3,optional,omitempty"`
 }
 
-func (cert *TBSCertificate) SetAppropriateVersion() {
+func (cert *TBSCertificateT) SetAppropriateVersion() {
 	if cert.Extensions != nil && len(cert.Extensions) > 0 {
 		cert.Version = 3
 		return
@@ -32,4 +35,35 @@ func (cert *TBSCertificate) SetAppropriateVersion() {
 		return
 	}
 	cert.Version = 1
+}
+
+type CertificateListT struct {
+	TBSCertList        TBSCertListT
+	SignatureAlgorithm AlgorithmIdentifierT
+	Signature          asn1.BitString
+}
+
+// type TBSCertListT  struct  {
+//      version                 Version `asn1:"optional,omitempty"`
+//      signature               AlgorithmIdentifierT
+//      issuer                  NameT
+//      thisUpdate              time.Time
+//      nextUpdate              time.Time `asn1:"optional,omitempty"`,
+//      revokedCertificates     SEQUENCE OF SEQUENCE  {
+//           userCertificate         CertificateSerialNumber,
+//           revocationDate          Time,
+//           crlEntryExtensions      Extensions OPTIONAL
+//                                          -- if present, MUST be v2
+//                                }  OPTIONAL,
+//                                          -- if present, MUST be v2
+//      CRLExtensions           []ExtensionT `asn1:"optional,omitempty,tag:0"` }
+// }
+
+func (lcerts *TBSCertificateT) SetAppropriateVersion() {
+	if lcerts.Version != 0 {
+		lcerts.Version = 2
+	}
+	if cert.CRLExtensions != nil && len(cert.CRLExtensions) > 0 {
+		cert.Version = 2
+	}
 }

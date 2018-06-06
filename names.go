@@ -95,3 +95,10 @@ type GeneralNameT struct {
 	IPAddress                 []byte                `asn1:"tag:7,optional,omitempty"`
 	RegisteredID              asn1.ObjectIdentifier `asn1:"tag:8,optional,omitempty"`
 }
+
+type HolderT struct {
+	RawContent        asn1.RawContent
+	BaseCertificateID IssuerSerialT     `asn1:"optional,omitempty,tag:0"`
+	EntityName        []GeneralNameT    `asn1:"optional,omitempty,tag:1"`
+	ObjectDigestInfo  ObjectDigestInfoT `asn1:"optional,omitempty,tag:2"`
+}

@@ -20,3 +20,9 @@ type SignedDataT struct {
 func (sd *SignerInfosT) SetAppropriateVersion() {
 	// algorith in rfc5625 section 5.1 page 10
 }
+
+type IssuerAndSerialNumberT struct {
+	RawContent   asn1.RawContent
+	Issuer       NameT
+	SerialNumber int
+}
