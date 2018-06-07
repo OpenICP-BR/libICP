@@ -27,6 +27,8 @@ libicp.a: *.go
 	@$(ECHO) -e $(ANSI_BLUE)"Finished target $@"$(ANSI_RESET)
 
 coverage.out: *.go
+	@$(ECHO) -e $(ANSI_GREEN)"Formatting code..."$(ANSI_RESET)
+	go fmt
 	@$(ECHO) -e $(ANSI_GREEN)"Testing code..."$(ANSI_RESET)
 	go test -cover -coverprofile=coverage.out
 	@$(ECHO) -e $(ANSI_BLUE)"Finished target $@"$(ANSI_RESET)
