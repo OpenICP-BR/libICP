@@ -8,8 +8,15 @@ import (
 	"testing"
 )
 
+type hackStringS struct {
+}
+
+func (hs hackStringS) String() string {
+	return "-"
+}
+
 func Test_NewMultiError_1(t *testing.T) {
-	merr := NewMultiError("hi", 42, nil, nil, errors.New("hi2"))
+	merr := NewMultiError("hi", 42, nil, "hi", errors.New("hi2"), 0, nil, hackStringS{})
 	merr.AppendError(nil)
 	merr.AppendError(errors.New("hi"))
 	merr.SetParam("pointer", nil)
@@ -29,7 +36,7 @@ func Test_NewMultiError_1(t *testing.T) {
 }
 
 func Test_NewMultiError_2(t *testing.T) {
-	merr := NewMultiError("hi", 42, nil, nil, nil)
+	merr := NewMultiError("hi", 42, nil)
 	merr.AppendError(nil)
 	merr.AppendError(errors.New("hi"))
 	merr.SetParam("pointer", nil)

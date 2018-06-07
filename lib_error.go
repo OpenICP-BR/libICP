@@ -7,8 +7,12 @@ import (
 	"strings"
 )
 
+type stringI interface {
+	String() string
+}
+
 type CodedError interface {
-	Error() string
+	error
 	ErrorCode() int
 }
 
@@ -20,22 +24,16 @@ type MultiError struct {
 	file       string
 	function   string
 	parameters map[string]interface{}
-	errors     []error
+	errors     []interface{}
 	locked     bool
 }
 
-func NewMultiError(message string, code int, parameters map[string]interface{}, errors []error, single_error error) MultiError {
+func NewMultiError(message string, code int, parameters map[string]interface{}, errors ...interface{}) MultiError {
 	merr := MultiError{}
 	merr.code = code
 	merr.message = message
 	merr.parameters = parameters
 	merr.errors = errors
-	if single_error != nil {
-		if merr.errors == nil {
-			merr.errors = make([]error, 1)
-			merr.errors[0] = single_error
-		}
-	}
 	merr.mark_position()
 	return merr
 }
@@ -51,15 +49,26 @@ func (merr MultiError) Error() string {
 	}
 	// Print encapsulated errors
 	if merr.errors != nil && len(merr.errors) > 0 {
-		ans += "\nErrors:\n"
+		ans += "\nErrors: [\n"
 		for _, err := range merr.errors {
 			if err == nil {
 				continue
 			}
-			tmp := err.Error()
+			tmp := ""
+			switch err := err.(type) {
+			case error:
+				tmp = err.Error()
+				// here v has type T
+			case stringI:
+				tmp = err.String()
+				// here v has type S
+			default:
+				tmp = fmt.Sprintf("%+v", tmp)
+			}
 			strings.Replace(tmp, "\n", "\n\t", -1)
 			ans += "\n\t" + tmp
 		}
+		ans += "\n]"
 	}
 	// Print stack
 	if merr.stack != nil {
@@ -88,7 +97,7 @@ func (merr *MultiError) AppendError(err error) error {
 		return NewMultiError("attempted to edit locekd MultiError", ERR_LOCKED_MULTI_ERROR, nil, nil, nil)
 	}
 	if merr.errors == nil {
-		merr.errors = make([]error, 0)
+		merr.errors = make([]interface{}, 0)
 	}
 	merr.errors = append(merr.errors, err)
 	return nil
