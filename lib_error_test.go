@@ -2,10 +2,11 @@ package icp
 
 import (
 	"errors"
-	"github.com/stretchr/testify/assert"
 	"regexp"
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 type hackStringS struct {
@@ -16,10 +17,11 @@ func (hs hackStringS) String() string {
 }
 
 func Test_NewMultiError_1(t *testing.T) {
-	merr := NewMultiError("hi", 42, nil, "hi", errors.New("hi2"), 0, nil, hackStringS{})
+	merr := NewMultiError("hi", 42, nil, "hi", errors.New("hi2"), 0, nil, hackStringS{}, []byte{1})
 	merr.AppendError(nil)
 	merr.AppendError(errors.New("hi"))
 	merr.SetParam("pointer", nil)
+	merr.SetParam("dat", []byte{1})
 	merr.Finish()
 	err1 := merr.AppendError(nil)
 	assert.NotNil(t, err1)

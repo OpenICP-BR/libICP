@@ -2,8 +2,9 @@ package main
 
 import (
 	"fmt"
-	"github.com/mkideal/cli"
 	"os"
+
+	"github.com/mkideal/cli"
 )
 
 var help = cli.HelpCommand("display help information")

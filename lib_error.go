@@ -1,6 +1,7 @@
 package icp
 
 import (
+	"encoding/base64"
 	"fmt"
 	"runtime"
 	"runtime/debug"
@@ -42,30 +43,35 @@ func (merr MultiError) Error() string {
 	ans := fmt.Sprintf("%s:%d:%s:%d %s", merr.function, merr.code, merr.file, merr.line, merr.message)
 	// Print parameters
 	if merr.parameters != nil && len(merr.parameters) > 0 {
-		ans += "\nParameters:\n"
+		ans += "\nParameters:"
 		for k, v := range merr.parameters {
-			ans += fmt.Sprintf("\n\t%s: %+v", k, v)
+			switch v := v.(type) {
+			case []byte:
+				tmp := base64.StdEncoding.EncodeToString(v)
+				ans += fmt.Sprintf("\n\t%s:(base64): %+v", k, tmp)
+			default:
+				ans += fmt.Sprintf("\n\t%s: %+v", k, v)
+			}
 		}
 	}
 	// Print encapsulated errors
 	if merr.errors != nil && len(merr.errors) > 0 {
-		ans += "\nErrors: [\n"
+		ans += "\nErrors: ["
 		for _, err := range merr.errors {
 			if err == nil {
 				continue
 			}
-			tmp := ""
-			switch err := err.(type) {
+			tmp := "-"
+			switch terr := err.(type) {
 			case error:
-				tmp = err.Error()
-				// here v has type T
+				tmp = terr.Error()
 			case stringI:
-				tmp = err.String()
-				// here v has type S
+				tmp = terr.String()
 			default:
-				tmp = fmt.Sprintf("%+v", tmp)
+				tmp = fmt.Sprintf("%+v", terr)
 			}
-			strings.Replace(tmp, "\n", "\n\t", -1)
+			tmp = strings.Replace(tmp, "\n", "\n\t", -1)
+			tmp = strings.Replace(tmp, "\t", "\t\t", -1)
 			ans += "\n\t" + tmp
 		}
 		ans += "\n]"

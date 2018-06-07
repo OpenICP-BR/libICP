@@ -2,8 +2,9 @@ package icp
 
 import (
 	"encoding/asn1"
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func Test_idSignedData(t *testing.T) {
