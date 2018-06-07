@@ -43,7 +43,6 @@ func NewCertificateFromBytes(raw []byte) ([]Certificate, []CodedError) {
 			ok, _, merr := new_cert.LoadFromDER(block.Bytes)
 			if !ok {
 				merrs = append(merrs, merr)
-				println("46: ", merr.Error())
 			} else {
 				certs = append(certs, new_cert)
 			}
@@ -52,17 +51,18 @@ func NewCertificateFromBytes(raw []byte) ([]Certificate, []CodedError) {
 
 	// Try decoding the rest as DER certificates
 	for {
+		var ok bool
+		var merr CodedError
+		// Finished reading file?
+		if rest == nil || len(rest) < 42 {
+			break
+		}
 		new_cert := Certificate{}
-		ok, rest, merr := new_cert.LoadFromDER(rest)
+		ok, rest, merr = new_cert.LoadFromDER(rest)
 		if ok {
 			certs = append(certs, new_cert)
 		} else {
 			merrs = append(merrs, merr)
-			println("61: ", merr.Error())
-		}
-		// Finished reading file
-		if rest == nil || len(rest) == 0 {
-			break
 		}
 	}
 

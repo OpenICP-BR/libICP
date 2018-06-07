@@ -17,6 +17,13 @@ type CodedError interface {
 	ErrorCode() int
 }
 
+type pairErrorCodePos struct {
+	Error    interface{}
+	Line     int
+	File     string
+	Function string
+}
+
 type MultiError struct {
 	message    string
 	code       int
@@ -25,7 +32,7 @@ type MultiError struct {
 	file       string
 	function   string
 	parameters map[string]interface{}
-	errors     []interface{}
+	errors     []pairErrorCodePos
 	locked     bool
 }
 
@@ -34,7 +41,11 @@ func NewMultiError(message string, code int, parameters map[string]interface{}, 
 	merr.code = code
 	merr.message = message
 	merr.parameters = parameters
-	merr.errors = errors
+	merr.errors = make([]pairErrorCodePos, len(errors))
+	for i := 0; i < len(errors); i++ {
+		merr.errors[i].Error = errors[i]
+		merr.errors[i].Function, merr.errors[i].File, merr.errors[i].Line = get_stack_pos(2)
+	}
 	merr.mark_position()
 	return merr
 }
@@ -58,11 +69,11 @@ func (merr MultiError) Error() string {
 	if merr.errors != nil && len(merr.errors) > 0 {
 		ans += "\nErrors: ["
 		for _, err := range merr.errors {
-			if err == nil {
+			if err.Error == nil {
 				continue
 			}
 			tmp := "-"
-			switch terr := err.(type) {
+			switch terr := err.Error.(type) {
 			case error:
 				tmp = terr.Error()
 			case stringI:
@@ -72,7 +83,7 @@ func (merr MultiError) Error() string {
 			}
 			tmp = strings.Replace(tmp, "\n", "\n\t", -1)
 			tmp = strings.Replace(tmp, "\t", "\t\t", -1)
-			ans += "\n\t" + tmp
+			ans += fmt.Sprintf("\n\t(%s:%s:%d) %s", err.Function, err.File, err.Line, tmp)
 		}
 		ans += "\n]"
 	}
@@ -103,9 +114,12 @@ func (merr *MultiError) AppendError(err error) error {
 		return NewMultiError("attempted to edit locekd MultiError", ERR_LOCKED_MULTI_ERROR, nil, nil, nil)
 	}
 	if merr.errors == nil {
-		merr.errors = make([]interface{}, 0)
+		merr.errors = make([]pairErrorCodePos, 0)
 	}
-	merr.errors = append(merr.errors, err)
+	p := pairErrorCodePos{}
+	p.Error = err
+	p.Function, p.File, p.Line = get_stack_pos(2)
+	merr.errors = append(merr.errors, p)
 	return nil
 }
 
@@ -115,18 +129,25 @@ func (merr *MultiError) Finish() {
 	merr.locked = true
 }
 
+func get_stack_pos(depth int) (string, string, int) {
+	function := "?"
+	// Get information about who created this error
+	pc, file, line, _ := runtime.Caller(depth)
+	// Print only the last part of the file path
+	tmp := strings.Split(file, "/")
+	file = tmp[len(tmp)-1]
+	// Try to get the function name
+	f := runtime.FuncForPC(pc)
+	if f != nil {
+		function = f.Name()
+	}
+
+	return function, file, line
+}
+
 func (merr *MultiError) mark_position() {
 	// Save execution stack
 	merr.stack = debug.Stack()
 	// Get information about who created this error
-	pc, file, line, _ := runtime.Caller(2)
-	merr.line = line
-	// Print only the last part of the file path
-	tmp := strings.Split(file, "/")
-	merr.file = tmp[len(tmp)-1]
-	// Try to get the function name
-	f := runtime.FuncForPC(pc)
-	if f != nil {
-		merr.function = f.Name()
-	}
+	merr.function, merr.file, merr.line = get_stack_pos(3)
 }
