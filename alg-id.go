@@ -2,15 +2,13 @@ package icp
 
 import "encoding/asn1"
 
-type DigestAlgorithmIdentifierT AlgorithmIdentifierT
-
-type AlgorithmIdentifierT struct {
+type algorithmIdentifierT struct {
 	RawContent asn1.RawContent
 	Algorithm  asn1.ObjectIdentifier
 	Parameters interface{} `asn1:optional,omitempty`
 }
 
-type PairAlgPubKeyT struct {
+type pairAlgPubKeyT struct {
 	RawContent asn1.RawContent
 	Algorithm  asn1.ObjectIdentifier
 	PublicKey  asn1.BitString

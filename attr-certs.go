@@ -2,74 +2,74 @@ package icp
 
 import "encoding/asn1"
 
-type AttributeT struct {
+type attributeT struct {
 	RawContent asn1.RawContent
 	Type       asn1.ObjectIdentifier
 	Values     []interface{} `asn1:"set"`
 }
 
-type ExtensionT struct {
+type extensionT struct {
 	RawContent asn1.RawContent
 	ExtnID     asn1.ObjectIdentifier
 	Critical   bool
 	ExtnValue  []byte
 }
 
-type AttributeCertificateV1_T struct {
+type attributeCertificateV1_T struct {
 	RawContent         asn1.RawContent
-	AcInfo             AttributeCertificateInfoV1_T
-	SignatureAlgorithm AlgorithmIdentifierT
+	AcInfo             attributeCertificateInfoV1_T
+	SignatureAlgorithm algorithmIdentifierT
 	Signature          asn1.BitString
 }
 
-type SubjectOfAttributeCertificateInfoV1_T struct {
+type subjectOfAttributeCertificateInfoV1_T struct {
 	RawContent        asn1.RawContent
-	BaseCertificateID IssuerSerialT  `asn1:"tag:0,optional,omitempty"`
-	SubjectName       []GeneralNameT `asn1:"tag:1,optional,omitempty"`
+	BaseCertificateID issuerSerialT  `asn1:"tag:0,optional,omitempty"`
+	SubjectName       []generalNameT `asn1:"tag:1,optional,omitempty"`
 }
 
-type AttributeCertificateInfoV1_T struct {
+type attributeCertificateInfoV1_T struct {
 	RawContent            asn1.RawContent
 	Version               int
-	Subject               SubjectOfAttributeCertificateInfoV1_T
-	Issuer                []GeneralNameT
-	Signature             AlgorithmIdentifierT
+	Subject               subjectOfAttributeCertificateInfoV1_T
+	Issuer                []generalNameT
+	Signature             algorithmIdentifierT
 	SerialNumber          int
-	AttCertValidityPeriod GeneralizedValidityT
-	Attributes            []AttributeT
+	AttCertValidityPeriod generalizedValidityT
+	Attributes            []attributeT
 	IssuerUniqueID        asn1.BitString `asn1:"optional"`
-	Extensions            []ExtensionT   `asn1:"optional"`
+	Extensions            []extensionT   `asn1:"optional"`
 }
 
 // Also known as AttributeCertificate
-type AttributeCertificateV2_T struct {
+type attributeCertificateV2_T struct {
 	RawContent         asn1.RawContent
-	ACInfo             AttributeCertificateInfoT
-	SignatureAlgorithm AlgorithmIdentifierT
+	ACInfo             attributeCertificateInfoT
+	SignatureAlgorithm algorithmIdentifierT
 	SignatureValue     asn1.BitString
 }
 
-type AttributeCertificateInfoT struct {
+type attributeCertificateInfoT struct {
 	RawContent             asn1.RawContent
 	Version                int
-	Holder                 HolderT
-	IssuerV1               []GeneralNameT `asn1:"optional,omitempty"`
-	IssuerV2               V2FormT        `asn1:"optional,omitempty,tag:0"`
-	Signature              AlgorithmIdentifierT
+	Holder                 holderT
+	IssuerV1               []generalNameT `asn1:"optional,omitempty"`
+	IssuerV2               v2FormT        `asn1:"optional,omitempty,tag:0"`
+	Signature              algorithmIdentifierT
 	SerialNumber           int
-	AttrCertValidityPeriod GeneralizedValidityT
-	Attributes             []AttributeT
+	AttrCertValidityPeriod generalizedValidityT
+	Attributes             []attributeT
 	IssuerUniqueID         asn1.BitString `asn1:"optional,omitempty"`
-	Extensions             []ExtensionT   `asn1:"optional,omitempty"`
+	Extensions             []extensionT   `asn1:"optional,omitempty"`
 }
 
-func (acert *AttributeCertificateInfoT) SetAppropriateVersion() {
+func (acert *attributeCertificateInfoT) SetAppropriateVersion() {
 	acert.Version = 1
 }
 
-type V2FormT struct {
+type v2FormT struct {
 	RawContent        asn1.RawContent
-	IssuerName        []GeneralNameT    `asn1:"optional,omitempty"`
-	BaseCertificateID IssuerSerialT     `asn1:"optional,omitempty,tag:0"`
-	ObjectDigestInfo  ObjectDigestInfoT `asn1:"optional,omitempty,tag:1"`
+	IssuerName        []generalNameT    `asn1:"optional,omitempty"`
+	BaseCertificateID issuerSerialT     `asn1:"optional,omitempty,tag:0"`
+	ObjectDigestInfo  objectDigestInfoT `asn1:"optional,omitempty,tag:1"`
 }

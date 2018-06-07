@@ -2,9 +2,9 @@ package icp
 
 import "encoding/asn1"
 
-type IssuerSerialT struct {
+type issuerSerialT struct {
 	RawContent asn1.RawContent
-	Issuer     []GeneralNameT
+	Issuer     []generalNameT
 	Serial     int
 	IssuerUID  asn1.BitString `asn1:"optional"`
 }

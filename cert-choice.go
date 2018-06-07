@@ -2,28 +2,28 @@ package icp
 
 import "encoding/asn1"
 
-type CertificateChoiceT struct {
+type certificateChoiceT struct {
 	RawContent          asn1.RawContent
-	Certificate         CertificateT             `asn1:"optional,omitempty"`
-	ExtendedCertificate ExtendedCertificateT     `asn1:"tag:0,optional,omitempty"`
-	V1AttrCert          AttributeCertificateV1_T `asn1:"tag:1,optional,omitempty"`
-	V2AttrCert          AttributeCertificateV2_T `asn1:"tag:2,optional,omitempty"`
-	Other               OtherCertificateFormatT  `asn1:"tag:3,optional,omitempty"`
+	Certificate         certificateT             `asn1:"optional,omitempty"`
+	ExtendedCertificate extendedCertificateT     `asn1:"tag:0,optional,omitempty"`
+	V1AttrCert          attributeCertificateV1_T `asn1:"tag:1,optional,omitempty"`
+	V2AttrCert          attributeCertificateV2_T `asn1:"tag:2,optional,omitempty"`
+	Other               otherCertificateFormatT  `asn1:"tag:3,optional,omitempty"`
 }
 
-type ExtendedCertificateT struct {
-	ExtendedCertificateInfo ExtendedCertificateInfoT
-	SignatureAlgorithm      AlgorithmIdentifierT
+type extendedCertificateT struct {
+	ExtendedCertificateInfo extendedCertificateInfoT
+	SignatureAlgorithm      algorithmIdentifierT
 	Signature               asn1.BitString
 }
 
-type ExtendedCertificateInfoT struct {
+type extendedCertificateInfoT struct {
 	Version          int
-	Certificate      CertificateT
-	UnauthAttributes AttributeT `asn1:"set"`
+	Certificate      certificateT
+	UnauthAttributes attributeT `asn1:"set"`
 }
 
-type OtherCertificateFormatT struct {
+type otherCertificateFormatT struct {
 	RawContent      asn1.RawContent
 	OtherCertFormat asn1.ObjectIdentifier
 	OtherCert       interface{}

@@ -3,29 +3,29 @@ package icp
 import "encoding/asn1"
 
 // Returns the an ObjectIdentifier for id-signedData { iso(1) member-body(2) us(840) rsadsi(113549) pkcs(1) pkcs7(7) 2 }
-func IdSignedData() asn1.ObjectIdentifier {
+func idSignedData() asn1.ObjectIdentifier {
 	return asn1.ObjectIdentifier{1, 2, 840, 113549, 1, 7, 2}
 }
 
-type SignedDataT struct {
+type signedDataT struct {
 	RawContent       asn1.RawContent
 	Version          int
-	DigestAlgorithms []DigestAlgorithmIdentifierT `asn1:set`
-	EncapContentInfo EncapsulatedContentInfoT
-	Certificates     []CertificateChoiceT   `asn1:"tag:0,optional,set"`
-	CRLs             []RevocationInfoChoiceT `asn1:"tag:1,optional"`
-	SignerInfos      []SignerInfoT           `asn1:set`
+	DigestAlgorithms []algorithmIdentifierT `asn1:set`
+	EncapContentInfo encapsulatedContentInfoT
+	Certificates     []certificateChoiceT    `asn1:"tag:0,optional,set"`
+	CRLs             []revocationInfoChoiceT `asn1:"tag:1,optional"`
+	SignerInfos      []signerInfoT           `asn1:set`
 }
 
 // Apply algorithm described on RFC5625 Section 5.1 Page 9. This function MUST be called before marshaling.
-func (sd *SignedDataT) SetAppropriateVersion() {
+func (sd *signedDataT) SetAppropriateVersion() {
 	if sd.has_other_type_cert() || sd.has_other_type_crl() {
 		sd.Version = 5
 	} else {
-		if sd.has_v2_cert(){
+		if sd.has_v2_cert() {
 			sd.Version = 4
 		} else {
-			if sd.has_v1_cert() || sd.has_v3_signer_info() || !sd.EncapContentInfo.EContentType.Equal(IdData()) {
+			if sd.has_v1_cert() || sd.has_v3_signer_info() || !sd.EncapContentInfo.EContentType.Equal(idData()) {
 				sd.Version = 3
 			} else {
 				sd.Version = 1
@@ -34,7 +34,7 @@ func (sd *SignedDataT) SetAppropriateVersion() {
 	}
 }
 
-func (sd *SignedDataT) has_other_type_crl() bool {
+func (sd *signedDataT) has_other_type_crl() bool {
 	for _, crl := range sd.CRLs {
 		if !IsZeroOfUnderlyingType(crl.Other) {
 			return true
@@ -43,7 +43,7 @@ func (sd *SignedDataT) has_other_type_crl() bool {
 	return false
 }
 
-func (sd *SignedDataT) has_other_type_cert() bool {
+func (sd *signedDataT) has_other_type_cert() bool {
 	for _, cert := range sd.Certificates {
 		if !IsZeroOfUnderlyingType(cert.Other) {
 			return true
@@ -52,7 +52,7 @@ func (sd *SignedDataT) has_other_type_cert() bool {
 	return false
 }
 
-func (sd *SignedDataT) has_v1_cert() bool {
+func (sd *signedDataT) has_v1_cert() bool {
 	for _, cert := range sd.Certificates {
 		if !IsZeroOfUnderlyingType(cert.V1AttrCert) {
 			return true
@@ -61,7 +61,7 @@ func (sd *SignedDataT) has_v1_cert() bool {
 	return false
 }
 
-func (sd *SignedDataT) has_v2_cert() bool {
+func (sd *signedDataT) has_v2_cert() bool {
 	for _, cert := range sd.Certificates {
 		if !IsZeroOfUnderlyingType(cert.V2AttrCert) {
 			return true
@@ -70,7 +70,7 @@ func (sd *SignedDataT) has_v2_cert() bool {
 	return false
 }
 
-func (sd *SignedDataT) has_v3_signer_info() bool {
+func (sd *signedDataT) has_v3_signer_info() bool {
 	for _, info := range sd.SignerInfos {
 		if info.Version == 3 {
 			return true
@@ -79,8 +79,8 @@ func (sd *SignedDataT) has_v3_signer_info() bool {
 	return false
 }
 
-type IssuerAndSerialNumberT struct {
+type issuerAndSerialNumberT struct {
 	RawContent   asn1.RawContent
-	Issuer       NameT
+	Issuer       nameT
 	SerialNumber int
 }

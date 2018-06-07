@@ -2,7 +2,7 @@ package icp
 
 import "encoding/asn1"
 
-type EncapsulatedContentInfoT struct {
+type encapsulatedContentInfoT struct {
 	RawContent   asn1.RawContent
 	EContentType asn1.ObjectIdentifier
 	EContent     []byte `asn1:"explicit,optional,omitempty"`
@@ -16,7 +16,7 @@ type EncapsulatedContentInfoT struct {
 	"signed" MUST be id-data (as defined in Section 4), and the content
 	field of the EncapsulatedContentInfo value MUST be omitted.
 */
-func (ec *EncapsulatedContentInfoT) AdjustForNoSigners() {
-	ec.EContentType = IdData()
+func (ec *encapsulatedContentInfoT) AdjustForNoSigners() {
+	ec.EContentType = idData()
 	ec.EContent = nil
 }

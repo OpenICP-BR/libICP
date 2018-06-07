@@ -25,12 +25,12 @@ func Test_IsZeroOfUnderlyingType_4(t *testing.T) {
 }
 
 func Test_IsZeroOfUnderlyingType_5(t *testing.T) {
-	sd := SignedDataT{}
+	sd := signedDataT{}
 	assert.True(t, IsZeroOfUnderlyingType(sd), "")
 }
 
 func Test_IsZeroOfUnderlyingType_6(t *testing.T) {
-	sd := SignedDataT{}
+	sd := signedDataT{}
 	sd.EncapContentInfo.EContent = make([]byte, 0)
 	assert.False(t, IsZeroOfUnderlyingType(sd), "")
 }

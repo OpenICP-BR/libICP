@@ -2,67 +2,67 @@ package icp
 
 import "encoding/asn1"
 
-type NameT struct {
+type nameT struct {
 	RawContent  asn1.RawContent
-	RDNSequence []ATV_SET
+	RDNSequence []atv_SET
 }
 
 // Also known as RelativeDistinguishedName
-type ATV_SET struct {
+type atv_SET struct {
 	RawContent asn1.RawContent
 	Type       asn1.ObjectIdentifier
 	Value      interface{}
 }
 
-type AnotherNameT struct {
+type anotherNameT struct {
 	RawContent asn1.RawContent
 	TypeId     asn1.ObjectIdentifier
 	Value      interface{} `asn1:"tag:0,explicit"`
 }
 
-type EDIPartyNameT struct {
+type ediPartyNameT struct {
 	RawContent   asn1.RawContent
-	NameAssigner DirectoryStringT `asn1:"tag:0,optional"`
-	PartyName    DirectoryStringT `asn1:"tag:1"`
+	NameAssigner directoryStringT `asn1:"tag:0,optional"`
+	PartyName    directoryStringT `asn1:"tag:1"`
 }
 
-type DirectoryStringT struct {
+type directoryStringT struct {
 	PrintableString string `asn1:"printable,optional,omitempty"`
 	UTF8String      string `asn1:"utf8,optional,omitempty"`
 	OtherString     string `asn1:"utf8,optional,omitempty"`
 }
 
-type BuiltInDomainDefinedAttributeT struct {
+type builtInDomainDefinedAttributeT struct {
 	Type  string `asn1:"printable"`
 	Value string `asn1:"printable"`
 }
 
-type ExtensionAttributeT struct {
+type extensionAttributeT struct {
 	Type  int         `asn1:"tag:0"`
 	Value interface{} `asn1:"tag:1"`
 }
 
-type ORAddressT struct {
+type orAddressT struct {
 	RawContent                     asn1.RawContent
-	BuiltInStandardAttributes      BuiltInStandardAttributesT
-	BuiltInDomainDefinedAttributes []BuiltInDomainDefinedAttributeT `asn1:"optional"`
-	ExtensionAttributes            []ExtensionAttributeT            `asn1:"optional,set"`
+	BuiltInStandardAttributes      builtInStandardAttributesT
+	BuiltInDomainDefinedAttributes []builtInDomainDefinedAttributeT `asn1:"optional"`
+	ExtensionAttributes            []extensionAttributeT            `asn1:"optional,set"`
 }
 
-type CountryNameT struct {
+type countryNameT struct {
 	RawContent        asn1.RawContent
 	X121DccCode       string `asn1:"optional,omitempty"`
 	Iso3166Alpha2Code string `asn1:"optional,omitempty,printable"`
 }
 
-type NumericOrPrintableT struct {
+type numericOrPrintableT struct {
 	RawContent asn1.RawContent
 	Numeric    string `asn1:"optional,omitempty"`
 	Printable  string `asn1:"optional,omitempty,printable"`
 }
 
 // Use with `asn1:"set"`
-type PersonalNameT struct {
+type personalNameT struct {
 	RawContent          asn1.RawContent
 	Surname             string `asn1:"tag:0"`
 	GivenName           string `asn1:"optional,tag:1"`
@@ -70,35 +70,35 @@ type PersonalNameT struct {
 	GenerationQualifier string `asn1:"optional,tag:2"`
 }
 
-type BuiltInStandardAttributesT struct {
+type builtInStandardAttributesT struct {
 	RawContent               asn1.RawContent
-	CountryName              CountryNameT        `asn1:"optional,omitempty"`
-	AdministrationDomainName NumericOrPrintableT `asn1:"optional,omitempty,application,tag:2"`
+	CountryName              countryNameT        `asn1:"optional,omitempty"`
+	AdministrationDomainName numericOrPrintableT `asn1:"optional,omitempty,application,tag:2"`
 	NetworkAddress           string              `asn1:"tag:0,optional,omitempty"`
 	TerminalIdentifier       string              `asn1:"tag:1,optional,omitempty,printable"`
-	PrivateDomainName        NumericOrPrintableT `asn1:"tag:2,explicit,optional,omitempty"`
+	PrivateDomainName        numericOrPrintableT `asn1:"tag:2,explicit,optional,omitempty"`
 	OrganizationName         string              `asn1:"tag:3,optional,omitempty,printable"`
 	NumericUserIdentifier    string              `asn1:"tag:4,optional,omitempty"`
-	PersonalName             PersonalNameT       `asn1:"tag:5,optional,omitempty,set"`
+	PersonalName             personalNameT       `asn1:"tag:5,optional,omitempty,set"`
 	OrganizationalUnitNames  []string            `asn1:"tag:6,optional,omitempty,printable"`
 }
 
-type GeneralNameT struct {
+type generalNameT struct {
 	RawContent                asn1.RawContent
-	OtherName                 AnotherNameT          `asn1:"tag:0,optional,omitempty"`
+	OtherName                 anotherNameT          `asn1:"tag:0,optional,omitempty"`
 	RFC822Name                string                `asn1:"tag:1,ia5,optional,omitempty"`
 	DNSName                   string                `asn1:"tag:2,ia5,optional,omitempty"`
-	X400Address               ORAddressT            `asn1:"tag:3,optional,omitempty"`
-	DirectoryName             NameT                 `asn1:"tag:4,optional,omitempty"`
-	EdiPartyName              EDIPartyNameT         `asn1:"tag:5,optional,omitempty"`
+	X400Address               orAddressT            `asn1:"tag:3,optional,omitempty"`
+	DirectoryName             nameT                 `asn1:"tag:4,optional,omitempty"`
+	EdiPartyName              ediPartyNameT         `asn1:"tag:5,optional,omitempty"`
 	UniformResourceIdentifier string                `asn1:"tag:6,ia5,optional,omitempty"`
 	IPAddress                 []byte                `asn1:"tag:7,optional,omitempty"`
 	RegisteredID              asn1.ObjectIdentifier `asn1:"tag:8,optional,omitempty"`
 }
 
-type HolderT struct {
+type holderT struct {
 	RawContent        asn1.RawContent
-	BaseCertificateID IssuerSerialT     `asn1:"optional,omitempty,tag:0"`
-	EntityName        []GeneralNameT    `asn1:"optional,omitempty,tag:1"`
-	ObjectDigestInfo  ObjectDigestInfoT `asn1:"optional,omitempty,tag:2"`
+	BaseCertificateID issuerSerialT     `asn1:"optional,omitempty,tag:0"`
+	EntityName        []generalNameT    `asn1:"optional,omitempty,tag:1"`
+	ObjectDigestInfo  objectDigestInfoT `asn1:"optional,omitempty,tag:2"`
 }
