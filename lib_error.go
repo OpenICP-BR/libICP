@@ -42,6 +42,9 @@ func (merr MultiError) Error() string {
 	if merr.errors != nil && len(merr.errors) > 0 {
 		ans += "\nErrors:\n"
 		for _, err := range merr.errors {
+			if err == nil {
+				continue
+			}
 			tmp := err.Error()
 			strings.Replace(tmp, "\n", "\n\t", -1)
 			ans += "\n\t" + tmp
@@ -80,7 +83,7 @@ func (merr *MultiError) AppendError(err error) error {
 	return nil
 }
 
-func (merr *MultiError) Finish(err error) {
+func (merr *MultiError) Finish() {
 	merr.mark_position()
 	merr.locked = true
 }
