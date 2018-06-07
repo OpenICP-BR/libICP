@@ -79,7 +79,7 @@ func Test_TBSCertListT_SetAppropriateVersion_3(t *testing.T) {
 
 func Test_TBSCertListT_SetAppropriateVersion_4(t *testing.T) {
 	lcerts := TBSCertListT{}
-	lcerts.RevokedCertificates = make ([]RevokedCertificateT, 1)
+	lcerts.RevokedCertificates = make([]RevokedCertificateT, 1)
 	lcerts.RevokedCertificates[0].CRLEntryExtensions = make([]ExtensionT, 1)
 	lcerts.SetAppropriateVersion()
 	assert.Equal(t, 1, lcerts.Version, "The version MUST be 1 when revokedCertificates.crlEntryExtensions is present (see RFC3280 Section 5.1 Page 49)")

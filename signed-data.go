@@ -12,13 +12,13 @@ type SignedDataT struct {
 	Version          CMSVersionT
 	DigestAlgorithms []DigestAlgorithmIdentifierT `asn1:set`
 	EncapContentInfo EncapsulatedContentInfoT
-	Certificates     []CertificateChoicesT   `asn1:"tag:0,optional,set"`
-	Crls             []RevocationInfoChoiceT `asn1:"tag:1,optional"`
+	Certificates     []CertificateChoiceT   `asn1:"tag:0,optional,set"`
+	CRLs             []RevocationInfoChoiceT `asn1:"tag:1,optional"`
 	SignerInfos      []SignerInfoT           `asn1:set`
 }
 
+// Apply algorithm described on RFC5625 Section 5.1 Page 9. This function MUST be called before marshaling.
 func (sd *SignedDataT) SetAppropriateVersion() {
-	// algorith in rfc5625 section 5.1 page 9
 }
 
 type IssuerAndSerialNumberT struct {

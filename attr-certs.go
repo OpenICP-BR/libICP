@@ -24,8 +24,8 @@ type AttributeCertificateV1_T struct {
 
 type SubjectOfAttributeCertificateInfoV1_T struct {
 	RawContent        asn1.RawContent
-	baseCertificateID IssuerSerialT  `asn1:"tag:0,optional,omitempty"`
-	subjectName       []GeneralNameT `asn1:"tag:1,optional,omitempty"`
+	BaseCertificateID IssuerSerialT  `asn1:"tag:0,optional,omitempty"`
+	SubjectName       []GeneralNameT `asn1:"tag:1,optional,omitempty"`
 }
 
 type AttributeCertificateInfoV1_T struct {
