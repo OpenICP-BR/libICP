@@ -83,6 +83,7 @@ func (merr *MultiError) AppendError(err error) error {
 	return nil
 }
 
+// Sets the line number and function to match where this function is called and prevents further editing.
 func (merr *MultiError) Finish() {
 	merr.mark_position()
 	merr.locked = true

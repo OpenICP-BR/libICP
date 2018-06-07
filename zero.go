@@ -2,6 +2,6 @@ package icp
 
 import "reflect"
 
-func IsZeroOfUnderlyingType(x interface{}) bool {
+func isZeroOfUnderlyingType(x interface{}) bool {
 	return reflect.DeepEqual(x, reflect.Zero(reflect.TypeOf(x)).Interface())
 }
