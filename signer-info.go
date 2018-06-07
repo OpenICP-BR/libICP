@@ -7,7 +7,7 @@ type SignatureValueT []byte
 
 type SignerInfoT struct {
 	RawContent         asn1.RawContent
-	Version            CMSVersionT
+	Version            int
 	Sid_V1             IssuerAndSerialNumberT `asn1:"tag:choice"`
 	Sid_V3             SubjectKeyIdentifierT  `asn1:"tag:choice"`
 	Sid                interface{}            `asn1:"tag:end_choice"`

@@ -9,7 +9,7 @@ func IdSignedData() asn1.ObjectIdentifier {
 
 type SignedDataT struct {
 	RawContent       asn1.RawContent
-	Version          CMSVersionT
+	Version          int
 	DigestAlgorithms []DigestAlgorithmIdentifierT `asn1:set`
 	EncapContentInfo EncapsulatedContentInfoT
 	Certificates     []CertificateChoiceT   `asn1:"tag:0,optional,set"`
@@ -19,6 +19,64 @@ type SignedDataT struct {
 
 // Apply algorithm described on RFC5625 Section 5.1 Page 9. This function MUST be called before marshaling.
 func (sd *SignedDataT) SetAppropriateVersion() {
+	if sd.has_other_type_cert() || sd.has_other_type_crl() {
+		sd.Version = 5
+	} else {
+		if sd.has_v2_cert(){
+			sd.Version = 4
+		} else {
+			if sd.has_v1_cert() || sd.has_v3_signer_info() || !sd.EncapContentInfo.EContentType.Equal(IdData()) {
+				sd.Version = 3
+			} else {
+				sd.Version = 1
+			}
+		}
+	}
+}
+
+func (sd *SignedDataT) has_other_type_crl() bool {
+	for _, crl := range sd.CRLs {
+		if !IsZeroOfUnderlyingType(crl.Other) {
+			return true
+		}
+	}
+	return false
+}
+
+func (sd *SignedDataT) has_other_type_cert() bool {
+	for _, cert := range sd.Certificates {
+		if !IsZeroOfUnderlyingType(cert.Other) {
+			return true
+		}
+	}
+	return false
+}
+
+func (sd *SignedDataT) has_v1_cert() bool {
+	for _, cert := range sd.Certificates {
+		if !IsZeroOfUnderlyingType(cert.V1AttrCert) {
+			return true
+		}
+	}
+	return false
+}
+
+func (sd *SignedDataT) has_v2_cert() bool {
+	for _, cert := range sd.Certificates {
+		if !IsZeroOfUnderlyingType(cert.V2AttrCert) {
+			return true
+		}
+	}
+	return false
+}
+
+func (sd *SignedDataT) has_v3_signer_info() bool {
+	for _, info := range sd.SignerInfos {
+		if info.Version == 3 {
+			return true
+		}
+	}
+	return false
 }
 
 type IssuerAndSerialNumberT struct {

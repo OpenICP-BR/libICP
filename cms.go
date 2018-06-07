@@ -12,8 +12,6 @@ func IdData() asn1.ObjectIdentifier {
 	return asn1.ObjectIdentifier{1, 2, 840, 113549, 1, 7, 1}
 }
 
-type CMSVersionT int
-
 type ContentInfoT struct {
 	RawContent  asn1.RawContent
 	ContentType asn1.ObjectIdentifier

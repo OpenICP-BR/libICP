@@ -13,6 +13,7 @@ func Test_IdSignedData(t *testing.T) {
 
 func Test_SignedDataT_SetAppropriateVersion_1(t *testing.T) {
 	sd := SignedDataT{}
+	sd.EncapContentInfo.EContentType = IdData()
 	sd.SetAppropriateVersion()
 	assert.Equal(t, 1, sd.Version, "The version MUST be 1 in this case (see RFC5625 Section 5.1 Page 9)")
 }
@@ -55,8 +56,6 @@ func Test_SignedDataT_SetAppropriateVersion_6(t *testing.T) {
 	sd.SetAppropriateVersion()
 	assert.Equal(t, 5, sd.Version, "The version MUST be 5 in this case as: any certificates with a type of other are present (see RFC5625 Section 5.1 Page 9)")
 }
-
-//IsZeroOfUnderlyingType
 
 func Test_SignedDataT_SetAppropriateVersion_7(t *testing.T) {
 	sd := SignedDataT{}
