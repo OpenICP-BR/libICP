@@ -7,6 +7,11 @@ import (
 	"strings"
 )
 
+type CodedError interface {
+	Error() string
+	ErrorCode() int
+}
+
 type MultiError struct {
 	message    string
 	code       int
@@ -19,12 +24,18 @@ type MultiError struct {
 	locked     bool
 }
 
-func NewMultiError(message string, code int, parameters map[string]interface{}, errors []error) MultiError {
+func NewMultiError(message string, code int, parameters map[string]interface{}, errors []error, single_error error) MultiError {
 	merr := MultiError{}
 	merr.code = code
 	merr.message = message
 	merr.parameters = parameters
 	merr.errors = errors
+	if single_error != nil {
+		if merr.errors == nil {
+			merr.errors = make([]error, 1)
+			merr.errors[0] = single_error
+		}
+	}
 	merr.mark_position()
 	return merr
 }
@@ -63,7 +74,7 @@ func (merr MultiError) ErrorCode() int {
 
 func (merr *MultiError) SetParam(key string, val interface{}) error {
 	if merr.locked {
-		return NewMultiError("attempted to edit locekd MultiError", ERR_LOCKED_MULTI_ERROR, nil, nil)
+		return NewMultiError("attempted to edit locekd MultiError", ERR_LOCKED_MULTI_ERROR, nil, nil, nil)
 	}
 	if merr.parameters == nil {
 		merr.parameters = make(map[string]interface{})
@@ -74,7 +85,7 @@ func (merr *MultiError) SetParam(key string, val interface{}) error {
 
 func (merr *MultiError) AppendError(err error) error {
 	if merr.locked {
-		return NewMultiError("attempted to edit locekd MultiError", ERR_LOCKED_MULTI_ERROR, nil, nil)
+		return NewMultiError("attempted to edit locekd MultiError", ERR_LOCKED_MULTI_ERROR, nil, nil, nil)
 	}
 	if merr.errors == nil {
 		merr.errors = make([]error, 0)
