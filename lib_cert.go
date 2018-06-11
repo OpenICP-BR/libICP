@@ -10,6 +10,7 @@ type Certificate struct {
 	base certificateT
 }
 
+// Accepts PEM, DER and a mox of both.
 func NewCertificateFromFile(path string) ([]Certificate, CodedError) {
 	dat, err := ioutil.ReadFile(path)
 	if err != nil {
@@ -26,6 +27,7 @@ func NewCertificateFromFile(path string) ([]Certificate, CodedError) {
 	return certs, nil
 }
 
+// Accepts PEM, DER and a mox of both.
 func NewCertificateFromBytes(raw []byte) ([]Certificate, []CodedError) {
 	var block *pem.Block
 	certs := make([]Certificate, 0)
@@ -40,7 +42,7 @@ func NewCertificateFromBytes(raw []byte) ([]Certificate, []CodedError) {
 		}
 		if block.Type == "CERTIFICATE" {
 			new_cert := Certificate{}
-			ok, _, merr := new_cert.LoadFromDER(block.Bytes)
+			ok, _, merr := new_cert.loadFromDER(block.Bytes)
 			if !ok {
 				merrs = append(merrs, merr)
 			} else {
@@ -58,7 +60,7 @@ func NewCertificateFromBytes(raw []byte) ([]Certificate, []CodedError) {
 			break
 		}
 		new_cert := Certificate{}
-		ok, rest, merr = new_cert.LoadFromDER(rest)
+		ok, rest, merr = new_cert.loadFromDER(rest)
 		if ok {
 			certs = append(certs, new_cert)
 		} else {
@@ -72,7 +74,7 @@ func NewCertificateFromBytes(raw []byte) ([]Certificate, []CodedError) {
 	return certs, merrs
 }
 
-func (cert *Certificate) LoadFromDER(data []byte) (bool, []byte, CodedError) {
+func (cert *Certificate) loadFromDER(data []byte) (bool, []byte, CodedError) {
 	rest, err := asn1.Unmarshal(data, &cert.base)
 	if err != nil {
 		merr := NewMultiError("failed to parse DER certificate", ERR_PARSE_CERT, nil, err)
