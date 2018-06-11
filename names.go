@@ -4,7 +4,7 @@ import "encoding/asn1"
 
 type nameT struct {
 	RawContent  asn1.RawContent
-	RDNSequence []atv_SET
+	RDNSequence []atv_SET `asn1:"set"`
 }
 
 // Also known as RelativeDistinguishedName

@@ -18,7 +18,7 @@ func Test_NewCertificateFromFile_1(t *testing.T) {
 
 	// Test code
 	_, err = icp.NewCertificateFromFile(tmp_file.Name())
-	println(err.Error())
+	assert.Nil(t, err)
 
 	// Finish
 	os.Remove(tmp_file.Name())

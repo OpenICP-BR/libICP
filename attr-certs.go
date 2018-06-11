@@ -11,7 +11,7 @@ type attributeT struct {
 type extensionT struct {
 	RawContent asn1.RawContent
 	ExtnID     asn1.ObjectIdentifier
-	Critical   bool
+	Critical   bool `asn1:"optional"`
 	ExtnValue  []byte
 }
 

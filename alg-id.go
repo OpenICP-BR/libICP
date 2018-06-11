@@ -10,6 +10,6 @@ type algorithmIdentifierT struct {
 
 type pairAlgPubKeyT struct {
 	RawContent asn1.RawContent
-	Algorithm  asn1.ObjectIdentifier
+	Algorithm  algorithmIdentifierT
 	PublicKey  asn1.BitString
 }

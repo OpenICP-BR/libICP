@@ -2,28 +2,43 @@ package icp
 
 import (
 	"encoding/asn1"
+	"math/big"
 	"time"
 )
 
 type certificateT struct {
 	RawContent         asn1.RawContent
-	TBSCertificate     tbsCertificateT
+	TBSCertificate     hacky_tbsCertificateT
 	SignatureAlgorithm algorithmIdentifierT
 	Signature          asn1.BitString
 }
 
-type tbsCertificateT struct {
+type hacky_tbsCertificateT struct {
 	RawContent           asn1.RawContent
-	Version              int `asn:"tag:0,explicit"`
-	SerialNumber         int
+	Version              int `asn1:"optional,explicit,default:0,tag:0"`
+	SerialNumber         *big.Int
 	Signature            algorithmIdentifierT
 	Issuer               nameT
 	Validity             generalizedValidityT
 	Subject              nameT
 	SubjectPublicKeyInfo pairAlgPubKeyT
-	IssuerUniqueID       asn1.BitString `asn:"tag:1,optional,omitempty"`
-	SubjectUniqueID      asn1.BitString `asn:"tag:2,optional,omitempty"`
-	Extensions           []extensionT   `asn:"tag:3,optional,omitempty"`
+	IssuerUniqueID       asn1.BitString `asn1:"tag:1,optional,omitempty"`
+	SubjectUniqueID      asn1.BitString `asn1:"tag:2,optional,omitempty"`
+	Extensions           []extensionT   `asn1:"tag:3,optional,omitempty,explicit"`
+}
+
+type tbsCertificateT struct {
+	RawContent           asn1.RawContent
+	Version              int `asn1:"optional,explicit,default:0,tag:0"`
+	SerialNumber         *big.Int
+	Signature            algorithmIdentifierT
+	Issuer               nameT
+	Validity             generalizedValidityT
+	Subject              nameT
+	SubjectPublicKeyInfo pairAlgPubKeyT
+	IssuerUniqueID       asn1.BitString `asn1:"tag:1,optional,omitempty"`
+	SubjectUniqueID      asn1.BitString `asn1:"tag:2,optional,omitempty"`
+	Extensions           []extensionT   `asn1:"tag:3,optional,omitempty"`
 }
 
 func (cert *tbsCertificateT) SetAppropriateVersion() {

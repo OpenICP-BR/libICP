@@ -27,7 +27,7 @@ type pairErrorCodePos struct {
 type MultiError struct {
 	message    string
 	code       int
-	stack      []byte
+	stack      string
 	line       int
 	file       string
 	function   string
@@ -48,6 +48,10 @@ func NewMultiError(message string, code int, parameters map[string]interface{}, 
 	}
 	merr.mark_position()
 	return merr
+}
+
+func (perr pairErrorCodePos) String() string {
+	return fmt.Sprintf("%s:%s:%d %s", perr.Function, perr.File, perr.Line, perr.Error)
 }
 
 func (merr MultiError) Error() string {
@@ -88,8 +92,8 @@ func (merr MultiError) Error() string {
 		ans += "\n]"
 	}
 	// Print stack
-	if merr.stack != nil {
-		ans += "\nStack:\n" + string(merr.stack)
+	if len(merr.stack) > 0 {
+		ans += "\nStack:\n" + merr.stack
 	}
 	return ans
 }
@@ -147,7 +151,7 @@ func get_stack_pos(depth int) (string, string, int) {
 
 func (merr *MultiError) mark_position() {
 	// Save execution stack
-	merr.stack = debug.Stack()
+	merr.stack = string(debug.Stack())
 	// Get information about who created this error
 	merr.function, merr.file, merr.line = get_stack_pos(3)
 }
