@@ -10,6 +10,22 @@ type Certificate struct {
 	base certificateT
 }
 
+func (cert Certificate) Issuer() string {
+	return ""
+}
+
+func (cert Certificate) IssuerAsMap() map[string]string {
+	return nil
+}
+
+func (cert Certificate) Subject() string {
+	return ""
+}
+
+func (cert Certificate) SubjectAsMap() map[string]string {
+	return nil
+}
+
 // Accepts PEM, DER and a mox of both.
 func NewCertificateFromFile(path string) ([]Certificate, CodedError) {
 	dat, err := ioutil.ReadFile(path)
