@@ -8,23 +8,9 @@ import (
 
 type certificateT struct {
 	RawContent         asn1.RawContent
-	TBSCertificate     hacky_tbsCertificateT
+	TBSCertificate     tbsCertificateT
 	SignatureAlgorithm algorithmIdentifierT
 	Signature          asn1.BitString
-}
-
-type hacky_tbsCertificateT struct {
-	RawContent           asn1.RawContent
-	Version              int `asn1:"optional,explicit,default:0,tag:0"`
-	SerialNumber         *big.Int
-	Signature            algorithmIdentifierT
-	Issuer               nameT
-	Validity             generalizedValidityT
-	Subject              nameT
-	SubjectPublicKeyInfo pairAlgPubKeyT
-	IssuerUniqueID       asn1.BitString `asn1:"tag:1,optional,omitempty"`
-	SubjectUniqueID      asn1.BitString `asn1:"tag:2,optional,omitempty"`
-	Extensions           []extensionT   `asn1:"tag:3,optional,omitempty,explicit"`
 }
 
 type tbsCertificateT struct {
@@ -38,7 +24,7 @@ type tbsCertificateT struct {
 	SubjectPublicKeyInfo pairAlgPubKeyT
 	IssuerUniqueID       asn1.BitString `asn1:"tag:1,optional,omitempty"`
 	SubjectUniqueID      asn1.BitString `asn1:"tag:2,optional,omitempty"`
-	Extensions           []extensionT   `asn1:"tag:3,optional,omitempty"`
+	Extensions           []extensionT   `asn1:"tag:3,optional,omitempty,explicit"`
 }
 
 func (cert *tbsCertificateT) SetAppropriateVersion() {
