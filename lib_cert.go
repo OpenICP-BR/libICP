@@ -11,24 +11,28 @@ type Certificate struct {
 }
 
 // Example: C=BR/ON=ICP-Brasil/OU=Autoridade Certificadora Raiz Brasileira v2/CN=AC CAIXA v2
+//
 // Unkown OIDs will *always* be included at the end. Ex: C=BR/ON=Some Company/2.5.4.17=70160-900
 func (cert Certificate) Issuer() string {
 	return cert.base.TBSCertificate.Issuer.String()
 }
 
 // Example: map[OU:Autoridade Certificadora Raiz Brasileira v2 CN:AC CAIXA v2 C:BR ON:ICP-Brasil]
+//
 // Unkown OIDs will *always* be included.
 func (cert Certificate) IssuerAsMap() map[string]string {
 	return cert.base.TBSCertificate.Issuer.Map()
 }
 
 // Example: C=BR/ON=ICP-Brasil/OU=Caixa Economica Federal/CN=AC CAIXA PF v2
+//
 // Unkown OIDs will *always* be included at the end. Ex: C=BR/ON=Some Company/2.5.4.17=70160-900
 func (cert Certificate) Subject() string {
 	return cert.base.TBSCertificate.Subject.String()
 }
 
 // Example: map[C:BR ON:ICP-Brasil OU:Caixa Economica Federal CN:AC CAIXA PF v2]
+//
 // Unkown OIDs will *always* be included.
 func (cert Certificate) SubjectAsMap() map[string]string {
 	return cert.base.TBSCertificate.Subject.Map()
