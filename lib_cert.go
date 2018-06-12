@@ -7,35 +7,12 @@ import (
 )
 
 type Certificate struct {
-	base certificateT
-}
-
-// Example: C=BR/ON=ICP-Brasil/OU=Autoridade Certificadora Raiz Brasileira v2/CN=AC CAIXA v2
-//
-// Unkown OIDs will *always* be included at the end. Ex: C=BR/ON=Some Company/2.5.4.17=70160-900
-func (cert Certificate) Issuer() string {
-	return cert.base.TBSCertificate.Issuer.String()
-}
-
-// Example: map[OU:Autoridade Certificadora Raiz Brasileira v2 CN:AC CAIXA v2 C:BR ON:ICP-Brasil]
-//
-// Unkown OIDs will *always* be included.
-func (cert Certificate) IssuerAsMap() map[string]string {
-	return cert.base.TBSCertificate.Issuer.Map()
-}
-
-// Example: C=BR/ON=ICP-Brasil/OU=Caixa Economica Federal/CN=AC CAIXA PF v2
-//
-// Unkown OIDs will *always* be included at the end. Ex: C=BR/ON=Some Company/2.5.4.17=70160-900
-func (cert Certificate) Subject() string {
-	return cert.base.TBSCertificate.Subject.String()
-}
-
-// Example: map[C:BR ON:ICP-Brasil OU:Caixa Economica Federal CN:AC CAIXA PF v2]
-//
-// Unkown OIDs will *always* be included.
-func (cert Certificate) SubjectAsMap() map[string]string {
-	return cert.base.TBSCertificate.Subject.Map()
+	base       certificateT
+	Serial     string
+	Issuer     string
+	IssuerMap  map[string]string
+	Subject    string
+	SubjectMap map[string]string
 }
 
 // Accepts PEM, DER and a mix of both.
@@ -110,5 +87,15 @@ func (cert *Certificate) loadFromDER(data []byte) (bool, []byte, CodedError) {
 		return false, rest, merr
 	}
 
+	cert.finishParsing()
+
 	return true, rest, nil
+}
+
+func (cert *Certificate) finishParsing() {
+	cert.Serial = "0x" + cert.base.TBSCertificate.SerialNumber.Text(16)
+	cert.Issuer = cert.base.TBSCertificate.Issuer.String()
+	cert.IssuerMap = cert.base.TBSCertificate.Issuer.Map()
+	cert.Subject = cert.base.TBSCertificate.Subject.String()
+	cert.SubjectMap = cert.base.TBSCertificate.Subject.Map()
 }
