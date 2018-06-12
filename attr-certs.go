@@ -2,6 +2,14 @@ package icp
 
 import "encoding/asn1"
 
+func idSubjectKeyIdentifier() asn1.ObjectIdentifier {
+	return asn1.ObjectIdentifier{2, 5, 29, 14}
+}
+
+func idAuthorityKeyIdentifier() asn1.ObjectIdentifier {
+	return asn1.ObjectIdentifier{2, 5, 29, 35}
+}
+
 type attributeT struct {
 	RawContent asn1.RawContent
 	Type       asn1.ObjectIdentifier

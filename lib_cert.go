@@ -7,12 +7,14 @@ import (
 )
 
 type Certificate struct {
-	base       certificateT
-	Serial     string
-	Issuer     string
-	IssuerMap  map[string]string
-	Subject    string
-	SubjectMap map[string]string
+	base           certificateT
+	Serial         string
+	Issuer         string
+	IssuerMap      map[string]string
+	Subject        string
+	SubjectMap     map[string]string
+	SubjectKeyID   string
+	AuthorityKeyID string
 }
 
 // Accepts PEM, DER and a mix of both.
@@ -98,4 +100,16 @@ func (cert *Certificate) finishParsing() {
 	cert.IssuerMap = cert.base.TBSCertificate.Issuer.Map()
 	cert.Subject = cert.base.TBSCertificate.Subject.String()
 	cert.SubjectMap = cert.base.TBSCertificate.Subject.Map()
+	// Just a hack to prevent some problems
+	cert.SubjectKeyID = cert.Subject
+	cert.AuthorityKeyID = cert.Issuer
+	// Look for SubjectKeyID and AuthorityKeyID
+	for _, ext := range cert.base.TBSCertificate.Extensions {
+		if ext.ExtnID.Equal(idSubjectKeyIdentifier()) {
+			cert.SubjectKeyID = nice_hex(ext.ExtnValue)
+		}
+		if ext.ExtnID.Equal(idAuthorityKeyIdentifier()) {
+			cert.AuthorityKeyID = nice_hex(ext.ExtnValue)
+		}
+	}
 }

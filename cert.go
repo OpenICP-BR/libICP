@@ -2,6 +2,7 @@ package icp
 
 import (
 	"encoding/asn1"
+	"fmt"
 	"math/big"
 	"time"
 )
@@ -35,6 +36,17 @@ func (cert *tbsCertificateT) SetAppropriateVersion() {
 	if cert.Extensions != nil && len(cert.Extensions) > 0 {
 		cert.Version = 2
 	}
+}
+
+func nice_hex(buf []byte) string {
+	ans := ""
+	for i := 0; i < len(buf); i++ {
+		if i != 0 {
+			ans += ":"
+		}
+		ans += fmt.Sprintf("%X", buf[i:i+1])
+	}
+	return ans
 }
 
 type certificateListT struct {

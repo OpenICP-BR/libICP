@@ -27,6 +27,8 @@ func Test_NewCertificateFromFile_1(t *testing.T) {
 	assert.Equal(t, "0x28eea57c362904d8", cert.Serial)
 	assert.Equal(t, "C=BR/ON=ICP-Brasil/OU=Autoridade Certificadora Raiz Brasileira v2/CN=AC CAIXA v2", cert.Issuer)
 	assert.Equal(t, "C=BR/ON=ICP-Brasil/OU=Caixa Economica Federal/CN=AC CAIXA PF v2", cert.Subject)
+	assert.Equal(t, "04:14:9E:2A:D6:41:57:00:AF:5B:ED:07:F8:D0:5C:8E:F3:6D:E6:E5:0C:1A", cert.SubjectKeyID)
+	assert.Equal(t, "30:16:80:14:0F:50:24:31:E4:BA:BC:B1:99:49:26:35:ED:0E:D0:75:FE:9C:9F:55", cert.AuthorityKeyID)
 
 	// Finish
 	os.Remove(tmp_file.Name())
