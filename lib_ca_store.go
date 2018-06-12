@@ -1,6 +1,8 @@
 package icp
 
-import "time"
+import (
+	"time"
+)
 
 var CAStore CAStoreT
 
@@ -19,6 +21,7 @@ func (store *CAStoreT) Init() {
 	store.cas = make(map[string]Certificate)
 	for _, cert := range certs {
 		store.cas[cert.SubjectKeyID] = cert
+		store.cas[cert.Subject] = cert
 	}
 }
 
@@ -40,25 +43,35 @@ func (store *CAStoreT) addCAatTime(cert Certificate, now time.Time) (bool, []Cod
 
 const _PATH_BUILDING_MAX_DEPTH = 16
 
-func (store CAStoreT) buildPath(end_cert Certificate, max_depth int) []Certificate {
+func (store CAStoreT) buildPath(end_cert Certificate, max_depth int) ([]Certificate, CodedError) {
 	issuer, ok := store.cas[end_cert.AuthorityKeyID]
-	if !ok || max_depth < 0 {
-		// We could not find the issuer or we reached the maximum depth
-		return nil
+	if !ok {
+		// Try again
+		issuer, ok = store.cas[end_cert.Issuer]
+	}
+	if !ok {
+		merr := NewMultiError("issuer not found", ERR_ISSUER_NOT_FOUND, nil)
+		merr.SetParam("AuthorityKeyID", end_cert.AuthorityKeyID)
+		return nil, merr
+	}
+	if max_depth < 0 {
+		merr := NewMultiError("reached maximum depth", ERR_MAX_DEPTH_REACHED, nil)
+		merr.SetParam("SubjectKeyID", end_cert.SubjectKeyID)
+		return nil, merr
 	}
 	ans := make([]Certificate, 1)
 	ans[0] = end_cert
-	if end_cert.AuthorityKeyID == issuer.SubjectKeyID {
+	if end_cert.SelfSigned() {
 		// We reached a self signed CA
-		return ans
+		return ans, nil
 	}
 	// RECURSION!
-	extra_path := store.buildPath(issuer, max_depth-1)
+	extra_path, err := store.buildPath(issuer, max_depth-1)
 	if extra_path == nil {
 		// We failed to build the path
-		return nil
+		return nil, NewMultiError("reached maximum depth", ERR_FAILED_TO_BUILD_CERT_PATH, nil, err)
 	}
 	// Add the recursion result
 	ans = append(ans, extra_path...)
-	return ans
+	return ans, nil
 }

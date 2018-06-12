@@ -34,6 +34,10 @@ func NewCertificateFromFile(path string) ([]Certificate, CodedError) {
 	return certs, nil
 }
 
+func firstCert(certs []Certificate, stuff []CodedError) Certificate {
+	return certs[0]
+}
+
 // Accepts PEM, DER and a mix of both.
 func NewCertificateFromBytes(raw []byte) ([]Certificate, []CodedError) {
 	var block *pem.Block
@@ -92,6 +96,11 @@ func (cert *Certificate) loadFromDER(data []byte) (bool, []byte, CodedError) {
 	cert.finishParsing()
 
 	return true, rest, nil
+}
+
+func (cert Certificate) SelfSigned() bool {
+	// println(cert.SubjectMap["CN"], cert.Subject == cert.Issuer, cert.SubjectKeyID == cert.AuthorityKeyID)
+	return cert.Subject == cert.Issuer || cert.SubjectKeyID == cert.AuthorityKeyID
 }
 
 func (cert *Certificate) finishParsing() {
