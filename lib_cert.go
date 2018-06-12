@@ -10,23 +10,31 @@ type Certificate struct {
 	base certificateT
 }
 
+// Example: C=BR/ON=ICP-Brasil/OU=Autoridade Certificadora Raiz Brasileira v2/CN=AC CAIXA v2
+// Unkown OIDs will *always* be included at the end. Ex: C=BR/ON=Some Company/2.5.4.17=70160-900
 func (cert Certificate) Issuer() string {
 	return cert.base.TBSCertificate.Issuer.String()
 }
 
+// Example: map[OU:Autoridade Certificadora Raiz Brasileira v2 CN:AC CAIXA v2 C:BR ON:ICP-Brasil]
+// Unkown OIDs will *always* be included.
 func (cert Certificate) IssuerAsMap() map[string]string {
 	return cert.base.TBSCertificate.Issuer.Map()
 }
 
+// Example: C=BR/ON=ICP-Brasil/OU=Caixa Economica Federal/CN=AC CAIXA PF v2
+// Unkown OIDs will *always* be included at the end. Ex: C=BR/ON=Some Company/2.5.4.17=70160-900
 func (cert Certificate) Subject() string {
 	return cert.base.TBSCertificate.Subject.String()
 }
 
+// Example: map[C:BR ON:ICP-Brasil OU:Caixa Economica Federal CN:AC CAIXA PF v2]
+// Unkown OIDs will *always* be included.
 func (cert Certificate) SubjectAsMap() map[string]string {
 	return cert.base.TBSCertificate.Subject.Map()
 }
 
-// Accepts PEM, DER and a mox of both.
+// Accepts PEM, DER and a mix of both.
 func NewCertificateFromFile(path string) ([]Certificate, CodedError) {
 	dat, err := ioutil.ReadFile(path)
 	if err != nil {
@@ -43,7 +51,7 @@ func NewCertificateFromFile(path string) ([]Certificate, CodedError) {
 	return certs, nil
 }
 
-// Accepts PEM, DER and a mox of both.
+// Accepts PEM, DER and a mix of both.
 func NewCertificateFromBytes(raw []byte) ([]Certificate, []CodedError) {
 	var block *pem.Block
 	certs := make([]Certificate, 0)
