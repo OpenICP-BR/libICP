@@ -11,19 +11,19 @@ type Certificate struct {
 }
 
 func (cert Certificate) Issuer() string {
-	return ""
+	return cert.base.TBSCertificate.Issuer.String()
 }
 
 func (cert Certificate) IssuerAsMap() map[string]string {
-	return nil
+	return cert.base.TBSCertificate.Issuer.Map()
 }
 
 func (cert Certificate) Subject() string {
-	return ""
+	return cert.base.TBSCertificate.Subject.String()
 }
 
 func (cert Certificate) SubjectAsMap() map[string]string {
-	return nil
+	return cert.base.TBSCertificate.Subject.Map()
 }
 
 // Accepts PEM, DER and a mox of both.

@@ -1,17 +1,100 @@
 package icp
 
-import "encoding/asn1"
+import (
+	"encoding/asn1"
+	"fmt"
+)
 
-type nameT struct {
-	RawContent  asn1.RawContent
-	RDNSequence []atv_SET `asn1:"set"`
+// Returns the an ObjectIdentifier for countryName
+func idCountryName() asn1.ObjectIdentifier {
+	return asn1.ObjectIdentifier{2, 5, 4, 6}
 }
 
-// Also known as RelativeDistinguishedName
-type atv_SET struct {
+// Returns the an ObjectIdentifier for stateOrProvinceName
+func idStateOrProvinceName() asn1.ObjectIdentifier {
+	return asn1.ObjectIdentifier{2, 5, 4, 8}
+}
+
+// Returns the an ObjectIdentifier for localityName
+func idLocalityName() asn1.ObjectIdentifier {
+	return asn1.ObjectIdentifier{2, 5, 4, 7}
+}
+
+// Returns the an ObjectIdentifier for organizationName
+func idOrganizationName() asn1.ObjectIdentifier {
+	return asn1.ObjectIdentifier{2, 5, 4, 10}
+}
+
+// Returns the an ObjectIdentifier for organizationalUnitName
+func idOrganizationalUnitName() asn1.ObjectIdentifier {
+	return asn1.ObjectIdentifier{2, 5, 4, 11}
+}
+
+// Returns the an ObjectIdentifier for commonName
+func idCommonName() asn1.ObjectIdentifier {
+	return asn1.ObjectIdentifier{2, 5, 4, 3}
+}
+
+func oid2str_key(oid asn1.ObjectIdentifier) string {
+	switch {
+	case oid.Equal(idCountryName()):
+		return "C"
+	case oid.Equal(idStateOrProvinceName()):
+		return "S"
+	case oid.Equal(idLocalityName()):
+		return "L"
+	case oid.Equal(idOrganizationName()):
+		return "ON"
+	case oid.Equal(idOrganizationalUnitName()):
+		return "OU"
+	case oid.Equal(idCommonName()):
+		return "CN"
+	default:
+		return oid.String()
+	}
+}
+
+type nameT []rdnSET
+type rdnSET []atv
+type atv struct {
 	RawContent asn1.RawContent
 	Type       asn1.ObjectIdentifier
 	Value      interface{}
+}
+
+func (this nameT) Map() map[string]string {
+	m := make(map[string]string)
+	for _, item := range this {
+		k := oid2str_key(item[0].Type)
+		m[k] = fmt.Sprintf("%s", item[0].Value)
+	}
+	return m
+}
+
+func (this nameT) String() string {
+	// Prepare stuff
+	ans := ""
+	first := true
+	m := this.Map()
+	order := []string{"C", "S", "L", "ON", "OU", "CN"}
+	// Add each element in the prefered order
+	for _, k := range order {
+		if v, ok := m[k]; ok {
+			if !first {
+				ans += "/"
+			}
+			ans += k + "=" + v
+			delete(m, k)
+			first = false
+		}
+	}
+	// Add any remaining elements
+	for k, v := range m {
+		ans += k + "=" + v
+		delete(m, k)
+	}
+
+	return ans
 }
 
 type anotherNameT struct {
