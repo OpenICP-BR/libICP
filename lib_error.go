@@ -14,7 +14,7 @@ type stringI interface {
 
 type CodedError interface {
 	error
-	ErrorCode() int
+	Code() string
 }
 
 type pairErrorCodePos struct {
@@ -26,7 +26,7 @@ type pairErrorCodePos struct {
 
 type MultiError struct {
 	message    string
-	code       int
+	code       string
 	stack      string
 	line       int
 	file       string
@@ -36,7 +36,7 @@ type MultiError struct {
 	locked     bool
 }
 
-func NewMultiError(message string, code int, parameters map[string]interface{}, errors ...interface{}) MultiError {
+func NewMultiError(message string, code string, parameters map[string]interface{}, errors ...interface{}) MultiError {
 	merr := MultiError{}
 	merr.code = code
 	merr.message = message
@@ -55,7 +55,7 @@ func (perr pairErrorCodePos) String() string {
 }
 
 func (merr MultiError) Error() string {
-	ans := fmt.Sprintf("%s:%d:%s:%d %s", merr.function, merr.code, merr.file, merr.line, merr.message)
+	ans := fmt.Sprintf("%s:%s:%s:%d %s", merr.function, merr.code, merr.file, merr.line, merr.message)
 	// Print parameters
 	if merr.parameters != nil && len(merr.parameters) > 0 {
 		ans += "\nParameters:"
@@ -98,7 +98,7 @@ func (merr MultiError) Error() string {
 	return ans
 }
 
-func (merr MultiError) ErrorCode() int {
+func (merr MultiError) Code() string {
 	return merr.code
 }
 

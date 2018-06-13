@@ -17,7 +17,7 @@ func (hs hackStringS) String() string {
 }
 
 func Test_NewMultiError_1(t *testing.T) {
-	merr := NewMultiError("hi", 42, nil, "hi", errors.New("hi2"), 0, nil, hackStringS{}, []byte{1})
+	merr := NewMultiError("hi", "MY_ERR", nil, "hi", errors.New("hi2"), 0, nil, hackStringS{}, []byte{1})
 	merr.AppendError(nil)
 	merr.AppendError(errors.New("hi"))
 	merr.SetParam("pointer", nil)
@@ -33,12 +33,12 @@ func Test_NewMultiError_1(t *testing.T) {
 	tmp := strings.Split(merr.Error(), "\n")
 	r := regexp.MustCompile("[.]go:[0-9]*")
 	tmp[0] = r.ReplaceAllString(tmp[0], ".go:?")
-	assert.Equal(t, "github.com/gjvnq/libICP.Test_NewMultiError_1:42:lib_error_test.go:? hi", tmp[0])
-	assert.Equal(t, 42, merr.ErrorCode())
+	assert.Equal(t, "github.com/gjvnq/libICP.Test_NewMultiError_1:MY_ERR:lib_error_test.go:? hi", tmp[0])
+	assert.Equal(t, "MY_ERR", merr.Code())
 }
 
 func Test_NewMultiError_2(t *testing.T) {
-	merr := NewMultiError("hi", 42, nil)
+	merr := NewMultiError("hi", "MY_ERR", nil)
 	merr.AppendError(nil)
 	merr.AppendError(errors.New("hi"))
 	merr.SetParam("pointer", nil)
@@ -53,6 +53,6 @@ func Test_NewMultiError_2(t *testing.T) {
 	tmp := strings.Split(merr.Error(), "\n")
 	r := regexp.MustCompile("[.]go:[0-9]*")
 	tmp[0] = r.ReplaceAllString(tmp[0], ".go:?")
-	assert.Equal(t, "github.com/gjvnq/libICP.Test_NewMultiError_2:42:lib_error_test.go:? hi", tmp[0])
-	assert.Equal(t, 42, merr.ErrorCode())
+	assert.Equal(t, "github.com/gjvnq/libICP.Test_NewMultiError_2:MY_ERR:lib_error_test.go:? hi", tmp[0])
+	assert.Equal(t, "MY_ERR", merr.Code())
 }
