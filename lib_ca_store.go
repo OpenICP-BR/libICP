@@ -8,19 +8,31 @@ type CAStore struct {
 	// If true, it will attempt to download missing CAs and CRLs
 	AllowDownloads bool
 	cas            map[string]Certificate
+	inited bool
 }
 
-// Adds the root CAs.
+// This function MUST be called before using this struct. It makes a few maps and adds the following root CAs:
+//
+// - Autoridade Certificadora Raiz Brasileira v1
+// - Autoridade Certificadora Raiz Brasileira v2
+// - Autoridade Certificadora Raiz Brasileira v5
 func (store *CAStore) Init() {
+	// Do not run this function twice
+	if inited {
+		return
+	}
+	// Get our root certificates
 	certs, err := NewCertificateFromBytes([]byte(root_ca_BR_ICP_V1 + root_ca_BR_ICP_V2 + root_ca_BR_ICP_V5))
 	if err != nil {
 		panic(err)
 	}
+	// Save them
 	store.cas = make(map[string]Certificate)
 	for _, cert := range certs {
 		store.cas[cert.SubjectKeyID] = cert
 		store.cas[cert.Subject] = cert
 	}
+	inited = true
 }
 
 func (store CAStore) VerifyCert(cert Certificate) (bool, []CodedError) {
