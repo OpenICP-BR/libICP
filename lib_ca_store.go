@@ -4,16 +4,14 @@ import (
 	"time"
 )
 
-var CAStore CAStoreT
-
-type CAStoreT struct {
+type CAStore struct {
 	// If true, it will attempt to download missing CAs and CRLs
 	AllowDownloads bool
 	cas            map[string]Certificate
 }
 
 // Adds the root CAs.
-func (store *CAStoreT) Init() {
+func (store *CAStore) Init() {
 	certs, err := NewCertificateFromBytes([]byte(root_ca_BR_ICP_V1 + root_ca_BR_ICP_V2 + root_ca_BR_ICP_V5))
 	if err != nil {
 		panic(err)
@@ -25,25 +23,25 @@ func (store *CAStoreT) Init() {
 	}
 }
 
-func (store CAStoreT) VerifyCert(cert Certificate) (bool, []CodedError) {
+func (store CAStore) VerifyCert(cert Certificate) (bool, []CodedError) {
 	return store.verifyCertAt(cert, time.Now())
 }
 
-func (store CAStoreT) verifyCertAt(cert Certificate, now time.Time) (bool, []CodedError) {
+func (store CAStore) verifyCertAt(cert Certificate, now time.Time) (bool, []CodedError) {
 	return false, nil
 }
 
-func (store *CAStoreT) AddCA(cert Certificate) (bool, []CodedError) {
+func (store *CAStore) AddCA(cert Certificate) (bool, []CodedError) {
 	return store.addCAatTime(cert, time.Now())
 }
 
-func (store *CAStoreT) addCAatTime(cert Certificate, now time.Time) (bool, []CodedError) {
+func (store *CAStore) addCAatTime(cert Certificate, now time.Time) (bool, []CodedError) {
 	return false, nil
 }
 
 const _PATH_BUILDING_MAX_DEPTH = 16
 
-func (store CAStoreT) buildPath(end_cert Certificate, max_depth int) ([]Certificate, CodedError) {
+func (store CAStore) buildPath(end_cert Certificate, max_depth int) ([]Certificate, CodedError) {
 	issuer, ok := store.cas[end_cert.AuthorityKeyID]
 	if !ok {
 		// Try again

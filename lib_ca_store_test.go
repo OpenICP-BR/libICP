@@ -6,8 +6,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func Test_CAStoreT_buildPath_1(t *testing.T) {
-	store := CAStoreT{}
+func Test_CAStore_buildPath_1(t *testing.T) {
+	store := CAStore{}
 	store.Init()
 	end_cert := firstCert(NewCertificateFromBytes([]byte(root_ca_BR_ICP_V1)))
 	ans, err := store.buildPath(end_cert, _PATH_BUILDING_MAX_DEPTH)
@@ -17,8 +17,8 @@ func Test_CAStoreT_buildPath_1(t *testing.T) {
 	assert.Equal(t, right_ans, ans)
 }
 
-func Test_CAStoreT_buildPath_2(t *testing.T) {
-	store := CAStoreT{}
+func Test_CAStore_buildPath_2(t *testing.T) {
+	store := CAStore{}
 	store.Init()
 	certs, err := NewCertificateFromBytes([]byte(pem_ac_soluti + root_ca_BR_ICP_V2))
 	assert.Nil(t, err)
@@ -33,8 +33,8 @@ func Test_CAStoreT_buildPath_2(t *testing.T) {
 	assert.Equal(t, right_ans, ans)
 }
 
-func Test_CAStoreT_buildPath_3(t *testing.T) {
-	store := CAStoreT{}
+func Test_CAStore_buildPath_3(t *testing.T) {
+	store := CAStore{}
 	store.Init()
 	certs, err := NewCertificateFromBytes([]byte(pem_ac_digital + pem_ac_soluti + root_ca_BR_ICP_V2))
 	assert.Nil(t, err)
