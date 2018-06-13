@@ -13,9 +13,7 @@ type CAStore struct {
 
 // This function MUST be called before using this struct. It makes a few maps and adds the following root CAs:
 //
-// - Autoridade Certificadora Raiz Brasileira v1
-// - Autoridade Certificadora Raiz Brasileira v2
-// - Autoridade Certificadora Raiz Brasileira v5
+// Autoridade Certificadora Raiz Brasileira v1, Autoridade Certificadora Raiz Brasileira v2, Autoridade Certificadora Raiz Brasileira v5
 func (store *CAStore) Init() {
 	// Do not run this function twice
 	if inited {
