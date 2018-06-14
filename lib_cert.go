@@ -4,6 +4,7 @@ import (
 	"encoding/asn1"
 	"encoding/pem"
 	"io/ioutil"
+	"time"
 )
 
 type Certificate struct {
@@ -15,6 +16,8 @@ type Certificate struct {
 	SubjectMap     map[string]string
 	SubjectKeyID   string
 	AuthorityKeyID string
+	NotBefore      time.Time
+	NotAfter       time.Time
 }
 
 // Accepts PEM, DER and a mix of both.
@@ -121,4 +124,7 @@ func (cert *Certificate) finishParsing() {
 			cert.AuthorityKeyID = nice_hex(ext.ExtnValue)
 		}
 	}
+	// Get validity
+	cert.NotBefore = cert.base.TBSCertificate.Validity.NotBeforeTime
+	cert.NotAfter = cert.base.TBSCertificate.Validity.NotAfterTime
 }

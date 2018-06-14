@@ -38,7 +38,36 @@ func (store CAStore) VerifyCert(cert Certificate) (bool, []CodedError) {
 }
 
 func (store CAStore) verifyCertAt(cert Certificate, now time.Time) (bool, []CodedError) {
-	return false, nil
+	ans_errs := make([]CodedError, 0)
+	// Get certification path
+	path, err := store.buildPath(cert, _PATH_BUILDING_MAX_DEPTH)
+	if err != nil {
+		ans_errs = append(ans_errs, err)
+		return false, ans_errs
+	}
+
+	// Check each certficiate
+	for _, cert := range path {
+		if !now.After(cert.NotBefore) {
+			merr := NewMultiError("certificate not yet valid", ERR_NOT_BEFORE_DATE, nil)
+			merr.SetParam("cert.NotBefore", cert.NotBefore)
+			merr.SetParam("now", now)
+			merr.SetParam("cert.Subject", cert.Subject)
+			ans_errs = append(ans_errs, merr)
+		}
+		if !now.Before(cert.NotAfter) {
+			merr := NewMultiError("certificate has expired", ERR_NOT_AFTER_DATE, nil)
+			merr.SetParam("cert.NotAfter", cert.NotAfter)
+			merr.SetParam("now", now)
+			merr.SetParam("cert.Subject", cert.Subject)
+			ans_errs = append(ans_errs, merr)
+		}
+	}
+
+	if len(ans_errs) > 0 {
+		return false, ans_errs
+	}
+	return true, nil
 }
 
 func (store *CAStore) AddCA(cert Certificate) (bool, []CodedError) {
@@ -77,7 +106,7 @@ func (store CAStore) buildPath(end_cert Certificate, max_depth int) ([]Certifica
 	extra_path, err := store.buildPath(issuer, max_depth-1)
 	if extra_path == nil {
 		// We failed to build the path
-		return nil, NewMultiError("reached maximum depth", ERR_FAILED_TO_BUILD_CERT_PATH, nil, err)
+		return nil, NewMultiError("failure on recursion", err.Code(), nil, err)
 	}
 	// Add the recursion result
 	ans = append(ans, extra_path...)

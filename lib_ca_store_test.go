@@ -2,6 +2,7 @@ package icp
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -51,6 +52,58 @@ func Test_CAStore_buildPath_3(t *testing.T) {
 	right_ans[2] = root
 	assert.NotNil(t, ans)
 	assert.Equal(t, right_ans, ans)
+}
+
+func Test_CAStore_verifyCertAt_1(t *testing.T) {
+	store := CAStore{}
+	store.Init()
+	certs, err := NewCertificateFromBytes([]byte(pem_ac_soluti + root_ca_BR_ICP_V2))
+	assert.Nil(t, err)
+	end_cert := certs[0]
+	root := certs[1]
+
+	some_time := time.Unix(1528997864, 0)
+	ok, errs := store.verifyCertAt(root, some_time)
+	assert.Nil(t, errs)
+	assert.True(t, ok)
+
+	ok, errs = store.verifyCertAt(end_cert, some_time)
+	assert.Nil(t, errs)
+	assert.True(t, ok)
+}
+
+func Test_CAStore_verifyCertAt_2(t *testing.T) {
+	store := CAStore{}
+	store.Init()
+	certs, err := NewCertificateFromBytes([]byte(pem_ac_soluti + root_ca_BR_ICP_V2))
+	assert.Nil(t, err)
+	end_cert := certs[0]
+	root := certs[1]
+
+	some_time := time.Unix(0, 0)
+	ok, errs := store.verifyCertAt(root, some_time)
+	assert.False(t, ok)
+	assert.NotNil(t, errs)
+	assert.Equal(t, ERR_NOT_BEFORE_DATE, errs[0].Code())
+
+	ok, errs = store.verifyCertAt(end_cert, some_time)
+	assert.False(t, ok)
+	assert.NotNil(t, errs)
+	assert.Equal(t, ERR_NOT_BEFORE_DATE, errs[0].Code())
+}
+
+func Test_CAStore_verifyCertAt_3(t *testing.T) {
+	store := CAStore{}
+	store.Init()
+	certs, err := NewCertificateFromBytes([]byte(pem_ac_digital))
+	assert.Nil(t, err)
+	end_cert := certs[0]
+
+	some_time := time.Unix(0, 0)
+	ok, errs := store.verifyCertAt(end_cert, some_time)
+	assert.False(t, ok)
+	assert.NotNil(t, errs)
+	assert.Equal(t, ERR_ISSUER_NOT_FOUND, errs[0].Code())
 }
 
 const pem_ac_soluti = "-----BEGIN CERTIFICATE-----\nMIIGOzCCBCOgAwIBAgIBEDANBgkqhkiG9w0BAQ0FADCBlzELMAkGA1UEBhMCQlIx\nEzARBgNVBAoTCklDUC1CcmFzaWwxPTA7BgNVBAsTNEluc3RpdHV0byBOYWNpb25h\nbCBkZSBUZWNub2xvZ2lhIGRhIEluZm9ybWFjYW8gLSBJVEkxNDAyBgNVBAMTK0F1\ndG9yaWRhZGUgQ2VydGlmaWNhZG9yYSBSYWl6IEJyYXNpbGVpcmEgdjIwHhcNMTIx\nMjAzMTIzOTEzWhcNMjMwNjIwMjM1OTU5WjBsMQswCQYDVQQGEwJCUjETMBEGA1UE\nChMKSUNQLUJyYXNpbDE0MDIGA1UECxMrQXV0b3JpZGFkZSBDZXJ0aWZpY2Fkb3Jh\nIFJhaXogQnJhc2lsZWlyYSB2MjESMBAGA1UEAxMJQUMgU09MVVRJMIICIjANBgkq\nhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEAm+fP9BaY+XTsxfG1QkZbm4h8Ru6dZURx\nX+t+BBSni9YG0ojBKIKiY/mGTLfBfKydZ+lfVmT51uocPmtCbs4pUIDhtCZ1NP+8\n2sEpYry3wMLd5DvCVpuIQa08Y2RsrPIKCxZCgNV2GCw6aFL753LysYatGEOZ09pQ\nQDDiK9Lp2ETXwgwQsc4abMQhhe3M/jysUJwIKy7CAg0uBGdIsPl9WVbEhmK+S/Or\ny+lE/zAKtalVxatjUCQrBBu83kN6k0WM4mG5usoCeSHejX+F+PAwJcoAOBBFRNqw\nN2m95v3t0eL6MhNrxpM/wZGT574ARKIoKBuvemWnuA2GI8zCfTSFxkuc2oMJeqt9\nWR4ommK1VyxMHSQD+BKF+ae21mWpK5CePc4rj+O1zUwu3GJxJ4taXCs1e8kDuO39\nVOeJ7i3KxiF2PmckN1QdkHZBbVmEks9+lzD9kdtaj/5r2hu04ong7+DsoG0N55ut\n3gj/DQccxarvOCgkgox+Bse5fsk/2IVW7fNBav3TfGyQaNYRfl5zl8ReVnL7ibVS\n5qUFxeImeXBj8ofPFF98O2PN89Y9r3xngXkjaUlqFsTPFGvrYTRAv6KVOZYitIWi\nbAdNzpooXWmccMik+Rxgqn0M22IAxHAFUceFNg5E5yA0HRbOcI7oKdb/wSTMLoTj\nFXQAgLj+gU8CAwEAAaOBuzCBuDAUBgNVHSAEDTALMAkGBWBMAQEuMAAwPwYDVR0f\nBDgwNjA0oDKgMIYuaHR0cDovL2FjcmFpei5pY3BicmFzaWwuZ292LmJyL0xDUmFj\ncmFpenYyLmNybDAfBgNVHSMEGDAWgBQMOSA6twEfy9cofUGgx/pKrTIkvjAdBgNV\nHQ4EFgQUZKWFK33P30DFzaIqls7qQw/rlGowDwYDVR0TAQH/BAUwAwEB/zAOBgNV\nHQ8BAf8EBAMCAQYwDQYJKoZIhvcNAQENBQADggIBAGPZajNPNzW7Ir5TW3MTYvJ+\nJNngfHF7rbJKPjPo+Rb7A4rzorl0H1a0geBCGqN+FCCh0ltp9H641wcHfwSRYmF+\ng0JKUOd58FUxh1YYEkc5SyqI+Y0BRiM28vit07fHFqCTArrgaMwjcQ41N0ePSrCZ\nwZKD3aA+8m0a9NcKSusV3CjmhcQ+Kwnnk4tGYq5R4WullaumCn7k9PCySenMte8P\nZgvBOZGI6IHxPKOk9b3IrC+A7JYuuIQ1CueRuycdwOqyuN3X0IyU+N3TGXFOSu0u\nsQJj0W8Rj11RSIG3/aGVqjUVWQJiiaOJW4JGVF4GXFBRa4E/1Ieh4qhyFqDv5i5q\n+e5Cb20lA/RyhqWeTZ024At2/XIKj3N7SnDScL1n2z4ND9OAAPthIuMCzzGe9RyP\n78QTBCX+sATZ5LtlIiWP8hdt2frpargnt7f0wHfMiSCs1fOqLCUd6py6XWahEknF\n3daqSvxpT9RnYISZrNxNvtGKbghqPSfGOypH09h+JorKbb8dgCWjMfiJzw/XMpUe\nIPVT6HkQHDzMGI2CRYGGxr+cXmjiHF74+R2nZa7rD/ConBR02nucX/ry67g+LY+P\nHfTc19kWMeRI77RwA0w7rNw6UQUhPb6OyYI/1AAGR0tGgt/0crXRufz8n5P3U10d\nlZNUzDUzly3ClcwIGaJW\n-----END CERTIFICATE-----\n"
