@@ -102,8 +102,18 @@ func (cert *Certificate) loadFromDER(data []byte) (bool, []byte, CodedError) {
 }
 
 func (cert Certificate) SelfSigned() bool {
-	// println(cert.SubjectMap["CN"], cert.Subject == cert.Issuer, cert.SubjectKeyID == cert.AuthorityKeyID)
-	return cert.Subject == cert.Issuer || cert.SubjectKeyID == cert.AuthorityKeyID
+	if cert.Subject == cert.Issuer || cert.SubjectKeyID == cert.AuthorityKeyID {
+		return true
+	}
+	if len(cert.SubjectMap) != len(cert.IssuerMap) {
+		return false
+	}
+	for k, v := range cert.SubjectMap {
+		if v != cert.IssuerMap[k] {
+			return false
+		}
+	}
+	return true
 }
 
 func (cert Certificate) verifySignedBy(issuer Certificate) bool {
