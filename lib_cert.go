@@ -106,6 +106,10 @@ func (cert Certificate) SelfSigned() bool {
 	return cert.Subject == cert.Issuer || cert.SubjectKeyID == cert.AuthorityKeyID
 }
 
+func (cert Certificate) verifySignedBy(issuer Certificate) bool {
+	return false
+}
+
 func (cert *Certificate) finishParsing() {
 	cert.Serial = "0x" + cert.base.TBSCertificate.SerialNumber.Text(16)
 	cert.Issuer = cert.base.TBSCertificate.Issuer.String()

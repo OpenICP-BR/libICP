@@ -84,12 +84,15 @@ func Test_CAStore_verifyCertAt_2(t *testing.T) {
 	ok, errs := store.verifyCertAt(root, some_time)
 	assert.False(t, ok)
 	assert.NotNil(t, errs)
+	assert.Equal(t, 1, len(errs), "there should be only one error")
 	assert.Equal(t, ERR_NOT_BEFORE_DATE, errs[0].Code())
 
 	ok, errs = store.verifyCertAt(end_cert, some_time)
 	assert.False(t, ok)
 	assert.NotNil(t, errs)
+	assert.Equal(t, 2, len(errs), "there should be only two error")
 	assert.Equal(t, ERR_NOT_BEFORE_DATE, errs[0].Code())
+	assert.Equal(t, ERR_NOT_BEFORE_DATE, errs[1].Code())
 }
 
 func Test_CAStore_verifyCertAt_3(t *testing.T) {
@@ -103,6 +106,7 @@ func Test_CAStore_verifyCertAt_3(t *testing.T) {
 	ok, errs := store.verifyCertAt(end_cert, some_time)
 	assert.False(t, ok)
 	assert.NotNil(t, errs)
+	assert.Equal(t, 1, len(errs), "there should be only one error")
 	assert.Equal(t, ERR_ISSUER_NOT_FOUND, errs[0].Code())
 }
 

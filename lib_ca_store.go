@@ -62,6 +62,19 @@ func (store CAStore) verifyCertAt(cert Certificate, now time.Time) (bool, []Code
 			merr.SetParam("cert.Subject", cert.Subject)
 			ans_errs = append(ans_errs, merr)
 		}
+		// issuer := Certificate{}
+		// if i == len(path)-1 {
+		// 	issuer = path[len(path)-1]
+		// } else {
+		// 	issuer = path[i+1]
+		// }
+		// if !cert.verifySignedBy(issuer) {
+		// 	merr := NewMultiError("certificate has bad signature", ERR_BAD_SIGANTURE, nil)
+		// 	merr.SetParam("cert.Subject", cert.Subject)
+		// 	merr.SetParam("cert.Issuer", cert.Issuer)
+		// 	merr.SetParam("issuer.Subject", issuer.Subject)
+		// 	ans_errs = append(ans_errs, merr)
+		// }
 	}
 
 	if len(ans_errs) > 0 {
