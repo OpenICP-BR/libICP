@@ -1,8 +1,15 @@
 package icp
 
 import (
+	"crypto"
+	"crypto/rsa"
+	"crypto/sha1"
+	"crypto/sha256"
+	"crypto/sha512"
 	"encoding/asn1"
 	"encoding/pem"
+	"fmt"
+	"hash"
 	"io/ioutil"
 	"time"
 )
@@ -116,8 +123,50 @@ func (cert Certificate) SelfSigned() bool {
 	return true
 }
 
-func (cert Certificate) verifySignedBy(issuer Certificate) bool {
-	return false
+func (cert Certificate) verifySignedBy(issuer Certificate) (bool, CodedError) {
+	// Check algorithm
+	alg := cert.base.SignatureAlgorithm.Algorithm
+	var tbs_hasher hash.Hash
+	var tbs_hash_alg crypto.Hash
+	switch {
+	case alg.Equal(idSha1WithRSAEncryption()):
+		tbs_hasher = sha1.New()
+		tbs_hash_alg = crypto.SHA1
+	case alg.Equal(idSha256WithRSAEncryption()):
+		tbs_hasher = sha256.New()
+		tbs_hash_alg = crypto.SHA256
+	case alg.Equal(idSha384WithRSAEncryption()):
+		tbs_hasher = sha512.New384()
+		tbs_hash_alg = crypto.SHA384
+	case alg.Equal(idSha512WithRSAEncryption()):
+		tbs_hasher = sha512.New()
+		tbs_hash_alg = crypto.SHA512
+	default:
+		merr := NewMultiError("unknown algorithm", ERR_UNKOWN_ALGORITHM, nil)
+		merr.SetParam("algorithm", alg)
+		return false, merr
+	}
+
+	// Write raw value
+	tbs_hasher.Write(cert.base.TBSCertificate.RawContent)
+	hash_ans := make([]byte, 0)
+	hash_ans = tbs_hasher.Sum(hash_ans)
+
+	// Get key and signature
+	sig := cert.base.Signature.Bytes
+	pubkey, err := issuer.base.TBSCertificate.SubjectPublicKeyInfo.RSAPubKey()
+	if err != nil {
+		return false, NewMultiError("failed to parse public key", ERR_PARSE_RSA_PUBKEY, nil, err)
+	}
+
+	// Verify signature
+	err = rsa.VerifyPKCS1v15(&pubkey, tbs_hash_alg, hash_ans, sig)
+	if err != nil {
+		fmt.Println(err)
+		return false, NewMultiError("failed to verify signature", ERR_BAD_SIGNATURE, nil, err)
+	}
+
+	return true, nil
 }
 
 func (cert *Certificate) finishParsing() {
