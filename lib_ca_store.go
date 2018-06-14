@@ -8,7 +8,7 @@ type CAStore struct {
 	// If true, it will attempt to download missing CAs and CRLs
 	AllowDownloads bool
 	cas            map[string]Certificate
-	inited bool
+	inited         bool
 }
 
 // This function MUST be called before using this struct. It makes a few maps and adds the following root CAs:
@@ -16,7 +16,7 @@ type CAStore struct {
 // Autoridade Certificadora Raiz Brasileira v1, Autoridade Certificadora Raiz Brasileira v2, Autoridade Certificadora Raiz Brasileira v5
 func (store *CAStore) Init() {
 	// Do not run this function twice
-	if inited {
+	if store.inited {
 		return
 	}
 	// Get our root certificates
@@ -30,7 +30,7 @@ func (store *CAStore) Init() {
 		store.cas[cert.SubjectKeyID] = cert
 		store.cas[cert.Subject] = cert
 	}
-	inited = true
+	store.inited = true
 }
 
 func (store CAStore) VerifyCert(cert Certificate) (bool, []CodedError) {
