@@ -11,7 +11,7 @@ type CAStore struct {
 	inited         bool
 }
 
-// This function MUST be called before using this struct. It makes a few maps and adds the following root CAs:
+// This function MUST be called before using this struct. It makes a few maps and adds the following root CAs: (you cannot add others)
 //
 // Autoridade Certificadora Raiz Brasileira v1, Autoridade Certificadora Raiz Brasileira v2, Autoridade Certificadora Raiz Brasileira v5
 func (store *CAStore) Init() {
@@ -33,6 +33,9 @@ func (store *CAStore) Init() {
 	store.inited = true
 }
 
+// For now, this functions verifies: validity, integrity, propper chain of certification.
+//
+// Some of the error codes this may return are: ERR_NOT_BEFORE_DATE, ERR_NOT_AFTER_DATE, ERR_BAD_SIGNATURE, ERR_ISSUER_NOT_FOUND, ERR_MAX_DEPTH_REACHED
 func (store CAStore) VerifyCert(cert Certificate) (bool, []CodedError) {
 	return store.verifyCertAt(cert, time.Now())
 }
@@ -83,6 +86,7 @@ func (store CAStore) verifyCertAt(cert Certificate, now time.Time) (bool, []Code
 	return true, nil
 }
 
+// This function will fail if the desired CA fails validation for any reason.
 func (store *CAStore) AddCA(cert Certificate) (bool, []CodedError) {
 	return store.addCAatTime(cert, time.Now())
 }
