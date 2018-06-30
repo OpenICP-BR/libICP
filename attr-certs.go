@@ -10,6 +10,14 @@ func idAuthorityKeyIdentifier() asn1.ObjectIdentifier {
 	return asn1.ObjectIdentifier{2, 5, 29, 35}
 }
 
+func idCeBasicConstraints() asn1.ObjectIdentifier {
+	return asn1.ObjectIdentifier{2, 5, 29, 19}
+}
+
+func idCeKeyUsage() asn1.ObjectIdentifier {
+	return asn1.ObjectIdentifier{2, 5, 29, 15}
+}
+
 type attributeT struct {
 	RawContent asn1.RawContent
 	Type       asn1.ObjectIdentifier
@@ -80,4 +88,32 @@ type v2FormT struct {
 	IssuerName        []generalNameT    `asn1:"optional,omitempty"`
 	BaseCertificateID issuerSerialT     `asn1:"optional,omitempty,tag:0"`
 	ObjectDigestInfo  objectDigestInfoT `asn1:"optional,omitempty,tag:1"`
+}
+
+type extKeyUsage struct {
+	DigitalSignature bool
+	NonRepudiation   bool
+	KeyEncipherment  bool
+	DataEncipherment bool
+	KeyAgreement     bool
+	KeyCertSign      bool
+	CRLSign          bool
+}
+
+func (ans *extKeyUsage) FromExtensionT(ext extensionT) CodedError {
+	seq := asn1.BitString{}
+	_, err := asn1.Unmarshal(ext.ExtnValue, &seq)
+	if err != nil {
+		merr := NewMultiError("failed to parse key usage extention as bit sequence", ERR_PARSE_EXTENSION, nil, err)
+		merr.SetParam("raw-data", ext.ExtnValue)
+		return merr
+	}
+	ans.DigitalSignature = (seq.At(0) != 0)
+	ans.NonRepudiation = (seq.At(1) != 0)
+	ans.KeyEncipherment = (seq.At(2) != 0)
+	ans.DataEncipherment = (seq.At(3) != 0)
+	ans.KeyAgreement = (seq.At(4) != 0)
+	ans.KeyCertSign = (seq.At(5) != 0)
+	ans.CRLSign = (seq.At(6) != 0)
+	return nil
 }

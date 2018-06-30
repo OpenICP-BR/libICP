@@ -25,6 +25,7 @@ type Certificate struct {
 	AuthorityKeyID string
 	NotBefore      time.Time
 	NotAfter       time.Time
+	ExtKeyUsage    extKeyUsage
 }
 
 // Accepts PEM, DER and a mix of both.
@@ -103,7 +104,9 @@ func (cert *Certificate) loadFromDER(data []byte) (bool, []byte, CodedError) {
 		return false, rest, merr
 	}
 
-	cert.finishParsing()
+	if cerr := cert.finishParsing(); cerr != nil {
+		return false, rest, cerr
+	}
 
 	return true, rest, nil
 }
@@ -169,25 +172,46 @@ func (cert Certificate) verifySignedBy(issuer Certificate) (bool, CodedError) {
 	return true, nil
 }
 
-func (cert *Certificate) finishParsing() {
+func (cert *Certificate) finishParsing() CodedError {
 	cert.Serial = "0x" + cert.base.TBSCertificate.SerialNumber.Text(16)
 	cert.Issuer = cert.base.TBSCertificate.Issuer.String()
 	cert.IssuerMap = cert.base.TBSCertificate.Issuer.Map()
 	cert.Subject = cert.base.TBSCertificate.Subject.String()
 	cert.SubjectMap = cert.base.TBSCertificate.Subject.Map()
-	// Just a hack to prevent some problems
-	cert.SubjectKeyID = cert.Subject
-	cert.AuthorityKeyID = cert.Issuer
-	// Look for SubjectKeyID and AuthorityKeyID
-	for _, ext := range cert.base.TBSCertificate.Extensions {
-		if ext.ExtnID.Equal(idSubjectKeyIdentifier()) {
-			cert.SubjectKeyID = nice_hex(ext.ExtnValue)
-		}
-		if ext.ExtnID.Equal(idAuthorityKeyIdentifier()) {
-			cert.AuthorityKeyID = nice_hex(ext.ExtnValue)
-		}
-	}
 	// Get validity
 	cert.NotBefore = cert.base.TBSCertificate.Validity.NotBeforeTime
 	cert.NotAfter = cert.base.TBSCertificate.Validity.NotAfterTime
+	// Just a hack to prevent some problems
+	cert.SubjectKeyID = cert.Subject
+	cert.AuthorityKeyID = cert.Issuer
+	// Look for SubjectKeyID, AuthorityKeyID and other extensions
+	return cert.parseExtensions()
+}
+
+func (cert *Certificate) parseExtensions() CodedError {
+	// Look for SubjectKeyID and AuthorityKeyID
+	for _, ext := range cert.base.TBSCertificate.Extensions {
+		id := ext.ExtnID
+		val := ext.ExtnValue
+		switch {
+		case id.Equal(idSubjectKeyIdentifier()):
+			cert.SubjectKeyID = nice_hex(val)
+		case id.Equal(idAuthorityKeyIdentifier()):
+			cert.AuthorityKeyID = nice_hex(val)
+		case id.Equal(idCeBasicConstraints()):
+			println("WARN: Basic Constraints are still unsupported")
+		case id.Equal(idCeKeyUsage()):
+			if err := cert.ExtKeyUsage.FromExtensionT(ext); err != nil {
+				return err
+			}
+		default:
+			if ext.Critical {
+				merr := NewMultiError("unsupported critical extension", ERR_UNSUPORTED_CRITICAL_EXTENSION, nil)
+				merr.SetParam("extension id", id)
+				println("err")
+				return merr
+			}
+		}
+	}
+	return nil
 }
