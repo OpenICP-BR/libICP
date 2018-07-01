@@ -8,24 +8,24 @@ import (
 	"crypto/sha512"
 	"encoding/asn1"
 	"encoding/pem"
-	"fmt"
 	"hash"
 	"io/ioutil"
 	"time"
 )
 
 type Certificate struct {
-	base           certificateT
-	Serial         string
-	Issuer         string
-	IssuerMap      map[string]string
-	Subject        string
-	SubjectMap     map[string]string
-	SubjectKeyID   string
-	AuthorityKeyID string
-	NotBefore      time.Time
-	NotAfter       time.Time
-	ExtKeyUsage    extKeyUsage
+	base                certificateT
+	Serial              string
+	Issuer              string
+	IssuerMap           map[string]string
+	Subject             string
+	SubjectMap          map[string]string
+	SubjectKeyID        string
+	AuthorityKeyID      string
+	NotBefore           time.Time
+	NotAfter            time.Time
+	ExtKeyUsage         extKeyUsage
+	ExtBasicConstraints extBasicConstraints
 }
 
 // Accepts PEM, DER and a mix of both.
@@ -122,7 +122,11 @@ func (cert Certificate) SelfSigned() bool {
 	return true
 }
 
-func (cert Certificate) verifySignedBy(issuer Certificate) (bool, CodedError) {
+func (cert Certificate) IsCA() bool {
+	return cert.ExtBasicConstraints.CA
+}
+
+func (cert Certificate) verifySignedBy(issuer Certificate) CodedError {
 	// Check algorithm
 	alg := cert.base.SignatureAlgorithm.Algorithm
 	var tbs_hasher hash.Hash
@@ -143,7 +147,15 @@ func (cert Certificate) verifySignedBy(issuer Certificate) (bool, CodedError) {
 	default:
 		merr := NewMultiError("unknown algorithm", ERR_UNKOWN_ALGORITHM, nil)
 		merr.SetParam("algorithm", alg)
-		return false, merr
+		return merr
+	}
+
+	// Check CA permission from issuer
+	if issuer.ExtKeyUsage.Exists && !issuer.ExtKeyUsage.KeyCertSign {
+		return NewMultiError("issuer is not a certificate authority (Key Usage extension)", ERR_NOT_CA, nil)
+	}
+	if issuer.ExtBasicConstraints.Exists && !issuer.ExtBasicConstraints.CA {
+		return NewMultiError("issuer is not a certificate authority (Basic Constraints extension)", ERR_NOT_CA, nil)
 	}
 
 	// Write raw value
@@ -155,17 +167,16 @@ func (cert Certificate) verifySignedBy(issuer Certificate) (bool, CodedError) {
 	sig := cert.base.Signature.Bytes
 	pubkey, err := issuer.base.TBSCertificate.SubjectPublicKeyInfo.RSAPubKey()
 	if err != nil {
-		return false, NewMultiError("failed to parse public key", ERR_PARSE_RSA_PUBKEY, nil, err)
+		return NewMultiError("failed to parse public key", ERR_PARSE_RSA_PUBKEY, nil, err)
 	}
 
 	// Verify signature
 	err = rsa.VerifyPKCS1v15(&pubkey, tbs_hash_alg, hash_ans, sig)
 	if err != nil {
-		fmt.Println(err)
-		return false, NewMultiError("failed to verify signature", ERR_BAD_SIGNATURE, nil, err)
+		return NewMultiError("failed to verify signature", ERR_BAD_SIGNATURE, nil, err)
 	}
 
-	return true, nil
+	return nil
 }
 
 func (cert *Certificate) finishParsing() CodedError {
@@ -195,7 +206,9 @@ func (cert *Certificate) parseExtensions() CodedError {
 		case id.Equal(idAuthorityKeyIdentifier()):
 			cert.AuthorityKeyID = nice_hex(val)
 		case id.Equal(idCeBasicConstraints()):
-			println("WARN: Basic Constraints are still unsupported")
+			if err := cert.ExtBasicConstraints.FromExtensionT(ext); err != nil {
+				return err
+			}
 		case id.Equal(idCeKeyUsage()):
 			if err := cert.ExtKeyUsage.FromExtensionT(ext); err != nil {
 				return err

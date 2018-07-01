@@ -41,18 +41,20 @@ func (store *CAStore) Init() {
 // For now, this functions verifies: validity, integrity, propper chain of certification.
 //
 // Some of the error codes this may return are: ERR_NOT_BEFORE_DATE, ERR_NOT_AFTER_DATE, ERR_BAD_SIGNATURE, ERR_ISSUER_NOT_FOUND, ERR_MAX_DEPTH_REACHED
-func (store CAStore) VerifyCert(cert Certificate) (bool, []CodedError) {
+func (store CAStore) VerifyCert(cert Certificate) []CodedError {
 	return store.verifyCertAt(cert, time.Now())
 }
 
-func (store CAStore) verifyCertAt(cert Certificate, now time.Time) (bool, []CodedError) {
+func (store CAStore) verifyCertAt(cert Certificate, now time.Time) []CodedError {
 	ans_errs := make([]CodedError, 0)
 	// Get certification path
 	path, err := store.buildPath(cert, _PATH_BUILDING_MAX_DEPTH)
 	if err != nil {
 		ans_errs = append(ans_errs, err)
-		return false, ans_errs
+		return ans_errs
 	}
+	last_ca_max_ca_i := -1
+	last_ca_subj := ""
 
 	// Check each certficiate
 	for i, cert := range path {
@@ -70,25 +72,39 @@ func (store CAStore) verifyCertAt(cert Certificate, now time.Time) (bool, []Code
 			merr.SetParam("cert.Subject", cert.Subject)
 			ans_errs = append(ans_errs, merr)
 		}
+
+		// Take care of the basic constraints extension
+		if cert.IsCA() && cert.ExtBasicConstraints.Exists && cert.ExtBasicConstraints.CA && cert.ExtBasicConstraints.PathLen != 0 {
+			new_max_i := i + cert.ExtBasicConstraints.PathLen
+			if last_ca_max_ca_i > 0 && last_ca_max_ca_i > new_max_i {
+				last_ca_subj = cert.Subject
+				last_ca_max_ca_i = new_max_i
+			}
+		}
+		if cert.IsCA() && i > last_ca_max_ca_i && last_ca_max_ca_i >= 0 {
+			merr := NewMultiError("exceded max path basic constraint", ERR_BASIC_CONSTRAINTS_MAX_PATH_EXCEDED, nil)
+			merr.SetParam("cert.Subject", cert.Subject)
+			merr.SetParam("last_ca.Subject", last_ca_subj)
+			ans_errs = append(ans_errs, merr)
+		}
+
 		issuer := Certificate{}
 		if i == len(path)-1 {
 			issuer = path[len(path)-1]
 		} else {
 			issuer = path[i+1]
 		}
-		if ok, err := cert.verifySignedBy(issuer); !ok {
-			merr := NewMultiError("certificate has bad signature", ERR_BAD_SIGNATURE, nil, err)
+		if err := cert.verifySignedBy(issuer); err != nil {
+			merr := NewMultiError("certificate is invalid", err.Code(), nil, err)
 			merr.SetParam("cert.Subject", cert.Subject)
-			merr.SetParam("cert.Issuer", cert.Issuer)
-			merr.SetParam("issuer.Subject", issuer.Subject)
 			ans_errs = append(ans_errs, merr)
 		}
 	}
 
-	if len(ans_errs) > 0 {
-		return false, ans_errs
+	if len(ans_errs) == 0 {
+		ans_errs = nil
 	}
-	return true, nil
+	return ans_errs
 }
 
 // This function will fail if the desired CA fails validation for any reason.

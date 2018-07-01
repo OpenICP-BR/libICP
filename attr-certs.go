@@ -91,6 +91,7 @@ type v2FormT struct {
 }
 
 type extKeyUsage struct {
+	Exists           bool
 	DigitalSignature bool
 	NonRepudiation   bool
 	KeyEncipherment  bool
@@ -108,6 +109,7 @@ func (ans *extKeyUsage) FromExtensionT(ext extensionT) CodedError {
 		merr.SetParam("raw-data", ext.ExtnValue)
 		return merr
 	}
+	ans.Exists = true
 	ans.DigitalSignature = (seq.At(0) != 0)
 	ans.NonRepudiation = (seq.At(1) != 0)
 	ans.KeyEncipherment = (seq.At(2) != 0)
@@ -115,5 +117,31 @@ func (ans *extKeyUsage) FromExtensionT(ext extensionT) CodedError {
 	ans.KeyAgreement = (seq.At(4) != 0)
 	ans.KeyCertSign = (seq.At(5) != 0)
 	ans.CRLSign = (seq.At(6) != 0)
+	return nil
+}
+
+type extBasicConstraints struct {
+	Exists  bool
+	CA      bool
+	PathLen int
+}
+
+// I had to created this struct because encoding/asn1 does can't ignore fields with `asn1:"-"`
+type extBasicConstraints_raw struct {
+	CA      bool
+	PathLen int `asn1:"optional"`
+}
+
+func (ans *extBasicConstraints) FromExtensionT(ext extensionT) CodedError {
+	raw := extBasicConstraints_raw{}
+	_, err := asn1.Unmarshal(ext.ExtnValue, &raw)
+	if err != nil {
+		merr := NewMultiError("failed to parse basic constraints extention", ERR_PARSE_EXTENSION, nil, err)
+		merr.SetParam("raw-data", ext.ExtnValue)
+		return merr
+	}
+	ans.Exists = true
+	ans.CA = raw.CA
+	ans.PathLen = raw.PathLen
 	return nil
 }
