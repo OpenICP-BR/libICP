@@ -212,15 +212,15 @@ func (cert *Certificate) parseExtensions() CodedError {
 		case id.Equal(idAuthorityKeyIdentifier()):
 			cert.AuthorityKeyID = nice_hex(val)
 		case id.Equal(idCeBasicConstraints()):
-			if err := cert.ExtBasicConstraints.FromExtensionT(ext); err != nil {
+			if err := cert.ExtBasicConstraints.fromExtensionT(ext); err != nil {
 				return err
 			}
 		case id.Equal(idCeKeyUsage()):
-			if err := cert.ExtKeyUsage.FromExtensionT(ext); err != nil {
+			if err := cert.ExtKeyUsage.fromExtensionT(ext); err != nil {
 				return err
 			}
 		case id.Equal(idCeCRLDistributionPoint()):
-			if err := cert.ExtCRLDistributionPoints.FromExtensionT(ext); err != nil {
+			if err := cert.ExtCRLDistributionPoints.fromExtensionT(ext); err != nil {
 				return err
 			}
 		default:

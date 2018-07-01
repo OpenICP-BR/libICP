@@ -105,7 +105,7 @@ type ExtKeyUsageT struct {
 	CRLSign          bool
 }
 
-func (ans *ExtKeyUsageT) FromExtensionT(ext extensionT) CodedError {
+func (ans *ExtKeyUsageT) fromExtensionT(ext extensionT) CodedError {
 	seq := asn1.BitString{}
 	_, err := asn1.Unmarshal(ext.ExtnValue, &seq)
 	if err != nil {
@@ -136,7 +136,7 @@ type extBasicConstraintsRawT struct {
 	PathLen int `asn1:"optional"`
 }
 
-func (ans *ExtBasicConstraintsT) FromExtensionT(ext extensionT) CodedError {
+func (ans *ExtBasicConstraintsT) fromExtensionT(ext extensionT) CodedError {
 	raw := extBasicConstraintsRawT{}
 	_, err := asn1.Unmarshal(ext.ExtnValue, &raw)
 	if err != nil {
@@ -163,7 +163,7 @@ type extDistributionPointT struct {
 	FullName generalNameT `asn1:"optional,tag:0"`
 }
 
-func (ans *ExtCRLDistributionPointsT) FromExtensionT(ext extensionT) CodedError {
+func (ans *ExtCRLDistributionPointsT) fromExtensionT(ext extensionT) CodedError {
 	raw := []extCRLDistributionPointsRawT{}
 	_, err := asn1.Unmarshal(ext.ExtnValue, &raw)
 	if err != nil {
