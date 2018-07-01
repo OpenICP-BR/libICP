@@ -18,6 +18,10 @@ func idCeKeyUsage() asn1.ObjectIdentifier {
 	return asn1.ObjectIdentifier{2, 5, 29, 15}
 }
 
+func idCeCRLDistributionPoint() asn1.ObjectIdentifier {
+	return asn1.ObjectIdentifier{2, 5, 29, 31}
+}
+
 type attributeT struct {
 	RawContent asn1.RawContent
 	Type       asn1.ObjectIdentifier
@@ -90,7 +94,7 @@ type v2FormT struct {
 	ObjectDigestInfo  objectDigestInfoT `asn1:"optional,omitempty,tag:1"`
 }
 
-type extKeyUsage struct {
+type ExtKeyUsageT struct {
 	Exists           bool
 	DigitalSignature bool
 	NonRepudiation   bool
@@ -101,7 +105,7 @@ type extKeyUsage struct {
 	CRLSign          bool
 }
 
-func (ans *extKeyUsage) FromExtensionT(ext extensionT) CodedError {
+func (ans *ExtKeyUsageT) FromExtensionT(ext extensionT) CodedError {
 	seq := asn1.BitString{}
 	_, err := asn1.Unmarshal(ext.ExtnValue, &seq)
 	if err != nil {
@@ -120,20 +124,20 @@ func (ans *extKeyUsage) FromExtensionT(ext extensionT) CodedError {
 	return nil
 }
 
-type extBasicConstraints struct {
+type ExtBasicConstraintsT struct {
 	Exists  bool
 	CA      bool
 	PathLen int
 }
 
 // I had to created this struct because encoding/asn1 does can't ignore fields with `asn1:"-"`
-type extBasicConstraints_raw struct {
+type extBasicConstraintsRawT struct {
 	CA      bool
 	PathLen int `asn1:"optional"`
 }
 
-func (ans *extBasicConstraints) FromExtensionT(ext extensionT) CodedError {
-	raw := extBasicConstraints_raw{}
+func (ans *ExtBasicConstraintsT) FromExtensionT(ext extensionT) CodedError {
+	raw := extBasicConstraintsRawT{}
 	_, err := asn1.Unmarshal(ext.ExtnValue, &raw)
 	if err != nil {
 		merr := NewMultiError("failed to parse basic constraints extention", ERR_PARSE_EXTENSION, nil, err)
@@ -143,5 +147,36 @@ func (ans *extBasicConstraints) FromExtensionT(ext extensionT) CodedError {
 	ans.Exists = true
 	ans.CA = raw.CA
 	ans.PathLen = raw.PathLen
+	return nil
+}
+
+type ExtCRLDistributionPointsT struct {
+	Exists bool
+	URLs   []string
+}
+
+type extCRLDistributionPointsRawT struct {
+	DistributionPoint extDistributionPointT `asn1:"optional,tag:0"`
+}
+
+type extDistributionPointT struct {
+	FullName generalNameT `asn1:"optional,tag:0"`
+}
+
+func (ans *ExtCRLDistributionPointsT) FromExtensionT(ext extensionT) CodedError {
+	raw := []extCRLDistributionPointsRawT{}
+	_, err := asn1.Unmarshal(ext.ExtnValue, &raw)
+	if err != nil {
+		merr := NewMultiError("failed to parse CRL distribution points extention", ERR_PARSE_EXTENSION, nil, err)
+		merr.SetParam("raw-data", ext.ExtnValue)
+		return merr
+	}
+	ans.Exists = true
+	for _, point := range raw {
+		url := point.DistributionPoint.FullName.UniformResourceIdentifier
+		if url != "" {
+			ans.URLs = append(ans.URLs, url)
+		}
+	}
 	return nil
 }

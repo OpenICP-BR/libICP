@@ -14,18 +14,19 @@ import (
 )
 
 type Certificate struct {
-	base                certificateT
-	Serial              string
-	Issuer              string
-	IssuerMap           map[string]string
-	Subject             string
-	SubjectMap          map[string]string
-	SubjectKeyID        string
-	AuthorityKeyID      string
-	NotBefore           time.Time
-	NotAfter            time.Time
-	ExtKeyUsage         extKeyUsage
-	ExtBasicConstraints extBasicConstraints
+	base                     certificateT
+	Serial                   string
+	Issuer                   string
+	IssuerMap                map[string]string
+	Subject                  string
+	SubjectMap               map[string]string
+	SubjectKeyID             string
+	AuthorityKeyID           string
+	NotBefore                time.Time
+	NotAfter                 time.Time
+	ExtKeyUsage              ExtKeyUsageT
+	ExtBasicConstraints      ExtBasicConstraintsT
+	ExtCRLDistributionPoints ExtCRLDistributionPointsT
 }
 
 // Accepts PEM, DER and a mix of both.
@@ -216,6 +217,10 @@ func (cert *Certificate) parseExtensions() CodedError {
 			}
 		case id.Equal(idCeKeyUsage()):
 			if err := cert.ExtKeyUsage.FromExtensionT(ext); err != nil {
+				return err
+			}
+		case id.Equal(idCeCRLDistributionPoint()):
+			if err := cert.ExtCRLDistributionPoints.FromExtensionT(ext); err != nil {
 				return err
 			}
 		default:

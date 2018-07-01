@@ -18,6 +18,12 @@ type CAStore struct {
 	inited        bool
 }
 
+func NewCAStore() *CAStore {
+	store := &CAStore{}
+	store.Init()
+	return store
+}
+
 // This function MUST be called before using this struct. It makes a few maps and adds the following root CAs: (you cannot add others)
 //
 // Autoridade Certificadora Raiz Brasileira v1, Autoridade Certificadora Raiz Brasileira v2, Autoridade Certificadora Raiz Brasileira v5
@@ -228,4 +234,16 @@ func (store *CAStore) DownloadAllCAs() error {
 	}
 
 	return store.parse_cas_zip(raw, resp.ContentLength)
+}
+
+func (store CAStore) list_crls() map[string]bool {
+	urls_set := make(map[string]bool)
+
+	for _, ca := range store.cas {
+		for _, url := range ca.ExtCRLDistributionPoints.URLs {
+			urls_set[url] = true
+		}
+	}
+
+	return urls_set
 }

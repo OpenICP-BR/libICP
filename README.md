@@ -23,7 +23,7 @@ A Golang library for CAdES (CMS Advanced Electronic Signatures) for the Brazilia
     - [X] Subject Key Identifier.
     - [X] Key Usage.
     - [ ] Certificate Policies.
-    - [ ] CRL Distribution Points.
+    - [X] CRL Distribution Points.
     - [X] Fail when critical extensions are not supported.
 - [ ] Join multiple signatures files into a single signature file.¹
 - [ ] Support for smartcard certificates.
