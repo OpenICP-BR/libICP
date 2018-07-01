@@ -126,7 +126,8 @@ func (cert Certificate) IsCA() bool {
 	return cert.ExtBasicConstraints.CA
 }
 
-func (cert Certificate) verifySignedBy(issuer Certificate) CodedError {
+func (cert Certificate) verifySignedBy(issuer Certificate) []CodedError {
+	ans_errs := make([]CodedError, 0)
 	// Check algorithm
 	alg := cert.base.SignatureAlgorithm.Algorithm
 	var tbs_hasher hash.Hash
@@ -147,15 +148,16 @@ func (cert Certificate) verifySignedBy(issuer Certificate) CodedError {
 	default:
 		merr := NewMultiError("unknown algorithm", ERR_UNKOWN_ALGORITHM, nil)
 		merr.SetParam("algorithm", alg)
-		return merr
+		ans_errs = append(ans_errs, merr)
+		return ans_errs
 	}
 
 	// Check CA permission from issuer
 	if issuer.ExtKeyUsage.Exists && !issuer.ExtKeyUsage.KeyCertSign {
-		return NewMultiError("issuer is not a certificate authority (Key Usage extension)", ERR_NOT_CA, nil)
+		ans_errs = append(ans_errs, NewMultiError("issuer is not a certificate authority (Key Usage extension)", ERR_NOT_CA, nil))
 	}
 	if issuer.ExtBasicConstraints.Exists && !issuer.ExtBasicConstraints.CA {
-		return NewMultiError("issuer is not a certificate authority (Basic Constraints extension)", ERR_NOT_CA, nil)
+		ans_errs = append(ans_errs, NewMultiError("issuer is not a certificate authority (Basic Constraints extension)", ERR_NOT_CA, nil))
 	}
 
 	// Write raw value
@@ -167,15 +169,18 @@ func (cert Certificate) verifySignedBy(issuer Certificate) CodedError {
 	sig := cert.base.Signature.Bytes
 	pubkey, err := issuer.base.TBSCertificate.SubjectPublicKeyInfo.RSAPubKey()
 	if err != nil {
-		return NewMultiError("failed to parse public key", ERR_PARSE_RSA_PUBKEY, nil, err)
+		ans_errs = append(ans_errs, NewMultiError("failed to parse public key", ERR_PARSE_RSA_PUBKEY, nil, err))
+	}
+	if len(ans_errs) > 0 {
+		return ans_errs
 	}
 
 	// Verify signature
 	err = rsa.VerifyPKCS1v15(&pubkey, tbs_hash_alg, hash_ans, sig)
 	if err != nil {
-		return NewMultiError("failed to verify signature", ERR_BAD_SIGNATURE, nil, err)
-	}
+		return []CodedError{NewMultiError("failed to verify signature", ERR_BAD_SIGNATURE, nil, err)}
 
+	}
 	return nil
 }
 

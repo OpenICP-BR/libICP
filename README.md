@@ -12,17 +12,18 @@ A Golang library for CAdES (CMS Advanced Electronic Signatures) for the Brazilia
 - [X] Verify X509 digital certificates.
   - [X] Validity check.
   - [X] Integrity/signature check.
-  - [ ] Consider key usage restrictions.
+  - [X] Download all CAs on request.
   - [ ] Check CRLs.
   - [ ] Auto download CRLs.
-  - [ ] Auto download certificate authorities when needed.
+  - [ ] Auto download CAs when needed.
   - [ ] Support certificate extensions.
     - [X] Basic Constraints.
     - [X] Key Usage.
     - [X] Authority Key Identifier.
     - [X] Subject Key Identifier.
+    - [X] Key Usage.
     - [ ] Certificate Policies.
-    - [ ] CRL Distribution Points
+    - [ ] CRL Distribution Points.
     - [X] Fail when critical extensions are not supported.
 - [ ] Join multiple signatures files into a single signature file.¹
 - [ ] Support for smartcard certificates.

@@ -1,14 +1,21 @@
 package icp
 
 import (
+	"archive/zip"
+	"bytes"
+	"io/ioutil"
+	"net/http"
 	"time"
 )
 
+// The lack of HTTPS is not a security problem because the root CAs are embedded in libICP and all CAs are checked against them. (see file `data.go`)
+const ALL_CAs_ZIP_URL = "http://acraiz.icpbrasil.gov.br/credenciadas/CertificadosAC-ICP-Brasil/ACcompactado.zip"
+
 type CAStore struct {
 	// If true, it will attempt to download missing CAs and CRLs
-	AllowDownloads bool
-	cas            map[string]Certificate
-	inited         bool
+	AutoDownloads bool
+	cas           map[string]Certificate
+	inited        bool
 }
 
 // This function MUST be called before using this struct. It makes a few maps and adds the following root CAs: (you cannot add others)
@@ -94,10 +101,8 @@ func (store CAStore) verifyCertAt(cert Certificate, now time.Time) []CodedError 
 		} else {
 			issuer = path[i+1]
 		}
-		if err := cert.verifySignedBy(issuer); err != nil {
-			merr := NewMultiError("certificate is invalid", err.Code(), nil, err)
-			merr.SetParam("cert.Subject", cert.Subject)
-			ans_errs = append(ans_errs, merr)
+		if errs := cert.verifySignedBy(issuer); errs != nil {
+			ans_errs = append(ans_errs, errs...)
 		}
 	}
 
@@ -108,12 +113,20 @@ func (store CAStore) verifyCertAt(cert Certificate, now time.Time) []CodedError 
 }
 
 // This function will fail if the desired CA fails validation for any reason.
-func (store *CAStore) AddCA(cert Certificate) (bool, []CodedError) {
+func (store *CAStore) AddCA(cert Certificate) []CodedError {
 	return store.addCAatTime(cert, time.Now())
 }
 
-func (store *CAStore) addCAatTime(cert Certificate, now time.Time) (bool, []CodedError) {
-	return false, nil
+func (store *CAStore) addCAatTime(cert Certificate, now time.Time) []CodedError {
+	if !cert.IsCA() {
+		return []CodedError{NewMultiError("certificate is not a certificate authority", ERR_NOT_CA, nil)}
+	}
+	if errs := store.verifyCertAt(cert, now); errs != nil {
+		return errs
+	}
+	store.cas[cert.SubjectKeyID] = cert
+	store.cas[cert.Subject] = cert
+	return nil
 }
 
 const _PATH_BUILDING_MAX_DEPTH = 16
@@ -149,4 +162,70 @@ func (store CAStore) buildPath(end_cert Certificate, max_depth int) ([]Certifica
 	// Add the recursion result
 	ans = append(ans, extra_path...)
 	return ans, nil
+}
+
+func (store *CAStore) zip_step(file *zip.File) bool {
+	if file == nil {
+		return false
+	}
+
+	// Open cert
+	reader, err := file.Open()
+	defer reader.Close()
+	if err != nil {
+		return false
+	}
+
+	// Get data
+	raw, err := ioutil.ReadAll(reader)
+	if err != nil {
+		return false
+	}
+
+	// Parse it
+	certs, _ := NewCertificateFromBytes(raw)
+
+	// Add them all!
+	for _, cert := range certs {
+		store.AddCA(cert)
+	}
+
+	return true
+}
+
+func (store *CAStore) parse_cas_zip(raw []byte, raw_len int64) error {
+	// Load zip
+	zreader, err := zip.NewReader(bytes.NewReader(raw), raw_len)
+	if err != nil {
+		return err
+	}
+
+	// Try to add CAs until it is clear that no more are possible
+	last_total := -1
+	for i := 0; len(store.cas) != last_total && i < 10; i++ {
+		last_total = len(store.cas)
+		// For each file in the zip archive
+		for _, file := range zreader.File {
+			// Try to add its CA
+			store.zip_step(file)
+		}
+	}
+
+	return nil
+}
+
+// This function will attempt download all CAs from ALL_CAs_ZIP_URL. This runs regardless of CAStore.AutoDownload
+func (store *CAStore) DownloadAllCAs() error {
+	// Get the data
+	resp, err := http.Get(ALL_CAs_ZIP_URL)
+	if err != nil {
+		return err
+	}
+	raw, err := ioutil.ReadAll(resp.Body)
+	resp.Body.Close()
+	if err != nil {
+		return err
+	}
+
+	return store.parse_cas_zip(raw, resp.ContentLength)
 }
