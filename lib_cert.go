@@ -64,51 +64,47 @@ func NewCertificateFromBytes(raw []byte) ([]Certificate, []CodedError) {
 		}
 		if block.Type == "CERTIFICATE" {
 			new_cert := Certificate{}
-			ok, _, merr := new_cert.loadFromDER(block.Bytes)
-			if !ok {
-				merrs = append(merrs, merr)
-			} else {
-				certs = append(certs, new_cert)
-			}
+			_, merr := new_cert.loadFromDER(block.Bytes)
+			certs = append(certs, new_cert)
+			merrs = append(merrs, merr)
 		}
 	}
 
 	// Try decoding the rest as DER certificates
 	for {
-		var ok bool
 		var merr CodedError
 		// Finished reading file?
 		if rest == nil || len(rest) < 42 {
 			break
 		}
 		new_cert := Certificate{}
-		ok, rest, merr = new_cert.loadFromDER(rest)
-		if ok {
-			certs = append(certs, new_cert)
-		} else {
-			merrs = append(merrs, merr)
+		rest, merr = new_cert.loadFromDER(rest)
+		certs = append(certs, new_cert)
+		merrs = append(merrs, merr)
+	}
+
+	// Avoid returining an array of nils.
+	for _, merr := range merrs {
+		if merr != nil {
+			return certs, merrs
 		}
 	}
-
-	if len(merrs) == 0 {
-		merrs = nil
-	}
-	return certs, merrs
+	return certs, nil
 }
 
-func (cert *Certificate) loadFromDER(data []byte) (bool, []byte, CodedError) {
+func (cert *Certificate) loadFromDER(data []byte) ([]byte, CodedError) {
 	rest, err := asn1.Unmarshal(data, &cert.base)
 	if err != nil {
 		merr := NewMultiError("failed to parse DER certificate", ERR_PARSE_CERT, nil, err)
 		merr.SetParam("raw-data", data)
-		return false, rest, merr
+		return rest, merr
 	}
 
 	if cerr := cert.finishParsing(); cerr != nil {
-		return false, rest, cerr
+		return rest, cerr
 	}
 
-	return true, rest, nil
+	return rest, nil
 }
 
 func (cert Certificate) SelfSigned() bool {

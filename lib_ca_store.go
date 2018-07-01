@@ -20,9 +20,14 @@ func (store *CAStore) Init() {
 		return
 	}
 	// Get our root certificates
-	certs, err := NewCertificateFromBytes([]byte(root_ca_BR_ICP_V1 + root_ca_BR_ICP_V2 + root_ca_BR_ICP_V5))
-	if err != nil {
-		panic(err)
+	certs, errs := NewCertificateFromBytes([]byte(root_ca_BR_ICP_V1 + root_ca_BR_ICP_V2 + root_ca_BR_ICP_V5))
+	if errs != nil {
+		for _, err := range errs {
+			if err != nil {
+				println(err.Error())
+			}
+		}
+		panic(errs)
 	}
 	// Save them
 	store.cas = make(map[string]Certificate)
