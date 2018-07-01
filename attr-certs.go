@@ -94,7 +94,7 @@ type v2FormT struct {
 	ObjectDigestInfo  objectDigestInfoT `asn1:"optional,omitempty,tag:1"`
 }
 
-type ExtKeyUsageT struct {
+type ExtKeyUsage struct {
 	Exists           bool
 	DigitalSignature bool
 	NonRepudiation   bool
@@ -105,7 +105,7 @@ type ExtKeyUsageT struct {
 	CRLSign          bool
 }
 
-func (ans *ExtKeyUsageT) fromExtensionT(ext extensionT) CodedError {
+func (ans *ExtKeyUsage) fromExtensionT(ext extensionT) CodedError {
 	seq := asn1.BitString{}
 	_, err := asn1.Unmarshal(ext.ExtnValue, &seq)
 	if err != nil {
@@ -124,7 +124,7 @@ func (ans *ExtKeyUsageT) fromExtensionT(ext extensionT) CodedError {
 	return nil
 }
 
-type ExtBasicConstraintsT struct {
+type ExtBasicConstraints struct {
 	Exists  bool
 	CA      bool
 	PathLen int
@@ -136,7 +136,7 @@ type extBasicConstraintsRawT struct {
 	PathLen int `asn1:"optional"`
 }
 
-func (ans *ExtBasicConstraintsT) fromExtensionT(ext extensionT) CodedError {
+func (ans *ExtBasicConstraints) fromExtensionT(ext extensionT) CodedError {
 	raw := extBasicConstraintsRawT{}
 	_, err := asn1.Unmarshal(ext.ExtnValue, &raw)
 	if err != nil {
@@ -150,7 +150,7 @@ func (ans *ExtBasicConstraintsT) fromExtensionT(ext extensionT) CodedError {
 	return nil
 }
 
-type ExtCRLDistributionPointsT struct {
+type ExtCRLDistributionPoints struct {
 	Exists bool
 	URLs   []string
 }
@@ -163,7 +163,7 @@ type extDistributionPointT struct {
 	FullName generalNameT `asn1:"optional,tag:0"`
 }
 
-func (ans *ExtCRLDistributionPointsT) fromExtensionT(ext extensionT) CodedError {
+func (ans *ExtCRLDistributionPoints) fromExtensionT(ext extensionT) CodedError {
 	raw := []extCRLDistributionPointsRawT{}
 	_, err := asn1.Unmarshal(ext.ExtnValue, &raw)
 	if err != nil {

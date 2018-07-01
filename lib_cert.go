@@ -24,9 +24,9 @@ type Certificate struct {
 	AuthorityKeyID           string
 	NotBefore                time.Time
 	NotAfter                 time.Time
-	ExtKeyUsage              ExtKeyUsageT
-	ExtBasicConstraints      ExtBasicConstraintsT
-	ExtCRLDistributionPoints ExtCRLDistributionPointsT
+	ExtKeyUsage              ExtKeyUsage
+	ExtBasicConstraints      ExtBasicConstraints
+	ExtCRLDistributionPoints ExtCRLDistributionPoints
 }
 
 // Accepts PEM, DER and a mix of both.
@@ -108,6 +108,7 @@ func (cert *Certificate) loadFromDER(data []byte) ([]byte, CodedError) {
 	return rest, nil
 }
 
+// Returns true if the subject is equal to the issuer.
 func (cert Certificate) SelfSigned() bool {
 	if cert.Subject == cert.Issuer || cert.SubjectKeyID == cert.AuthorityKeyID {
 		return true
@@ -123,6 +124,7 @@ func (cert Certificate) SelfSigned() bool {
 	return true
 }
 
+// Returns true if this certificate is a certificate authority. This is checked via the basic constraints extension. (see RFC 5280 Section 4.2.1.9 Page 38)
 func (cert Certificate) IsCA() bool {
 	return cert.ExtBasicConstraints.CA
 }
