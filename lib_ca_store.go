@@ -134,6 +134,9 @@ func (store *CAStore) AddTestingRootCA(cert Certificate) []CodedError {
 		return []CodedError{merr}
 	}
 
+	store.cas[cert.SubjectKeyID] = cert
+	store.cas[cert.Subject] = cert
+
 	return nil
 }
 
