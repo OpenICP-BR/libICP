@@ -24,16 +24,14 @@ func NewCAStore() *CAStore {
 	return store
 }
 
-// This function MUST be called before using this struct. It makes a few maps and adds the following root CAs: (you cannot add others)
-//
-// Autoridade Certificadora Raiz Brasileira v1, Autoridade Certificadora Raiz Brasileira v2, Autoridade Certificadora Raiz Brasileira v5
+// This function MUST be called before using this struct. It makes a few maps and adds the following root CAs: ROOT_CA_BR_ICP_V1, ROOT_CA_BR_ICP_V2, ROOT_CA_BR_ICP_V5
 func (store *CAStore) Init() {
 	// Do not run this function twice
 	if store.inited {
 		return
 	}
 	// Get our root certificates
-	certs, errs := NewCertificateFromBytes([]byte(root_ca_BR_ICP_V1 + root_ca_BR_ICP_V2 + root_ca_BR_ICP_V5))
+	certs, errs := NewCertificateFromBytes([]byte(ROOT_CA_BR_ICP_V1 + ROOT_CA_BR_ICP_V2 + ROOT_CA_BR_ICP_V5))
 	if errs != nil {
 		for _, err := range errs {
 			if err != nil {

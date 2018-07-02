@@ -124,7 +124,7 @@ func (cert Certificate) SelfSigned() bool {
 	return true
 }
 
-// Returns true if this certificate is a certificate authority. This is checked via the basic constraints extension. (see RFC 5280 Section 4.2.1.9 Page 38)
+// Returns true if this certificate is a certificate authority. This is checked via the basic constraints extension. (see RFC 5280 Section 4.2.1.9)
 func (cert Certificate) IsCA() bool {
 	return cert.ExtBasicConstraints.CA
 }
@@ -235,4 +235,16 @@ func (cert *Certificate) parseExtensions() CodedError {
 		}
 	}
 	return nil
+}
+
+func list_crls(certs []Certificate) map[string]bool {
+	urls_set := make(map[string]bool)
+
+	for _, cert := range certs {
+		for _, url := range cert.ExtCRLDistributionPoints.URLs {
+			urls_set[url] = true
+		}
+	}
+
+	return urls_set
 }

@@ -11,7 +11,7 @@ import (
 func Test_CAStore_buildPath_1(t *testing.T) {
 	store := CAStore{}
 	store.Init()
-	end_cert := firstCert(NewCertificateFromBytes([]byte(root_ca_BR_ICP_V1)))
+	end_cert := firstCert(NewCertificateFromBytes([]byte(ROOT_CA_BR_ICP_V1)))
 	ans, err := store.buildPath(end_cert, _PATH_BUILDING_MAX_DEPTH)
 	assert.Nil(t, err)
 	right_ans := make([]Certificate, 1)
@@ -22,7 +22,7 @@ func Test_CAStore_buildPath_1(t *testing.T) {
 func Test_CAStore_buildPath_2(t *testing.T) {
 	store := CAStore{}
 	store.Init()
-	certs, err := NewCertificateFromBytes([]byte(pem_ac_soluti + root_ca_BR_ICP_V2))
+	certs, err := NewCertificateFromBytes([]byte(pem_ac_soluti + ROOT_CA_BR_ICP_V2))
 	assert.Nil(t, err)
 	end_cert := certs[0]
 	root := certs[1]
@@ -38,7 +38,11 @@ func Test_CAStore_buildPath_2(t *testing.T) {
 func Test_CAStore_buildPath_3(t *testing.T) {
 	store := CAStore{}
 	store.Init()
-	certs, err := NewCertificateFromBytes([]byte(pem_ac_digital + pem_ac_soluti + root_ca_BR_ICP_V2))
+
+	// Call init twice just to ensure it does not break things down
+	store.Init()
+
+	certs, err := NewCertificateFromBytes([]byte(pem_ac_digital + pem_ac_soluti + ROOT_CA_BR_ICP_V2))
 	assert.Nil(t, err)
 	end_cert := certs[0]
 	middle_ca := certs[1]
@@ -58,7 +62,7 @@ func Test_CAStore_buildPath_3(t *testing.T) {
 func Test_CAStore_verifyCertAt_1(t *testing.T) {
 	store := CAStore{}
 	store.Init()
-	certs, err := NewCertificateFromBytes([]byte(pem_ac_soluti + root_ca_BR_ICP_V2))
+	certs, err := NewCertificateFromBytes([]byte(pem_ac_soluti + ROOT_CA_BR_ICP_V2))
 	assert.Nil(t, err)
 	end_cert := certs[0]
 	root := certs[1]
@@ -74,7 +78,7 @@ func Test_CAStore_verifyCertAt_1(t *testing.T) {
 func Test_CAStore_verifyCertAt_2(t *testing.T) {
 	store := CAStore{}
 	store.Init()
-	certs, err := NewCertificateFromBytes([]byte(pem_ac_soluti + root_ca_BR_ICP_V2))
+	certs, err := NewCertificateFromBytes([]byte(pem_ac_soluti + ROOT_CA_BR_ICP_V2))
 	assert.Nil(t, err)
 	end_cert := certs[0]
 	root := certs[1]

@@ -12,6 +12,12 @@ endif
 .PHONY: all test test-html
 
 all: libicp.a
+docs:
+	xdg-open "http://localhost:6060/pkg/github.com/gjvnq/libICP/"
+full-docs:
+	xdg-open "http://localhost:6060/pkg/github.com/gjvnq/libICP/?m=all"
+docs-server:
+	godoc -http=:6060
 test: coverage.out
 test-html: coverage.out
 	@$(ECHO) -e $(ANSI_GREEN)"Generating coverage report..."$(ANSI_RESET)

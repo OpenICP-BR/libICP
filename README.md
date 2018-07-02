@@ -4,8 +4,7 @@
 [![Code Coverage](https://codecov.io/gh/gjvnq/libICP/branch/master/graph/badge.svg)](https://codecov.io/gh/gjvnq/libICP)
 [![GoDoc](https://godoc.org/github.com/gjvnq/libICP?status.svg)](https://godoc.org/github.com/gjvnq/libICP)
 
-
-A Golang library for CAdES (CMS Advanced Electronic Signatures) for the Brazilian Public Key Infrastructure (ICP-Brasil).
+A golang library for CAdES (CMS Advanced Electronic Signatures) for the Brazilian Public Key Infrastructure (ICP-Brasil).
 
 # Features
 
