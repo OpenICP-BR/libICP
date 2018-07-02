@@ -8,6 +8,8 @@ import (
 	"time"
 )
 
+const TESTING_ROOT_CA_SUBJECT = "C=BR/O=Fake-ICP-Brasil/OU=Apenas para testes - SEM VALOR LEGAL/CN=Autoridade Certificadora Raiz de Testes - SEM VALOR LEGAL"
+
 // The lack of HTTPS is not a security problem because the root CAs are embedded in libICP and all CAs are checked against them. (see file `data.go`)
 const ALL_CAs_ZIP_URL = "http://acraiz.icpbrasil.gov.br/credenciadas/CertificadosAC-ICP-Brasil/ACcompactado.zip"
 
@@ -116,9 +118,23 @@ func (store CAStore) verifyCertAt(cert Certificate, now time.Time) []CodedError 
 	return ans_errs
 }
 
-// This function will fail if the desired CA fails validation for any reason.
+// Adds a new CA (certificate authority) if, and only if, it is valid when check against the existing CAs.
 func (store *CAStore) AddCA(cert Certificate) []CodedError {
 	return store.addCAatTime(cert, time.Now())
+}
+
+// Adds a new root CA for testing proposes. It MUST have as subject and issuer: TESTING_ROOT_CA_SUBJECT
+//
+// This should NEVER be used in production!
+func (store *CAStore) AddTestingRootCA(cert Certificate) []CodedError {
+	if cert.Subject != cert.Issuer || cert.Subject != TESTING_ROOT_CA_SUBJECT {
+		merr := NewMultiError("AddTestingRootCA REQUIRES the testing CA to have a specific subject", ERR_TEST_CA_IMPROPPER_NAME, nil)
+		merr.SetParam("expected-value", TESTING_ROOT_CA_SUBJECT)
+		merr.SetParam("actual-value", cert.Subject)
+		return []CodedError{merr}
+	}
+
+	return nil
 }
 
 func (store *CAStore) addCAatTime(cert Certificate, now time.Time) []CodedError {
@@ -153,7 +169,7 @@ func (store CAStore) buildPath(end_cert Certificate, max_depth int) ([]Certifica
 	}
 	ans := make([]Certificate, 1)
 	ans[0] = end_cert
-	if end_cert.SelfSigned() {
+	if end_cert.IsSelfSigned() {
 		// We reached a self signed CA
 		return ans, nil
 	}
