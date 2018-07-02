@@ -44,7 +44,7 @@ func oid2str_key(oid asn1.ObjectIdentifier) string {
 	case oid.Equal(idLocalityName()):
 		return "L"
 	case oid.Equal(idOrganizationName()):
-		return "ON"
+		return "O"
 	case oid.Equal(idOrganizationalUnitName()):
 		return "OU"
 	case oid.Equal(idCommonName()):
@@ -76,7 +76,7 @@ func (this nameT) String() string {
 	ans := ""
 	first := true
 	m := this.Map()
-	order := []string{"C", "S", "L", "ON", "OU", "CN"}
+	order := []string{"C", "S", "L", "O", "OU", "CN"}
 	// Add each element in the prefered order
 	for _, k := range order {
 		if v, ok := m[k]; ok {

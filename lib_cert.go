@@ -109,7 +109,7 @@ func (cert *Certificate) loadFromDER(data []byte) ([]byte, CodedError) {
 }
 
 // Returns true if the subject is equal to the issuer.
-func (cert Certificate) SelfSigned() bool {
+func (cert Certificate) IsSelfSigned() bool {
 	if cert.Subject == cert.Issuer || cert.SubjectKeyID == cert.AuthorityKeyID {
 		return true
 	}
