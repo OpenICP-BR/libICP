@@ -128,9 +128,10 @@ func (store *CAStore) AddCA(cert Certificate) []CodedError {
 // This should NEVER be used in production!
 func (store *CAStore) AddTestingRootCA(cert Certificate) []CodedError {
 	if cert.Subject != cert.Issuer || cert.Subject != TESTING_ROOT_CA_SUBJECT {
-		merr := NewMultiError("AddTestingRootCA REQUIRES the testing CA to have a specific subject", ERR_TEST_CA_IMPROPPER_NAME, nil)
+		merr := NewMultiError("AddTestingRootCA REQUIRES the testing CA to have a specific subject and issuer", ERR_TEST_CA_IMPROPPER_NAME, nil)
 		merr.SetParam("expected-value", TESTING_ROOT_CA_SUBJECT)
-		merr.SetParam("actual-value", cert.Subject)
+		merr.SetParam("actual-subject", cert.Subject)
+		merr.SetParam("actual-issuer", cert.Issuer)
 		return []CodedError{merr}
 	}
 
