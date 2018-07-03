@@ -134,11 +134,14 @@ func (cert Certificate) IsSelfSigned() bool {
 	return true
 }
 
-// Returns true if this certificate is a certificate authority. This is checked via the basic constraints extension. (see RFC 5280 Section 4.2.1.9)
+// Returns true if this certificate is a certificate authority. This is checked via the following extensions: key usage and basic constraints extension. (see RFC 5280 Section 4.2.1.3 and Section 4.2.1.9, respectively)
 func (cert Certificate) IsCA() bool {
-	return cert.ExtBasicConstraints.CA
+	return cert.ExtKeyUsage.Exists && cert.ExtKeyUsage.KeyCertSign && cert.ExtBasicConstraints.Exists && cert.ExtBasicConstraints.CA
 }
 
+// This checks ONLY the digital signature and if the issuer is a CA (via the BasicConstraints and KeyUsage extensions). It will fail if any of those two extensions are not present.
+//
+// Possible errors are: ERR_UNKOWN_ALGORITHM, ERR_NOT_CA, ERR_PARSE_RSA_PUBKEY, ERR_BAD_SIGNATURE
 func (cert Certificate) verifySignedBy(issuer Certificate) []CodedError {
 	ans_errs := make([]CodedError, 0)
 	// Check algorithm
@@ -166,11 +169,15 @@ func (cert Certificate) verifySignedBy(issuer Certificate) []CodedError {
 	}
 
 	// Check CA permission from issuer
-	if issuer.ExtKeyUsage.Exists && !issuer.ExtKeyUsage.KeyCertSign {
-		ans_errs = append(ans_errs, NewMultiError("issuer is not a certificate authority (Key Usage extension)", ERR_NOT_CA, nil))
+	if !issuer.ExtKeyUsage.Exists || !issuer.ExtKeyUsage.KeyCertSign {
+		merr := NewMultiError("issuer is not a certificate authority (Key Usage extension)", ERR_NOT_CA, nil)
+		merr.SetParam("issuer.Subject", issuer.Subject)
+		ans_errs = append(ans_errs, merr)
 	}
-	if issuer.ExtBasicConstraints.Exists && !issuer.ExtBasicConstraints.CA {
-		ans_errs = append(ans_errs, NewMultiError("issuer is not a certificate authority (Basic Constraints extension)", ERR_NOT_CA, nil))
+	if !issuer.ExtBasicConstraints.Exists || !issuer.ExtBasicConstraints.CA {
+		merr := NewMultiError("issuer is not a certificate authority (Basic Constraints extension)", ERR_NOT_CA, nil)
+		merr.SetParam("issuer.Subject", issuer.Subject)
+		ans_errs = append(ans_errs, merr)
 	}
 
 	// Write raw value
