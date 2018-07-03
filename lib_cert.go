@@ -40,24 +40,14 @@ type Certificate struct {
 }
 
 // Accepts PEM, DER and a mix of both.
-func NewCertificateFromFile(path string) ([]Certificate, CodedError) {
+func NewCertificateFromFile(path string) ([]Certificate, []CodedError) {
 	dat, err := ioutil.ReadFile(path)
 	if err != nil {
 		merr := NewMultiError("failed to read certificate file", ERR_READ_CERT_FILE, nil, err)
 		merr.SetParam("path", path)
-		return nil, merr
+		return nil, []CodedError{merr}
 	}
-	certs, errs := NewCertificateFromBytes(dat)
-	if errs != nil {
-		merr := NewMultiError("failed to parse some certificates", ERR_PARSE_CERT, nil, errs)
-		merr.SetParam("path", path)
-		return certs, merr
-	}
-	return certs, nil
-}
-
-func firstCert(certs []Certificate, stuff []CodedError) Certificate {
-	return certs[0]
+	return NewCertificateFromBytes(dat)
 }
 
 // Accepts PEM, DER and a mix of both.

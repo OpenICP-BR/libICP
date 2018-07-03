@@ -12,9 +12,11 @@ import (
 func Test_CAStore_buildPath_1(t *testing.T) {
 	store := CAStore{}
 	store.Init()
-	end_cert := firstCert(NewCertificateFromBytes([]byte(ROOT_CA_BR_ICP_V1)))
+	certs, errs := NewCertificateFromBytes([]byte(ROOT_CA_BR_ICP_V1))
+	require.Nil(t, errs)
+	end_cert := certs[0]
 	ans, err := store.buildPath(end_cert, _PATH_BUILDING_MAX_DEPTH)
-	assert.Nil(t, err)
+	require.Nil(t, err)
 	right_ans := make([]Certificate, 1)
 	right_ans[0] = end_cert
 	assert.Equal(t, right_ans, ans)

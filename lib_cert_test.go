@@ -17,11 +17,8 @@ func Test_NewCertificateFromFile_1(t *testing.T) {
 	assert.Nil(t, err)
 
 	// Test code
-	certs, err := NewCertificateFromFile(tmp_file.Name())
-	assert.Nil(t, err)
-	if err != nil {
-		println(err.Error())
-	}
+	certs, errs := NewCertificateFromFile(tmp_file.Name())
+	assert.Nil(t, errs)
 	cert := certs[0]
 
 	assert.Equal(t, "0x28eea57c362904d8", cert.Serial)
