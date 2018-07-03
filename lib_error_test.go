@@ -33,7 +33,7 @@ func Test_NewMultiError_1(t *testing.T) {
 	tmp := strings.Split(merr.Error(), "\n")
 	r := regexp.MustCompile("[.]go:[0-9]*")
 	tmp[0] = r.ReplaceAllString(tmp[0], ".go:?")
-	assert.Equal(t, "github.com/gjvnq/libICP.Test_NewMultiError_1:MY_ERR:lib_error_test.go:? hi", tmp[0])
+	assert.Equal(t, tmp[0], "github.com/gjvnq/libICP.Test_NewMultiError_1 (lib_error_test.go:?): MY_ERR: hi")
 	assert.Equal(t, "MY_ERR", merr.Code())
 }
 
@@ -53,6 +53,6 @@ func Test_NewMultiError_2(t *testing.T) {
 	tmp := strings.Split(merr.Error(), "\n")
 	r := regexp.MustCompile("[.]go:[0-9]*")
 	tmp[0] = r.ReplaceAllString(tmp[0], ".go:?")
-	assert.Equal(t, "github.com/gjvnq/libICP.Test_NewMultiError_2:MY_ERR:lib_error_test.go:? hi", tmp[0])
+	assert.Equal(t, tmp[0], "github.com/gjvnq/libICP.Test_NewMultiError_2 (lib_error_test.go:?): MY_ERR: hi")
 	assert.Equal(t, "MY_ERR", merr.Code())
 }

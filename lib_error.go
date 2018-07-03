@@ -4,7 +4,6 @@ import (
 	"encoding/base64"
 	"fmt"
 	"runtime"
-	"runtime/debug"
 	"strings"
 )
 
@@ -32,7 +31,6 @@ type pairErrorCodePos struct {
 type MultiError struct {
 	message    string
 	code       string
-	stack      string
 	line       int
 	file       string
 	function   string
@@ -60,7 +58,7 @@ func (perr pairErrorCodePos) String() string {
 }
 
 func (merr MultiError) Error() string {
-	ans := fmt.Sprintf("%s:%s:%s:%d %s", merr.function, merr.code, merr.file, merr.line, merr.message)
+	ans := fmt.Sprintf("%s (%s:%d): %s: %s", merr.function, merr.file, merr.line, merr.code, merr.message)
 	// Print parameters
 	if merr.parameters != nil && len(merr.parameters) > 0 {
 		ans += "\nParameters:"
@@ -95,10 +93,6 @@ func (merr MultiError) Error() string {
 			ans += fmt.Sprintf("\n\t(%s:%s:%d) %s", err.Function, err.File, err.Line, tmp)
 		}
 		ans += "\n]"
-	}
-	// Print stack
-	if len(merr.stack) > 0 {
-		ans += "\nStack:\n" + merr.stack
 	}
 	return ans
 }
@@ -155,8 +149,6 @@ func get_stack_pos(depth int) (string, string, int) {
 }
 
 func (merr *MultiError) mark_position() {
-	// Save execution stack
-	merr.stack = string(debug.Stack())
 	// Get information about who created this error
 	merr.function, merr.file, merr.line = get_stack_pos(3)
 }
