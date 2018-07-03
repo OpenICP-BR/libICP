@@ -69,7 +69,7 @@ func (store CAStore) verifyCertAt(cert Certificate, now time.Time) []CodedError 
 	last_ca_max_ca_i := -1
 	last_ca_subj := ""
 
-	// Check each certficiate
+	// Check each certificate
 	for i, cert := range path {
 		if !now.After(cert.NotBefore) {
 			merr := NewMultiError("certificate not yet valid", ERR_NOT_BEFORE_DATE, nil)

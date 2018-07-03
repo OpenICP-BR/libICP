@@ -13,6 +13,14 @@ import (
 	"time"
 )
 
+type CRLStatusT string
+
+const (
+	CRL_REVOKED             = "CRL_REVOKED"
+	CRL_NOT_REVOKED         = "CRL_NOT_REVOKED"
+	CRL_UNSURE_OR_NOT_FOUND = "CRL_UNSURE_OR_NOT_FOUND"
+)
+
 type Certificate struct {
 	base                     certificateT
 	Serial                   string
@@ -27,6 +35,8 @@ type Certificate struct {
 	ExtKeyUsage              ExtKeyUsage
 	ExtBasicConstraints      ExtBasicConstraints
 	ExtCRLDistributionPoints ExtCRLDistributionPoints
+	LastCRLCheck             time.Time
+	CRLStatus                CRLStatusT
 }
 
 // Accepts PEM, DER and a mix of both.

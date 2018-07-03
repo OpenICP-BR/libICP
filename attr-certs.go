@@ -109,7 +109,7 @@ func (ans *ExtKeyUsage) fromExtensionT(ext extensionT) CodedError {
 	seq := asn1.BitString{}
 	_, err := asn1.Unmarshal(ext.ExtnValue, &seq)
 	if err != nil {
-		merr := NewMultiError("failed to parse key usage extention as bit sequence", ERR_FAILED_TO_PARSE_EXTENSION, nil, err)
+		merr := NewMultiError("failed to parse key usage extention as bit sequence", ERR_PARSE_EXTENSION, nil, err)
 		merr.SetParam("raw-data", ext.ExtnValue)
 		return merr
 	}
@@ -140,7 +140,7 @@ func (ans *ExtBasicConstraints) fromExtensionT(ext extensionT) CodedError {
 	raw := extBasicConstraintsRawT{}
 	_, err := asn1.Unmarshal(ext.ExtnValue, &raw)
 	if err != nil {
-		merr := NewMultiError("failed to parse basic constraints extention", ERR_FAILED_TO_PARSE_EXTENSION, nil, err)
+		merr := NewMultiError("failed to parse basic constraints extention", ERR_PARSE_EXTENSION, nil, err)
 		merr.SetParam("raw-data", ext.ExtnValue)
 		return merr
 	}
@@ -167,7 +167,7 @@ func (ans *ExtCRLDistributionPoints) fromExtensionT(ext extensionT) CodedError {
 	raw := []extCRLDistributionPointsRawT{}
 	_, err := asn1.Unmarshal(ext.ExtnValue, &raw)
 	if err != nil {
-		merr := NewMultiError("failed to parse CRL distribution points extention", ERR_FAILED_TO_PARSE_EXTENSION, nil, err)
+		merr := NewMultiError("failed to parse CRL distribution points extention", ERR_PARSE_EXTENSION, nil, err)
 		merr.SetParam("raw-data", ext.ExtnValue)
 		return merr
 	}

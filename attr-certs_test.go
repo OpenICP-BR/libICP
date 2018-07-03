@@ -18,7 +18,7 @@ func Test_ExtKeyUsage_fromExtensionT(t *testing.T) {
 	ext := ExtKeyUsage{}
 	err := ext.fromExtensionT(raw_ext)
 	require.NotNil(t, err)
-	assert.Equal(t, err.Code(), ERR_FAILED_TO_PARSE_EXTENSION)
+	assert.Equal(t, err.Code(), ERR_PARSE_EXTENSION)
 }
 
 func Test_ExtBasicConstraints_fromExtensionT(t *testing.T) {
@@ -26,7 +26,7 @@ func Test_ExtBasicConstraints_fromExtensionT(t *testing.T) {
 	ext := ExtBasicConstraints{}
 	err := ext.fromExtensionT(raw_ext)
 	require.NotNil(t, err)
-	assert.Equal(t, err.Code(), ERR_FAILED_TO_PARSE_EXTENSION)
+	assert.Equal(t, err.Code(), ERR_PARSE_EXTENSION)
 }
 
 func Test_ExtCRLDistributionPoints_fromExtensionT(t *testing.T) {
@@ -34,5 +34,5 @@ func Test_ExtCRLDistributionPoints_fromExtensionT(t *testing.T) {
 	ext := ExtCRLDistributionPoints{}
 	err := ext.fromExtensionT(raw_ext)
 	require.NotNil(t, err)
-	assert.Equal(t, err.Code(), ERR_FAILED_TO_PARSE_EXTENSION)
+	assert.Equal(t, err.Code(), ERR_PARSE_EXTENSION)
 }

@@ -17,6 +17,11 @@ type CodedError interface {
 	Code() string
 }
 
+// This is the same as CodedError. There are two names just to make the API more obvious to the reader when a functions returns an array of errors and an array of warnings.
+type CodedWarning interface {
+	CodedError
+}
+
 type pairErrorCodePos struct {
 	Error    interface{}
 	Line     int
