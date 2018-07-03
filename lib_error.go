@@ -13,7 +13,8 @@ type stringI interface {
 
 type CodedError interface {
 	error
-	Code() string
+	Code() ErrorCode
+	CodeString() string
 }
 
 // This is the same as CodedError. There are two names just to make the API more obvious to the reader when a functions returns an array of errors and an array of warnings.
@@ -30,7 +31,7 @@ type pairErrorCodePos struct {
 
 type MultiError struct {
 	message    string
-	code       string
+	code       ErrorCode
 	line       int
 	file       string
 	function   string
@@ -39,7 +40,7 @@ type MultiError struct {
 	locked     bool
 }
 
-func NewMultiError(message string, code string, parameters map[string]interface{}, errors ...interface{}) MultiError {
+func NewMultiError(message string, code ErrorCode, parameters map[string]interface{}, errors ...interface{}) MultiError {
 	merr := MultiError{}
 	merr.code = code
 	merr.message = message
@@ -97,8 +98,12 @@ func (merr MultiError) Error() string {
 	return ans
 }
 
-func (merr MultiError) Code() string {
+func (merr MultiError) Code() ErrorCode {
 	return merr.code
+}
+
+func (merr MultiError) CodeString() string {
+	return merr.code.String()
 }
 
 func (merr *MultiError) SetParam(key string, val interface{}) error {

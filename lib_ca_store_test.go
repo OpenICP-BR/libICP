@@ -88,13 +88,13 @@ func Test_CAStore_verifyCertAt_2(t *testing.T) {
 	errs := store.verifyCertAt(root, some_time)
 	assert.NotNil(t, errs)
 	assert.Equal(t, 1, len(errs), "there should be only one error")
-	assert.Equal(t, ERR_NOT_BEFORE_DATE, errs[0].Code())
+	assert.EqualValues(t, ERR_NOT_BEFORE_DATE, errs[0].Code())
 
 	errs = store.verifyCertAt(end_cert, some_time)
 	assert.NotNil(t, errs)
 	assert.Equal(t, 2, len(errs), "there should be only two error")
-	assert.Equal(t, ERR_NOT_BEFORE_DATE, errs[0].Code())
-	assert.Equal(t, ERR_NOT_BEFORE_DATE, errs[1].Code())
+	assert.EqualValues(t, ERR_NOT_BEFORE_DATE, errs[0].Code())
+	assert.EqualValues(t, ERR_NOT_BEFORE_DATE, errs[1].Code())
 }
 
 func Test_CAStore_verifyCertAt_3(t *testing.T) {
@@ -108,7 +108,7 @@ func Test_CAStore_verifyCertAt_3(t *testing.T) {
 	errs := store.verifyCertAt(end_cert, some_time)
 	assert.NotNil(t, errs)
 	assert.Equal(t, 1, len(errs), "there should be only one error")
-	assert.Equal(t, ERR_ISSUER_NOT_FOUND, errs[0].Code())
+	assert.EqualValues(t, ERR_ISSUER_NOT_FOUND, errs[0].Code())
 }
 
 func Test_CAStore_addCAatTime(t *testing.T) {
@@ -122,7 +122,7 @@ func Test_CAStore_addCAatTime(t *testing.T) {
 
 	errs := store.addCAatTime(end_ca, some_time)
 	assert.Equal(t, len(errs), 1)
-	assert.Equal(t, errs[0].Code(), ERR_ISSUER_NOT_FOUND)
+	assert.EqualValues(t, errs[0].Code(), ERR_ISSUER_NOT_FOUND)
 
 	errs = store.addCAatTime(middle_ca, some_time)
 	assert.Nil(t, errs)
@@ -170,7 +170,7 @@ func Test_CAStore_AddTestingRootCA_2(t *testing.T) {
 	store := NewCAStore()
 	errs = store.AddTestingRootCA(certs[0])
 	assert.Equal(t, 1, len(errs))
-	assert.Equal(t, ERR_TEST_CA_IMPROPPER_NAME, errs[0].Code())
+	assert.EqualValues(t, ERR_TEST_CA_IMPROPPER_NAME, errs[0].Code())
 	assert.Equal(t, 6, len(store.cas))
 }
 
