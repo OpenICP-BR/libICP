@@ -1,6 +1,9 @@
 package icp
 
-import "encoding/asn1"
+import (
+	"encoding/asn1"
+	"math/big"
+)
 
 func idSubjectKeyIdentifier() asn1.ObjectIdentifier {
 	return asn1.ObjectIdentifier{2, 5, 29, 14}
@@ -110,7 +113,8 @@ func (ans *ExtKeyUsage) fromExtensionT(ext extensionT) CodedError {
 	_, err := asn1.Unmarshal(ext.ExtnValue, &seq)
 	if err != nil {
 		merr := NewMultiError("failed to parse key usage extention as bit sequence", ERR_PARSE_EXTENSION, nil, err)
-		merr.SetParam("raw-data", ext.ExtnValue)
+		merr.SetParam("raw-data", ext.RawContent)
+		merr.SetParam("raw-ExtnValue", ext.ExtnValue)
 		return merr
 	}
 	ans.Exists = true
@@ -141,7 +145,8 @@ func (ans *ExtBasicConstraints) fromExtensionT(ext extensionT) CodedError {
 	_, err := asn1.Unmarshal(ext.ExtnValue, &raw)
 	if err != nil {
 		merr := NewMultiError("failed to parse basic constraints extention", ERR_PARSE_EXTENSION, nil, err)
-		merr.SetParam("raw-data", ext.ExtnValue)
+		merr.SetParam("raw-data", ext.RawContent)
+		merr.SetParam("raw-ExtnValue", ext.ExtnValue)
 		return merr
 	}
 	ans.Exists = true
@@ -168,7 +173,8 @@ func (ans *ExtCRLDistributionPoints) fromExtensionT(ext extensionT) CodedError {
 	_, err := asn1.Unmarshal(ext.ExtnValue, &raw)
 	if err != nil {
 		merr := NewMultiError("failed to parse CRL distribution points extention", ERR_PARSE_EXTENSION, nil, err)
-		merr.SetParam("raw-data", ext.ExtnValue)
+		merr.SetParam("raw-data", ext.RawContent)
+		merr.SetParam("raw-ExtnValue", ext.ExtnValue)
 		return merr
 	}
 	ans.Exists = true
@@ -178,5 +184,47 @@ func (ans *ExtCRLDistributionPoints) fromExtensionT(ext extensionT) CodedError {
 			ans.URLs = append(ans.URLs, url)
 		}
 	}
+	return nil
+}
+
+type extAuthorityKeyIdRawT struct {
+	KeyId          []byte         `asn1:"tag:0,optional"`
+	AuthCertIssuer []generalNameT `asn1:"tag:1,optional"`
+	AuthCertSerial *big.Int       `asn1:"tag:2,optional"`
+}
+
+type ExtAuthorityKeyId struct {
+	Exists bool
+	KeyId  []byte
+}
+
+func (ans *ExtAuthorityKeyId) fromExtensionT(ext extensionT) CodedError {
+	raw := extAuthorityKeyIdRawT{}
+	_, err := asn1.Unmarshal(ext.ExtnValue, &raw)
+	if err != nil {
+		merr := NewMultiError("failed to parse authority key id extention", ERR_PARSE_EXTENSION, nil, err)
+		merr.SetParam("raw-data", ext.RawContent)
+		merr.SetParam("raw-ExtnValue", ext.ExtnValue)
+		return merr
+	}
+	ans.Exists = true
+	ans.KeyId = raw.KeyId
+	return nil
+}
+
+type ExtSubjectKeyId struct {
+	Exists bool
+	KeyId  []byte
+}
+
+func (ans *ExtSubjectKeyId) fromExtensionT(ext extensionT) CodedError {
+	_, err := asn1.Unmarshal(ext.ExtnValue, &ans.KeyId)
+	if err != nil {
+		merr := NewMultiError("failed to parse subject key id extention", ERR_PARSE_EXTENSION, nil, err)
+		merr.SetParam("raw-data", ext.RawContent)
+		merr.SetParam("raw-ExtnValue", ext.ExtnValue)
+		return merr
+	}
+	ans.Exists = true
 	return nil
 }

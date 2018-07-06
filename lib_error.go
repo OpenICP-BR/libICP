@@ -1,6 +1,7 @@
 package icp
 
 import (
+	"encoding/asn1"
 	"encoding/base64"
 	"fmt"
 	"runtime"
@@ -66,6 +67,9 @@ func (merr MultiError) Error() string {
 		for k, v := range merr.parameters {
 			switch v := v.(type) {
 			case []byte:
+				tmp := base64.StdEncoding.EncodeToString(v)
+				ans += fmt.Sprintf("\n\t%s:(base64): %+v", k, tmp)
+			case asn1.RawContent:
 				tmp := base64.StdEncoding.EncodeToString(v)
 				ans += fmt.Sprintf("\n\t%s:(base64): %+v", k, tmp)
 			default:

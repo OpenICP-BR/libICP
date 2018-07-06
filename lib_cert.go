@@ -24,25 +24,17 @@ const (
 )
 
 type Certificate struct {
-	base                     certificateT
-	Serial                   string
-	Issuer                   string
-	IssuerMap                map[string]string
-	Subject                  string
-	SubjectMap               map[string]string
-	SubjectKeyID             string
-	AuthorityKeyID           string
-	NotBefore                time.Time
-	NotAfter                 time.Time
-	ExtKeyUsage              ExtKeyUsage
-	ExtBasicConstraints      ExtBasicConstraints
-	ExtCRLDistributionPoints ExtCRLDistributionPoints
-	CRLStatus                CRLStatus
-	// CRLLastCheck store the date of the CRL used to check, not the time when the verification was done
-	CRLLastCheck time.Time
-	// These are for CAs only
-	crl             certificateListT
-	crl_last_update time.Time
+	base                        certificateT
+	ext_subject_key_id          ExtSubjectKeyId
+	ext_authority_key_id        ExtAuthorityKeyId
+	ext_key_usage               ExtKeyUsage
+	ext_basic_constraints       ExtBasicConstraints
+	ext_crl_distribution_points ExtCRLDistributionPoints
+	// The CRL this cert published, not the crl about this cert
+	crl certificateListT
+	// These are calculated based on the CRL made by this cert issuer
+	crl_status     CRLStatus
+	crl_last_check time.Time
 }
 
 // Accepts PEM, DER and a mix of both.
@@ -107,18 +99,88 @@ func (cert *Certificate) loadFromDER(data []byte) ([]byte, CodedError) {
 		return rest, merr
 	}
 
-	if cerr := cert.finishParsing(); cerr != nil {
+	if cerr := cert.finish_parsing(); cerr != nil {
 		return rest, cerr
 	}
 
 	return rest, nil
 }
 
+func (cert Certificate) crl_this_update() time.Time {
+	return cert.crl.TBSCertList.ThisUpdate
+}
+
+func (cert Certificate) crl_next_update() time.Time {
+	return cert.crl.TBSCertList.NextUpdate
+}
+
+func (cert Certificate) NotBefore() time.Time {
+	return cert.base.TBSCertificate.Validity.NotBeforeTime
+}
+
+func (cert Certificate) NotAfter() time.Time {
+	return cert.base.TBSCertificate.Validity.NotAfterTime
+}
+
+func (cert Certificate) Subject() string {
+	return cert.base.TBSCertificate.Subject.String()
+}
+
+func (cert Certificate) SubjectMap() map[string]string {
+	return cert.base.TBSCertificate.Subject.Map()
+}
+
+func (cert Certificate) Issuer() string {
+	return cert.base.TBSCertificate.Issuer.String()
+}
+
+func (cert Certificate) IssuerMap() map[string]string {
+	return cert.base.TBSCertificate.Issuer.Map()
+}
+
+func (cert Certificate) Serial() string {
+	return "0x" + cert.base.TBSCertificate.SerialNumber.Text(16)
+}
+
+func (cert Certificate) AuthorityKeyId() string {
+	if !cert.ext_authority_key_id.Exists {
+		return cert.Issuer()
+	}
+	return nice_hex(cert.ext_authority_key_id.KeyId)
+}
+
+func (cert Certificate) SubjectKeyId() string {
+	if !cert.ext_subject_key_id.Exists {
+		return cert.Subject()
+	}
+	return nice_hex(cert.ext_subject_key_id.KeyId)
+}
+
+func (cert Certificate) BasicConstraints() ExtBasicConstraints {
+	return cert.ext_basic_constraints
+}
+
+func (cert Certificate) KeyUsage() ExtKeyUsage {
+	return cert.ext_key_usage
+}
+
+func (cert Certificate) CRLDistributionPoints() ExtCRLDistributionPoints {
+	return cert.ext_crl_distribution_points
+}
+
+func (cert Certificate) CRLStatus() (CRLStatus, time.Time) {
+	return cert.crl_status, cert.crl_last_check
+}
+
+func (cert Certificate) is_crl_outdated(now time.Time) bool {
+	return false
+}
+
 // Returns true if the subject is equal to the issuer.
 func (cert Certificate) IsSelfSigned() bool {
-	eq := reflect.DeepEqual(cert.SubjectMap, cert.IssuerMap)
+	eq := reflect.DeepEqual(cert.SubjectMap(), cert.IssuerMap())
 
-	if eq || cert.SubjectKeyID == cert.AuthorityKeyID {
+	if eq || cert.SubjectKeyId() == cert.AuthorityKeyId() {
 		return true
 	}
 	return false
@@ -126,7 +188,7 @@ func (cert Certificate) IsSelfSigned() bool {
 
 // Returns true if this certificate is a certificate authority. This is checked via the following extensions: key usage and basic constraints extension. (see RFC 5280 Section 4.2.1.3 and Section 4.2.1.9, respectively)
 func (cert Certificate) IsCA() bool {
-	return cert.ExtKeyUsage.Exists && cert.ExtKeyUsage.KeyCertSign && cert.ExtBasicConstraints.Exists && cert.ExtBasicConstraints.CA
+	return cert.KeyUsage().Exists && cert.KeyUsage().KeyCertSign && cert.BasicConstraints().Exists && cert.BasicConstraints().CA
 }
 
 // This checks ONLY the digital signature and if the issuer is a CA (via the BasicConstraints and KeyUsage extensions). It will fail if any of those two extensions are not present.
@@ -159,12 +221,12 @@ func (cert Certificate) verifySignedBy(issuer Certificate) []CodedError {
 	}
 
 	// Check CA permission from issuer
-	if !issuer.ExtKeyUsage.Exists || !issuer.ExtKeyUsage.KeyCertSign {
+	if !issuer.KeyUsage().Exists || !issuer.KeyUsage().KeyCertSign {
 		merr := NewMultiError("issuer is not a certificate authority (Key Usage extension)", ERR_NOT_CA, nil)
 		merr.SetParam("issuer.Subject", issuer.Subject)
 		ans_errs = append(ans_errs, merr)
 	}
-	if !issuer.ExtBasicConstraints.Exists || !issuer.ExtBasicConstraints.CA {
+	if !issuer.BasicConstraints().Exists || !issuer.BasicConstraints().CA {
 		merr := NewMultiError("issuer is not a certificate authority (Basic Constraints extension)", ERR_NOT_CA, nil)
 		merr.SetParam("issuer.Subject", issuer.Subject)
 		ans_errs = append(ans_errs, merr)
@@ -194,42 +256,32 @@ func (cert Certificate) verifySignedBy(issuer Certificate) []CodedError {
 	return nil
 }
 
-func (cert *Certificate) finishParsing() CodedError {
-	cert.Serial = "0x" + cert.base.TBSCertificate.SerialNumber.Text(16)
-	cert.Issuer = cert.base.TBSCertificate.Issuer.String()
-	cert.IssuerMap = cert.base.TBSCertificate.Issuer.Map()
-	cert.Subject = cert.base.TBSCertificate.Subject.String()
-	cert.SubjectMap = cert.base.TBSCertificate.Subject.Map()
-	// Get validity
-	cert.NotBefore = cert.base.TBSCertificate.Validity.NotBeforeTime
-	cert.NotAfter = cert.base.TBSCertificate.Validity.NotAfterTime
-	// Just a hack to prevent some problems
-	cert.SubjectKeyID = cert.Subject
-	cert.AuthorityKeyID = cert.Issuer
-	// Look for SubjectKeyID, AuthorityKeyID and other extensions
-	return cert.parseExtensions()
+func (cert *Certificate) finish_parsing() CodedError {
+	return cert.parse_extensions()
 }
 
-func (cert *Certificate) parseExtensions() CodedError {
-	// Look for SubjectKeyID and AuthorityKeyID
+func (cert *Certificate) parse_extensions() CodedError {
 	for _, ext := range cert.base.TBSCertificate.Extensions {
 		id := ext.ExtnID
-		val := ext.ExtnValue
 		switch {
 		case id.Equal(idSubjectKeyIdentifier()):
-			cert.SubjectKeyID = nice_hex(val)
+			if err := cert.ext_subject_key_id.fromExtensionT(ext); err != nil {
+				return err
+			}
 		case id.Equal(idAuthorityKeyIdentifier()):
-			cert.AuthorityKeyID = nice_hex(val)
+			if err := cert.ext_authority_key_id.fromExtensionT(ext); err != nil {
+				return err
+			}
 		case id.Equal(idCeBasicConstraints()):
-			if err := cert.ExtBasicConstraints.fromExtensionT(ext); err != nil {
+			if err := cert.ext_basic_constraints.fromExtensionT(ext); err != nil {
 				return err
 			}
 		case id.Equal(idCeKeyUsage()):
-			if err := cert.ExtKeyUsage.fromExtensionT(ext); err != nil {
+			if err := cert.ext_key_usage.fromExtensionT(ext); err != nil {
 				return err
 			}
 		case id.Equal(idCeCRLDistributionPoint()):
-			if err := cert.ExtCRLDistributionPoints.fromExtensionT(ext); err != nil {
+			if err := cert.ext_crl_distribution_points.fromExtensionT(ext); err != nil {
 				return err
 			}
 		default:
@@ -244,16 +296,7 @@ func (cert *Certificate) parseExtensions() CodedError {
 	return nil
 }
 
-func (cert *Certificate) check_crl(issuer Certificate) {
-	has := issuer.crl.TBSCertList.HasCert(cert.base.TBSCertificate.SerialNumber)
-	cert.CRLLastCheck = issuer.crl_last_update
-	if has {
-		cert.CRLStatus = CRL_REVOKED
-	} else if !has && !issuer.crl_last_update.IsZero() {
-		cert.CRLStatus = CRL_NOT_REVOKED
-	} else {
-		cert.CRLStatus = CRL_UNSURE_OR_NOT_FOUND
-	}
+func (cert *Certificate) verify_issuer_crl(issuer Certificate) {
 }
 
 func (cert *Certificate) download_crl() {
@@ -263,7 +306,7 @@ func list_crls(certs []Certificate) map[string]bool {
 	urls_set := make(map[string]bool)
 
 	for _, cert := range certs {
-		for _, url := range cert.ExtCRLDistributionPoints.URLs {
+		for _, url := range cert.CRLDistributionPoints().URLs {
 			urls_set[url] = true
 		}
 	}

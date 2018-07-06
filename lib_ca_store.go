@@ -72,26 +72,26 @@ func (store CAStore) verifyCertAt(cert_to_verify *Certificate, now time.Time) ([
 
 	// Check each certificate
 	for i, cert := range path {
-		if !now.After(cert.NotBefore) {
+		if !now.After(cert.NotBefore()) {
 			merr := NewMultiError("certificate not yet valid", ERR_NOT_BEFORE_DATE, nil)
-			merr.SetParam("cert.NotBefore", cert.NotBefore)
+			merr.SetParam("cert.NotBefore", cert.NotBefore())
 			merr.SetParam("now", now)
-			merr.SetParam("cert.Subject", cert.Subject)
+			merr.SetParam("cert.Subject", cert.Subject())
 			ans_errs = append(ans_errs, merr)
 		}
-		if !now.Before(cert.NotAfter) {
+		if !now.Before(cert.NotAfter()) {
 			merr := NewMultiError("certificate has expired", ERR_NOT_AFTER_DATE, nil)
-			merr.SetParam("cert.NotAfter", cert.NotAfter)
+			merr.SetParam("cert.NotAfter", cert.NotAfter())
 			merr.SetParam("now", now)
-			merr.SetParam("cert.Subject", cert.Subject)
+			merr.SetParam("cert.Subject", cert.Subject())
 			ans_errs = append(ans_errs, merr)
 		}
 
 		// Take care of the basic constraints extension
-		if cert.IsCA() && cert.ExtBasicConstraints.Exists && cert.ExtBasicConstraints.CA && cert.ExtBasicConstraints.PathLen != 0 {
-			new_max_i := i + cert.ExtBasicConstraints.PathLen
+		if cert.IsCA() && cert.BasicConstraints().Exists && cert.BasicConstraints().CA && cert.BasicConstraints().PathLen != 0 {
+			new_max_i := i + cert.BasicConstraints().PathLen
 			if last_ca_max_ca_i > 0 && last_ca_max_ca_i > new_max_i {
-				last_ca_subj = cert.Subject
+				last_ca_subj = cert.Subject()
 				last_ca_max_ca_i = new_max_i
 			}
 		}
@@ -112,22 +112,24 @@ func (store CAStore) verifyCertAt(cert_to_verify *Certificate, now time.Time) ([
 			ans_errs = append(ans_errs, errs...)
 		}
 
-		if issuer.crl_last_update.Before(now) && store.AutoDownload {
+		if issuer.is_crl_outdated(now) && store.AutoDownload {
 			issuer.download_crl()
 		}
-		cert.check_crl(*issuer)
-		if cert.CRLStatus == CRL_REVOKED {
+		cert.verify_issuer_crl(*issuer)
+
+		status, _ := cert.CRLStatus()
+		if status == CRL_REVOKED {
 			merr := NewMultiError("certificate revoked (source: CRL)", ERR_REVOKED, nil)
 			merr.SetParam("cert.Subject", cert.Subject)
 			merr.SetParam("cert.Issuer", cert.Issuer)
-			merr.SetParam("crl.ThisUpdate", issuer.crl.TBSCertList.ThisUpdate)
+			merr.SetParam("crl.ThisUpdate", issuer.crl_this_update())
 			ans_errs = append(ans_errs, merr)
 		}
-		if cert.CRLStatus == CRL_UNSURE_OR_NOT_FOUND {
+		if status == CRL_UNSURE_OR_NOT_FOUND {
 			merr := NewMultiError("certificate possibly revoked", ERR_UNKOWN_REVOCATION_STATUS, nil)
 			merr.SetParam("cert.Subject", cert.Subject)
 			merr.SetParam("cert.Issuer", cert.Issuer)
-			merr.SetParam("crl.ThisUpdate", issuer.crl.TBSCertList.ThisUpdate)
+			merr.SetParam("crl.ThisUpdate", issuer.crl_this_update())
 			ans_warns = append(ans_warns, merr)
 		}
 	}
@@ -150,7 +152,7 @@ func (store *CAStore) AddCA(cert *Certificate) []CodedError {
 //
 // This should NEVER be used in production!
 func (store *CAStore) AddTestingRootCA(cert *Certificate) []CodedError {
-	if cert.Subject != cert.Issuer || cert.Subject != TESTING_ROOT_CA_SUBJECT {
+	if cert.Subject() != cert.Issuer() || cert.Subject() != TESTING_ROOT_CA_SUBJECT {
 		merr := NewMultiError("AddTestingRootCA REQUIRES the testing CA to have a specific subject and issuer", ERR_TEST_CA_IMPROPPER_NAME, nil)
 		merr.SetParam("expected-value", TESTING_ROOT_CA_SUBJECT)
 		merr.SetParam("actual-subject", cert.Subject)
@@ -178,26 +180,28 @@ func (store *CAStore) raw_add_ca(cert *Certificate) {
 	if cert == nil {
 		return
 	}
-	store.cas[cert.SubjectKeyID] = cert
-	store.cas[cert.Subject] = cert
+	store.cas[cert.SubjectKeyId()] = cert
+	store.cas[cert.Subject()] = cert
 }
 
 const _PATH_BUILDING_MAX_DEPTH = 16
 
 func (store CAStore) buildPath(end_cert *Certificate, max_depth int) ([]*Certificate, CodedError) {
-	issuer, ok := store.cas[end_cert.AuthorityKeyID]
+	if max_depth < 0 {
+		merr := NewMultiError("reached maximum depth", ERR_MAX_DEPTH_REACHED, nil)
+		merr.SetParam("SubjectKeyID", end_cert.SubjectKeyId())
+		merr.SetParam("AuthorityKeyID", end_cert.AuthorityKeyId())
+		return nil, merr
+	}
+
+	issuer, ok := store.cas[end_cert.AuthorityKeyId()]
 	if !ok {
 		// Try again
-		issuer, ok = store.cas[end_cert.Issuer]
+		issuer, ok = store.cas[end_cert.Issuer()]
 	}
 	if !ok {
 		merr := NewMultiError("issuer not found", ERR_ISSUER_NOT_FOUND, nil)
-		merr.SetParam("AuthorityKeyID", end_cert.AuthorityKeyID)
-		return nil, merr
-	}
-	if max_depth < 0 {
-		merr := NewMultiError("reached maximum depth", ERR_MAX_DEPTH_REACHED, nil)
-		merr.SetParam("SubjectKeyID", end_cert.SubjectKeyID)
+		merr.SetParam("AuthorityKeyID", end_cert.AuthorityKeyId())
 		return nil, merr
 	}
 	ans := make([]*Certificate, 1)
@@ -210,6 +214,9 @@ func (store CAStore) buildPath(end_cert *Certificate, max_depth int) ([]*Certifi
 	extra_path, err := store.buildPath(issuer, max_depth-1)
 	if extra_path == nil {
 		// We failed to build the path
+		if err.Code() == ERR_MAX_DEPTH_REACHED {
+			return nil, err
+		}
 		return nil, NewMultiError("failure on recursion", err.Code(), nil, err)
 	}
 	// Add the recursion result
@@ -287,7 +294,7 @@ func (store CAStore) list_crls() map[string]bool {
 	urls_set := make(map[string]bool)
 
 	for _, ca := range store.cas {
-		for _, url := range ca.ExtCRLDistributionPoints.URLs {
+		for _, url := range ca.CRLDistributionPoints().URLs {
 			urls_set[url] = true
 		}
 	}
