@@ -10,6 +10,7 @@ import (
 	"encoding/pem"
 	"hash"
 	"io/ioutil"
+	"reflect"
 	"time"
 )
 
@@ -115,18 +116,12 @@ func (cert *Certificate) loadFromDER(data []byte) ([]byte, CodedError) {
 
 // Returns true if the subject is equal to the issuer.
 func (cert Certificate) IsSelfSigned() bool {
-	if cert.Subject == cert.Issuer || cert.SubjectKeyID == cert.AuthorityKeyID {
+	eq := reflect.DeepEqual(cert.SubjectMap, cert.IssuerMap)
+
+	if eq || cert.SubjectKeyID == cert.AuthorityKeyID {
 		return true
 	}
-	if len(cert.SubjectMap) != len(cert.IssuerMap) {
-		return false
-	}
-	for k, v := range cert.SubjectMap {
-		if v != cert.IssuerMap[k] {
-			return false
-		}
-	}
-	return true
+	return false
 }
 
 // Returns true if this certificate is a certificate authority. This is checked via the following extensions: key usage and basic constraints extension. (see RFC 5280 Section 4.2.1.3 and Section 4.2.1.9, respectively)
