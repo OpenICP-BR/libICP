@@ -66,17 +66,21 @@ func Test_CAStore_verifyCertAt_1(t *testing.T) {
 	store.Init()
 	certs, err := NewCertificateFromBytes([]byte(pem_ac_soluti + ROOT_CA_BR_ICP_V2))
 	assert.Nil(t, err)
-	end_cert := certs[0]
-	root := certs[1]
+	end_cert := &certs[0]
+	root := &certs[1]
 
+	right_ans := []*Certificate{root}
 	some_time := time.Unix(1528997864, 0)
-	errs, warns := store.verifyCertAt(&root, some_time)
+	path, errs, warns := store.verifyCertAt(root, some_time)
 	assert.Nil(t, errs)
+	assert.Equal(t, right_ans, path)
 	assert.Equal(t, 1, len(warns))
 	assert.EqualValues(t, ERR_UNKOWN_REVOCATION_STATUS, warns[0].Code())
 
-	errs, warns = store.verifyCertAt(&end_cert, some_time)
+	right_ans = []*Certificate{end_cert, root}
+	path, errs, warns = store.verifyCertAt(end_cert, some_time)
 	assert.Nil(t, errs)
+	assert.Equal(t, right_ans, path)
 	assert.Equal(t, 2, len(warns))
 	assert.EqualValues(t, ERR_UNKOWN_REVOCATION_STATUS, warns[0].Code())
 	assert.EqualValues(t, ERR_UNKOWN_REVOCATION_STATUS, warns[1].Code())
@@ -87,18 +91,22 @@ func Test_CAStore_verifyCertAt_2(t *testing.T) {
 	store.Init()
 	certs, err := NewCertificateFromBytes([]byte(pem_ac_soluti + ROOT_CA_BR_ICP_V2))
 	assert.Nil(t, err)
-	end_cert := certs[0]
-	root := certs[1]
+	end_cert := &certs[0]
+	root := &certs[1]
 
+	right_ans := []*Certificate{root}
 	some_time := time.Unix(0, 0)
-	errs, warns := store.verifyCertAt(&root, some_time)
+	path, errs, warns := store.verifyCertAt(root, some_time)
 	assert.Equal(t, 1, len(warns))
+	assert.Equal(t, right_ans, path)
 	assert.EqualValues(t, ERR_UNKOWN_REVOCATION_STATUS, warns[0].Code())
 	assert.Equal(t, 1, len(errs), "there should be only one error")
 	assert.EqualValues(t, ERR_NOT_BEFORE_DATE, errs[0].Code())
 
-	errs, warns = store.verifyCertAt(&end_cert, some_time)
+	right_ans = []*Certificate{end_cert, root}
+	path, errs, warns = store.verifyCertAt(end_cert, some_time)
 	assert.Equal(t, 2, len(warns))
+	assert.Equal(t, right_ans, path)
 	assert.EqualValues(t, ERR_UNKOWN_REVOCATION_STATUS, warns[0].Code())
 	assert.EqualValues(t, ERR_UNKOWN_REVOCATION_STATUS, warns[1].Code())
 	assert.Equal(t, 2, len(errs), "there should be only two error")
@@ -111,11 +119,12 @@ func Test_CAStore_verifyCertAt_3(t *testing.T) {
 	store.Init()
 	certs, err := NewCertificateFromBytes([]byte(pem_ac_digital))
 	assert.Nil(t, err)
-	end_cert := certs[0]
+	end_cert := &certs[0]
 
 	some_time := time.Unix(0, 0)
-	errs, warns := store.verifyCertAt(&end_cert, some_time)
+	path, errs, warns := store.verifyCertAt(end_cert, some_time)
 	assert.Nil(t, warns)
+	assert.Nil(t, path)
 	assert.NotNil(t, errs)
 	assert.Equal(t, 1, len(errs), "there should be only one error")
 	assert.EqualValues(t, ERR_ISSUER_NOT_FOUND, errs[0].Code())

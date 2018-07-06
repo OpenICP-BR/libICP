@@ -20,6 +20,7 @@ type CAStore struct {
 	inited       bool
 }
 
+// Calls CAStore.Init() for you.
 func NewCAStore() *CAStore {
 	store := &CAStore{}
 	store.Init()
@@ -53,18 +54,18 @@ func (store *CAStore) Init() {
 // For now, this functions verifies: validity, integrity, propper chain of certification.
 //
 // Some of the error codes this may return are: ERR_NOT_BEFORE_DATE, ERR_NOT_AFTER_DATE, ERR_BAD_SIGNATURE, ERR_ISSUER_NOT_FOUND, ERR_MAX_DEPTH_REACHED
-func (store CAStore) VerifyCert(cert *Certificate) ([]CodedError, []CodedWarning) {
+func (store CAStore) VerifyCert(cert *Certificate) ([]*Certificate, []CodedError, []CodedWarning) {
 	return store.verifyCertAt(cert, time.Now())
 }
 
-func (store CAStore) verifyCertAt(cert_to_verify *Certificate, now time.Time) ([]CodedError, []CodedWarning) {
+func (store CAStore) verifyCertAt(cert_to_verify *Certificate, now time.Time) ([]*Certificate, []CodedError, []CodedWarning) {
 	ans_errs := make([]CodedError, 0)
 	ans_warns := make([]CodedWarning, 0)
 	// Get certification path
 	path, err := store.buildPath(cert_to_verify, _PATH_BUILDING_MAX_DEPTH)
 	if err != nil {
 		ans_errs = append(ans_errs, err)
-		return ans_errs, nil
+		return nil, ans_errs, nil
 	}
 	last_ca_max_ca_i := -1
 	last_ca_subj := ""
@@ -129,7 +130,6 @@ func (store CAStore) verifyCertAt(cert_to_verify *Certificate, now time.Time) ([
 			merr.SetParam("crl.ThisUpdate", issuer.crl.TBSCertList.ThisUpdate)
 			ans_warns = append(ans_warns, merr)
 		}
-
 	}
 
 	if len(ans_errs) == 0 {
@@ -138,7 +138,7 @@ func (store CAStore) verifyCertAt(cert_to_verify *Certificate, now time.Time) ([
 	if len(ans_warns) == 0 {
 		ans_warns = nil
 	}
-	return ans_errs, ans_warns
+	return path, ans_errs, ans_warns
 }
 
 // Adds a new CA (certificate authority) if, and only if, it is valid when check against the existing CAs.
@@ -167,7 +167,7 @@ func (store *CAStore) addCAatTime(cert *Certificate, now time.Time) []CodedError
 	if !cert.IsCA() {
 		return []CodedError{NewMultiError("certificate is not a certificate authority", ERR_NOT_CA, nil)}
 	}
-	if errs, _ := store.verifyCertAt(cert, now); errs != nil {
+	if _, errs, _ := store.verifyCertAt(cert, now); errs != nil {
 		return errs
 	}
 	store.raw_add_ca(cert)
