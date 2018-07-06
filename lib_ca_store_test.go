@@ -15,10 +15,10 @@ func Test_CAStore_buildPath_1(t *testing.T) {
 	certs, errs := NewCertificateFromBytes([]byte(ROOT_CA_BR_ICP_V1))
 	require.Nil(t, errs)
 	end_cert := certs[0]
-	ans, err := store.buildPath(end_cert, _PATH_BUILDING_MAX_DEPTH)
+	ans, err := store.buildPath(&end_cert, _PATH_BUILDING_MAX_DEPTH)
 	require.Nil(t, err)
-	right_ans := make([]Certificate, 1)
-	right_ans[0] = end_cert
+	right_ans := make([]*Certificate, 1)
+	right_ans[0] = &end_cert
 	assert.Equal(t, right_ans, ans)
 }
 
@@ -26,15 +26,15 @@ func Test_CAStore_buildPath_2(t *testing.T) {
 	store := CAStore{}
 	store.Init()
 	certs, err := NewCertificateFromBytes([]byte(pem_ac_soluti + ROOT_CA_BR_ICP_V2))
-	assert.Nil(t, err)
+	require.Nil(t, err)
 	end_cert := certs[0]
 	root := certs[1]
-	ans, errs := store.buildPath(end_cert, _PATH_BUILDING_MAX_DEPTH)
-	assert.Nil(t, errs)
-	right_ans := make([]Certificate, 2)
-	right_ans[0] = end_cert
-	right_ans[1] = root
-	assert.NotNil(t, ans)
+	ans, errs := store.buildPath(&end_cert, _PATH_BUILDING_MAX_DEPTH)
+	require.Nil(t, errs)
+	right_ans := make([]*Certificate, 2)
+	right_ans[0] = &end_cert
+	right_ans[1] = &root
+	require.NotNil(t, ans)
 	assert.Equal(t, right_ans, ans)
 }
 
@@ -50,14 +50,13 @@ func Test_CAStore_buildPath_3(t *testing.T) {
 	end_cert := certs[0]
 	middle_ca := certs[1]
 	root := certs[2]
-	store.cas[middle_ca.SubjectKeyID] = middle_ca
-	store.cas[middle_ca.Subject] = middle_ca
-	ans, errs := store.buildPath(end_cert, _PATH_BUILDING_MAX_DEPTH)
+	store.raw_add_ca(&middle_ca)
+	ans, errs := store.buildPath(&end_cert, _PATH_BUILDING_MAX_DEPTH)
 	assert.Nil(t, errs)
-	right_ans := make([]Certificate, 3)
-	right_ans[0] = end_cert
-	right_ans[1] = middle_ca
-	right_ans[2] = root
+	right_ans := make([]*Certificate, 3)
+	right_ans[0] = &end_cert
+	right_ans[1] = &middle_ca
+	right_ans[2] = &root
 	assert.NotNil(t, ans)
 	assert.Equal(t, right_ans, ans)
 }
@@ -71,11 +70,16 @@ func Test_CAStore_verifyCertAt_1(t *testing.T) {
 	root := certs[1]
 
 	some_time := time.Unix(1528997864, 0)
-	errs := store.verifyCertAt(root, some_time)
+	errs, warns := store.verifyCertAt(&root, some_time)
 	assert.Nil(t, errs)
+	assert.Equal(t, 1, len(warns))
+	assert.EqualValues(t, ERR_UNKOWN_REVOCATION_STATUS, warns[0].Code())
 
-	errs = store.verifyCertAt(end_cert, some_time)
+	errs, warns = store.verifyCertAt(&end_cert, some_time)
 	assert.Nil(t, errs)
+	assert.Equal(t, 2, len(warns))
+	assert.EqualValues(t, ERR_UNKOWN_REVOCATION_STATUS, warns[0].Code())
+	assert.EqualValues(t, ERR_UNKOWN_REVOCATION_STATUS, warns[1].Code())
 }
 
 func Test_CAStore_verifyCertAt_2(t *testing.T) {
@@ -87,13 +91,16 @@ func Test_CAStore_verifyCertAt_2(t *testing.T) {
 	root := certs[1]
 
 	some_time := time.Unix(0, 0)
-	errs := store.verifyCertAt(root, some_time)
-	assert.NotNil(t, errs)
+	errs, warns := store.verifyCertAt(&root, some_time)
+	assert.Equal(t, 1, len(warns))
+	assert.EqualValues(t, ERR_UNKOWN_REVOCATION_STATUS, warns[0].Code())
 	assert.Equal(t, 1, len(errs), "there should be only one error")
 	assert.EqualValues(t, ERR_NOT_BEFORE_DATE, errs[0].Code())
 
-	errs = store.verifyCertAt(end_cert, some_time)
-	assert.NotNil(t, errs)
+	errs, warns = store.verifyCertAt(&end_cert, some_time)
+	assert.Equal(t, 2, len(warns))
+	assert.EqualValues(t, ERR_UNKOWN_REVOCATION_STATUS, warns[0].Code())
+	assert.EqualValues(t, ERR_UNKOWN_REVOCATION_STATUS, warns[1].Code())
 	assert.Equal(t, 2, len(errs), "there should be only two error")
 	assert.EqualValues(t, ERR_NOT_BEFORE_DATE, errs[0].Code())
 	assert.EqualValues(t, ERR_NOT_BEFORE_DATE, errs[1].Code())
@@ -107,7 +114,8 @@ func Test_CAStore_verifyCertAt_3(t *testing.T) {
 	end_cert := certs[0]
 
 	some_time := time.Unix(0, 0)
-	errs := store.verifyCertAt(end_cert, some_time)
+	errs, warns := store.verifyCertAt(&end_cert, some_time)
+	assert.Nil(t, warns)
 	assert.NotNil(t, errs)
 	assert.Equal(t, 1, len(errs), "there should be only one error")
 	assert.EqualValues(t, ERR_ISSUER_NOT_FOUND, errs[0].Code())
@@ -122,14 +130,14 @@ func Test_CAStore_addCAatTime(t *testing.T) {
 	middle_ca := certs[1]
 	some_time := time.Unix(1528997864, 0)
 
-	errs := store.addCAatTime(end_ca, some_time)
+	errs := store.addCAatTime(&end_ca, some_time)
 	assert.Equal(t, len(errs), 1)
 	assert.EqualValues(t, errs[0].Code(), ERR_ISSUER_NOT_FOUND)
 
-	errs = store.addCAatTime(middle_ca, some_time)
+	errs = store.addCAatTime(&middle_ca, some_time)
 	assert.Nil(t, errs)
 
-	errs = store.addCAatTime(end_ca, some_time)
+	errs = store.addCAatTime(&end_ca, some_time)
 	assert.Nil(t, errs)
 }
 
@@ -159,7 +167,7 @@ func Test_CAStore_AddTestingRootCA_1(t *testing.T) {
 	require.Equal(t, len(certs), 1)
 
 	store := NewCAStore()
-	errs = store.AddTestingRootCA(certs[0])
+	errs = store.AddTestingRootCA(&certs[0])
 	assert.Nil(t, errs)
 	assert.Equal(t, 8, len(store.cas))
 }
@@ -170,7 +178,7 @@ func Test_CAStore_AddTestingRootCA_2(t *testing.T) {
 	require.Equal(t, 1, len(certs))
 
 	store := NewCAStore()
-	errs = store.AddTestingRootCA(certs[0])
+	errs = store.AddTestingRootCA(&certs[0])
 	assert.Equal(t, 1, len(errs))
 	assert.EqualValues(t, ERR_TEST_CA_IMPROPPER_NAME, errs[0].Code())
 	assert.Equal(t, 6, len(store.cas))

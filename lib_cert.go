@@ -13,12 +13,13 @@ import (
 	"time"
 )
 
-type CRLStatusT string
+type CRLStatus int
 
 const (
-	CRL_REVOKED             = "CRL_REVOKED"
-	CRL_NOT_REVOKED         = "CRL_NOT_REVOKED"
-	CRL_UNSURE_OR_NOT_FOUND = "CRL_UNSURE_OR_NOT_FOUND"
+	CRL_UNSURE_OR_NOT_FOUND = 0
+	// CRL_NOT_REVOKED is also used when the CA offers no means to check revocation status.
+	CRL_NOT_REVOKED = 1
+	CRL_REVOKED     = 2
 )
 
 type Certificate struct {
@@ -35,8 +36,12 @@ type Certificate struct {
 	ExtKeyUsage              ExtKeyUsage
 	ExtBasicConstraints      ExtBasicConstraints
 	ExtCRLDistributionPoints ExtCRLDistributionPoints
-	LastCRLCheck             time.Time
-	CRLStatus                CRLStatusT
+	CRLStatus                CRLStatus
+	// CRLLastCheck store the date of the CRL used to check, not the time when the verification was done
+	CRLLastCheck time.Time
+	// These are for CAs only
+	crl             certificateListT
+	crl_last_update time.Time
 }
 
 // Accepts PEM, DER and a mix of both.
@@ -242,6 +247,21 @@ func (cert *Certificate) parseExtensions() CodedError {
 		}
 	}
 	return nil
+}
+
+func (cert *Certificate) check_crl(issuer Certificate) {
+	has := issuer.crl.TBSCertList.HasCert(cert.base.TBSCertificate.SerialNumber)
+	cert.CRLLastCheck = issuer.crl_last_update
+	if has {
+		cert.CRLStatus = CRL_REVOKED
+	} else if !has && !issuer.crl_last_update.IsZero() {
+		cert.CRLStatus = CRL_NOT_REVOKED
+	} else {
+		cert.CRLStatus = CRL_UNSURE_OR_NOT_FOUND
+	}
+}
+
+func (cert *Certificate) download_crl() {
 }
 
 func list_crls(certs []Certificate) map[string]bool {

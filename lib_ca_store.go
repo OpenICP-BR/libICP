@@ -15,9 +15,9 @@ const ALL_CAs_ZIP_URL = "http://acraiz.icpbrasil.gov.br/credenciadas/Certificado
 
 type CAStore struct {
 	// If true, it will attempt to download missing CAs and CRLs
-	AutoDownloads bool
-	cas           map[string]Certificate
-	inited        bool
+	AutoDownload bool
+	cas          map[string]*Certificate
+	inited       bool
 }
 
 func NewCAStore() *CAStore {
@@ -43,10 +43,9 @@ func (store *CAStore) Init() {
 		panic(errs)
 	}
 	// Save them
-	store.cas = make(map[string]Certificate)
-	for _, cert := range certs {
-		store.cas[cert.SubjectKeyID] = cert
-		store.cas[cert.Subject] = cert
+	store.cas = make(map[string]*Certificate)
+	for i, _ := range certs {
+		store.raw_add_ca(&certs[i])
 	}
 	store.inited = true
 }
@@ -54,17 +53,18 @@ func (store *CAStore) Init() {
 // For now, this functions verifies: validity, integrity, propper chain of certification.
 //
 // Some of the error codes this may return are: ERR_NOT_BEFORE_DATE, ERR_NOT_AFTER_DATE, ERR_BAD_SIGNATURE, ERR_ISSUER_NOT_FOUND, ERR_MAX_DEPTH_REACHED
-func (store CAStore) VerifyCert(cert Certificate) []CodedError {
+func (store CAStore) VerifyCert(cert *Certificate) ([]CodedError, []CodedWarning) {
 	return store.verifyCertAt(cert, time.Now())
 }
 
-func (store CAStore) verifyCertAt(cert Certificate, now time.Time) []CodedError {
+func (store CAStore) verifyCertAt(cert_to_verify *Certificate, now time.Time) ([]CodedError, []CodedWarning) {
 	ans_errs := make([]CodedError, 0)
+	ans_warns := make([]CodedWarning, 0)
 	// Get certification path
-	path, err := store.buildPath(cert, _PATH_BUILDING_MAX_DEPTH)
+	path, err := store.buildPath(cert_to_verify, _PATH_BUILDING_MAX_DEPTH)
 	if err != nil {
 		ans_errs = append(ans_errs, err)
-		return ans_errs
+		return ans_errs, nil
 	}
 	last_ca_max_ca_i := -1
 	last_ca_subj := ""
@@ -101,32 +101,55 @@ func (store CAStore) verifyCertAt(cert Certificate, now time.Time) []CodedError 
 			ans_errs = append(ans_errs, merr)
 		}
 
-		issuer := Certificate{}
+		var issuer *Certificate
 		if i == len(path)-1 {
-			issuer = path[len(path)-1]
+			issuer = path[i]
 		} else {
 			issuer = path[i+1]
 		}
-		if errs := cert.verifySignedBy(issuer); errs != nil {
+		if errs := cert.verifySignedBy(*issuer); errs != nil {
 			ans_errs = append(ans_errs, errs...)
 		}
+
+		if issuer.crl_last_update.Before(now) && store.AutoDownload {
+			issuer.download_crl()
+		}
+		cert.check_crl(*issuer)
+		if cert.CRLStatus == CRL_REVOKED {
+			merr := NewMultiError("certificate revoked (source: CRL)", ERR_REVOKED, nil)
+			merr.SetParam("cert.Subject", cert.Subject)
+			merr.SetParam("cert.Issuer", cert.Issuer)
+			merr.SetParam("crl.ThisUpdate", issuer.crl.TBSCertList.ThisUpdate)
+			ans_errs = append(ans_errs, merr)
+		}
+		if cert.CRLStatus == CRL_UNSURE_OR_NOT_FOUND {
+			merr := NewMultiError("certificate possibly revoked", ERR_UNKOWN_REVOCATION_STATUS, nil)
+			merr.SetParam("cert.Subject", cert.Subject)
+			merr.SetParam("cert.Issuer", cert.Issuer)
+			merr.SetParam("crl.ThisUpdate", issuer.crl.TBSCertList.ThisUpdate)
+			ans_warns = append(ans_warns, merr)
+		}
+
 	}
 
 	if len(ans_errs) == 0 {
 		ans_errs = nil
 	}
-	return ans_errs
+	if len(ans_warns) == 0 {
+		ans_warns = nil
+	}
+	return ans_errs, ans_warns
 }
 
 // Adds a new CA (certificate authority) if, and only if, it is valid when check against the existing CAs.
-func (store *CAStore) AddCA(cert Certificate) []CodedError {
+func (store *CAStore) AddCA(cert *Certificate) []CodedError {
 	return store.addCAatTime(cert, time.Now())
 }
 
 // Adds a new root CA for testing proposes. It MUST have as subject and issuer: TESTING_ROOT_CA_SUBJECT
 //
 // This should NEVER be used in production!
-func (store *CAStore) AddTestingRootCA(cert Certificate) []CodedError {
+func (store *CAStore) AddTestingRootCA(cert *Certificate) []CodedError {
 	if cert.Subject != cert.Issuer || cert.Subject != TESTING_ROOT_CA_SUBJECT {
 		merr := NewMultiError("AddTestingRootCA REQUIRES the testing CA to have a specific subject and issuer", ERR_TEST_CA_IMPROPPER_NAME, nil)
 		merr.SetParam("expected-value", TESTING_ROOT_CA_SUBJECT)
@@ -135,27 +158,33 @@ func (store *CAStore) AddTestingRootCA(cert Certificate) []CodedError {
 		return []CodedError{merr}
 	}
 
-	store.cas[cert.SubjectKeyID] = cert
-	store.cas[cert.Subject] = cert
+	store.raw_add_ca(cert)
 
 	return nil
 }
 
-func (store *CAStore) addCAatTime(cert Certificate, now time.Time) []CodedError {
+func (store *CAStore) addCAatTime(cert *Certificate, now time.Time) []CodedError {
 	if !cert.IsCA() {
 		return []CodedError{NewMultiError("certificate is not a certificate authority", ERR_NOT_CA, nil)}
 	}
-	if errs := store.verifyCertAt(cert, now); errs != nil {
+	if errs, _ := store.verifyCertAt(cert, now); errs != nil {
 		return errs
+	}
+	store.raw_add_ca(cert)
+	return nil
+}
+
+func (store *CAStore) raw_add_ca(cert *Certificate) {
+	if cert == nil {
+		return
 	}
 	store.cas[cert.SubjectKeyID] = cert
 	store.cas[cert.Subject] = cert
-	return nil
 }
 
 const _PATH_BUILDING_MAX_DEPTH = 16
 
-func (store CAStore) buildPath(end_cert Certificate, max_depth int) ([]Certificate, CodedError) {
+func (store CAStore) buildPath(end_cert *Certificate, max_depth int) ([]*Certificate, CodedError) {
 	issuer, ok := store.cas[end_cert.AuthorityKeyID]
 	if !ok {
 		// Try again
@@ -171,7 +200,7 @@ func (store CAStore) buildPath(end_cert Certificate, max_depth int) ([]Certifica
 		merr.SetParam("SubjectKeyID", end_cert.SubjectKeyID)
 		return nil, merr
 	}
-	ans := make([]Certificate, 1)
+	ans := make([]*Certificate, 1)
 	ans[0] = end_cert
 	if end_cert.IsSelfSigned() {
 		// We reached a self signed CA
@@ -211,7 +240,7 @@ func (store *CAStore) zip_step(file *zip.File) bool {
 
 	// Add them all!
 	for _, cert := range certs {
-		store.AddCA(cert)
+		store.AddCA(&cert)
 	}
 
 	return true

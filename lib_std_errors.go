@@ -25,6 +25,8 @@ const (
 	ERR_BASIC_CONSTRAINTS_MAX_PATH_EXCEDED
 	ERR_NETWORK_ERROR
 	ERR_UNZIP_ERROR
+	ERR_REVOKED
+	ERR_UNKOWN_REVOCATION_STATUS
 )
 
 var errors_map_string = map[ErrorCode]string{
@@ -48,6 +50,8 @@ var errors_map_string = map[ErrorCode]string{
 	ERR_BASIC_CONSTRAINTS_MAX_PATH_EXCEDED: "ERR_BASIC_CONSTRAINTS_MAX_PATH_EXCEDED",
 	ERR_NETWORK_ERROR:                      "ERR_NETWORK_ERROR",
 	ERR_UNZIP_ERROR:                        "ERR_UNZIP_ERROR",
+	ERR_REVOKED:                            "ERR_REVOKED",
+	ERR_UNKOWN_REVOCATION_STATUS:           "ERR_UNKOWN_REVOCATION_STATUS",
 }
 
 func (err ErrorCode) String() string {

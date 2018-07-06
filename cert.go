@@ -69,7 +69,7 @@ type tbsCertListT struct {
 
 type revokedCertificateT struct {
 	RawContent         asn1.RawContent
-	UserCertificate    int
+	UserCertificate    *big.Int
 	RevocationDate     time.Time
 	CRLEntryExtensions []extensionT `asn1:"optional,omitempty"`
 }
@@ -85,4 +85,28 @@ func (lcerts *tbsCertListT) SetAppropriateVersion() {
 			return
 		}
 	}
+}
+
+func (lcerts tbsCertListT) HasCriticalExtension() bool {
+	for _, ext := range lcerts.CRLExtensions {
+		if ext.Critical {
+			return true
+		}
+	}
+	return false
+}
+
+func (lcerts tbsCertListT) HasCert(serial *big.Int) bool {
+	if serial == nil {
+		return false
+	}
+	for _, rev := range lcerts.RevokedCertificates {
+		if rev.UserCertificate == nil {
+			continue
+		}
+		if serial.Cmp(rev.UserCertificate) == 0 {
+			return true
+		}
+	}
+	return false
 }
