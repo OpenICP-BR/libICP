@@ -71,6 +71,7 @@ func (this nameT) Map() map[string]string {
 	return m
 }
 
+// TODO(x): Unkown oids should be sorted so calls to this function always returns the same thing.
 func (this nameT) String() string {
 	// Prepare stuff
 	ans := ""
