@@ -8,7 +8,6 @@ import (
 )
 
 type certificateT struct {
-	RawContent         asn1.RawContent
 	TBSCertificate     tbsCertificateT
 	SignatureAlgorithm algorithmIdentifierT
 	Signature          asn1.BitString
@@ -39,7 +38,7 @@ func (cert *tbsCertificateT) SetAppropriateVersion() {
 }
 
 func (cert certificateT) raw_content() asn1.RawContent {
-	return cert.RawContent
+	return cert.TBSCertificate.RawContent
 }
 
 func (cert certificateT) signature_algorithm() algorithmIdentifierT {
@@ -69,7 +68,7 @@ type certificateListT struct {
 }
 
 func (cert certificateListT) raw_content() asn1.RawContent {
-	return cert.RawContent
+	return cert.TBSCertList.RawContent
 }
 
 func (cert certificateListT) signature_algorithm() algorithmIdentifierT {
@@ -81,6 +80,7 @@ func (cert certificateListT) signature() asn1.BitString {
 }
 
 type tbsCertListT struct {
+	RawContent          asn1.RawContent
 	Version             int `asn1:"optional,omitempty"`
 	Signature           algorithmIdentifierT
 	Issuer              nameT
