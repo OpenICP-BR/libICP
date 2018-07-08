@@ -186,6 +186,9 @@ func (store *CAStore) raw_add_ca(cert *Certificate) {
 
 	// Attempt to download CRL
 	if store.AutoDownload {
+		println("Downloading CRL for", cert.SubjectMap()["CN"])
+		store.wg.Add(1)
+		go cert.download_crl(&store.wg)
 		store.wg.Add(1)
 		go cert.download_crl(&store.wg)
 	}

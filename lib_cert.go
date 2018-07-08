@@ -259,7 +259,6 @@ func (cert *Certificate) parse_extensions() CodedError {
 			if ext.Critical {
 				merr := NewMultiError("unsupported critical extension", ERR_UNSUPORTED_CRITICAL_EXTENSION, nil)
 				merr.SetParam("extension id", id)
-				println("err")
 				return merr
 			}
 		}
@@ -276,25 +275,27 @@ func (cert Certificate) CRLLastError() CodedError {
 
 func (cert *Certificate) parse_crl(data []byte) CodedError {
 	new_crl := certificateListT{}
+	println("Parsing CRL for", cert.SubjectMap()["CN"])
 
 	// Unmarshal data
 	_, err := asn1.Unmarshal(data, &new_crl)
 	if err != nil {
 		merr := NewMultiError("failed to parse CRL", ERR_PARSE_CRL, nil, err)
 		merr.SetParam("raw-data", data)
+		println(err.Error())
 		return merr
 	}
 
 	// Verify signature
 	pubkey, err := cert.base.TBSCertificate.SubjectPublicKeyInfo.RSAPubKey()
 	if err != nil {
+		println(err.Error())
 		return NewMultiError("failed to RSA parse public key", ERR_PARSE_RSA_PUBKEY, nil, err)
 	}
-	fmt.Println(cert.SubjectMap()["CN"])
-	fmt.Println(new_crl.TBSCertList.Issuer.Map()["CN"])
+	fmt.Println("Cheking CRL for", cert.SubjectMap()["CN"])
 	cerr := verify_signaure(new_crl, pubkey)
 	if cerr != nil {
-		fmt.Println(cerr.Error())
+		println(cerr.Error())
 		return cerr
 	}
 	cert.crl = new_crl
@@ -302,15 +303,16 @@ func (cert *Certificate) parse_crl(data []byte) CodedError {
 }
 
 func (cert *Certificate) download_crl(wg *sync.WaitGroup) {
-	defer wg.Done()
-
 	if !cert.crl_lock.TryLock() {
+		println("Failed to lock")
+		wg.Done()
 		return
 	}
 	defer cert.crl_lock.Unlock()
 
 	var last_error CodedError
 	for _, url := range cert.CRLDistributionPoints().URLs {
+		println(url)
 		var buf []byte
 		buf, _, last_error = http_get(url)
 		if last_error != nil {
@@ -322,4 +324,6 @@ func (cert *Certificate) download_crl(wg *sync.WaitGroup) {
 		}
 	}
 	cert.crl_last_error = last_error
+	println("finished")
+	wg.Done()
 }
