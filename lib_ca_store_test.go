@@ -161,7 +161,7 @@ func Test_CAStore_parse_cas_zip(t *testing.T) {
 }
 
 func Test_CAStore_list_crls(t *testing.T) {
-	store := NewCAStore()
+	store := NewCAStore(false)
 	crls := store.list_crls()
 	assert.Equal(t, crls, map[string]bool{
 		"http://acraiz.icpbrasil.gov.br/LCRacraizv1.crl": true,
@@ -175,7 +175,7 @@ func Test_CAStore_AddTestingRootCA_1(t *testing.T) {
 	require.Nil(t, errs)
 	require.Equal(t, len(certs), 1)
 
-	store := NewCAStore()
+	store := NewCAStore(false)
 	errs = store.AddTestingRootCA(&certs[0])
 	assert.Nil(t, errs)
 	assert.Equal(t, 8, len(store.cas))
@@ -186,7 +186,7 @@ func Test_CAStore_AddTestingRootCA_2(t *testing.T) {
 	require.Nil(t, errs)
 	require.Equal(t, 1, len(certs))
 
-	store := NewCAStore()
+	store := NewCAStore(false)
 	errs = store.AddTestingRootCA(&certs[0])
 	assert.Equal(t, 1, len(errs))
 	assert.EqualValues(t, ERR_TEST_CA_IMPROPPER_NAME, errs[0].Code())

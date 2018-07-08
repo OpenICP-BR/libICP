@@ -27,6 +27,8 @@ const (
 	ERR_UNZIP_ERROR
 	ERR_REVOKED
 	ERR_UNKOWN_REVOCATION_STATUS
+	ERR_PARSE_CRL
+	ERR_HTTP
 )
 
 var errors_map_string = map[ErrorCode]string{
@@ -52,6 +54,8 @@ var errors_map_string = map[ErrorCode]string{
 	ERR_UNZIP_ERROR:                        "ERR_UNZIP_ERROR",
 	ERR_REVOKED:                            "ERR_REVOKED",
 	ERR_UNKOWN_REVOCATION_STATUS:           "ERR_UNKOWN_REVOCATION_STATUS",
+	ERR_PARSE_CRL:                          "ERR_PARSE_CRL",
+	ERR_HTTP:                               "ERR_HTTP",
 }
 
 func (err ErrorCode) String() string {

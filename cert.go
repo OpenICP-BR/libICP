@@ -38,6 +38,18 @@ func (cert *tbsCertificateT) SetAppropriateVersion() {
 	}
 }
 
+func (cert certificateT) raw_content() asn1.RawContent {
+	return cert.RawContent
+}
+
+func (cert certificateT) signature_algorithm() algorithmIdentifierT {
+	return cert.SignatureAlgorithm
+}
+
+func (cert certificateT) signature() asn1.BitString {
+	return cert.Signature
+}
+
 func nice_hex(buf []byte) string {
 	ans := ""
 	for i := 0; i < len(buf); i++ {
@@ -56,19 +68,29 @@ type certificateListT struct {
 	Signature          asn1.BitString
 }
 
+func (cert certificateListT) raw_content() asn1.RawContent {
+	return cert.RawContent
+}
+
+func (cert certificateListT) signature_algorithm() algorithmIdentifierT {
+	return cert.SignatureAlgorithm
+}
+
+func (cert certificateListT) signature() asn1.BitString {
+	return cert.Signature
+}
+
 type tbsCertListT struct {
-	RawContent          asn1.RawContent
 	Version             int `asn1:"optional,omitempty"`
 	Signature           algorithmIdentifierT
 	Issuer              nameT
 	ThisUpdate          time.Time
 	NextUpdate          time.Time             `asn1:"optional,omitempty"`
 	RevokedCertificates []revokedCertificateT `asn1:"optional,omitempty"`
-	CRLExtensions       []extensionT          `asn1:"optional,omitempty,tag:0"`
+	CRLExtensions       []extensionT          `asn1:"optional,omitempty,tag:0,explicit"`
 }
 
 type revokedCertificateT struct {
-	RawContent         asn1.RawContent
 	UserCertificate    *big.Int
 	RevocationDate     time.Time
 	CRLEntryExtensions []extensionT `asn1:"optional,omitempty"`

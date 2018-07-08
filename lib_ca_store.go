@@ -4,7 +4,7 @@ import (
 	"archive/zip"
 	"bytes"
 	"io/ioutil"
-	"net/http"
+	"sync"
 	"time"
 )
 
@@ -18,11 +18,14 @@ type CAStore struct {
 	AutoDownload bool
 	cas          map[string]*Certificate
 	inited       bool
+	wg           sync.WaitGroup
 }
 
 // Calls CAStore.Init() for you.
-func NewCAStore() *CAStore {
-	store := &CAStore{}
+func NewCAStore(AutoDownload bool) *CAStore {
+	store := &CAStore{
+		AutoDownload: AutoDownload,
+	}
 	store.Init()
 	return store
 }
@@ -113,9 +116,9 @@ func (store CAStore) verifyCertAt(cert_to_verify *Certificate, now time.Time) ([
 		}
 
 		if issuer.is_crl_outdated(now) && store.AutoDownload {
-			issuer.download_crl()
+			issuer.download_crl(nil)
 		}
-		cert.verify_issuer_crl(*issuer)
+		cert.check_against_issuer_crl(issuer)
 
 		status, _ := cert.CRLStatus()
 		if status == CRL_REVOKED {
@@ -180,8 +183,19 @@ func (store *CAStore) raw_add_ca(cert *Certificate) {
 	if cert == nil {
 		return
 	}
+
+	// Attempt to download CRL
+	if store.AutoDownload {
+		store.wg.Add(1)
+		go cert.download_crl(&store.wg)
+	}
+
 	store.cas[cert.SubjectKeyId()] = cert
 	store.cas[cert.Subject()] = cert
+}
+
+func (store CAStore) WaitDownloads() {
+	store.wg.Wait()
 }
 
 const _PATH_BUILDING_MAX_DEPTH = 16
@@ -276,18 +290,11 @@ func (store *CAStore) parse_cas_zip(raw []byte, raw_len int64) error {
 
 // This function will attempt download all CAs from ALL_CAs_ZIP_URL. This runs regardless of CAStore.AutoDownload
 func (store *CAStore) DownloadAllCAs() error {
-	// Get the data
-	resp, err := http.Get(ALL_CAs_ZIP_URL)
+	buf, l, err := http_get(ALL_CAs_ZIP_URL)
 	if err != nil {
 		return err
 	}
-	raw, err := ioutil.ReadAll(resp.Body)
-	resp.Body.Close()
-	if err != nil {
-		return err
-	}
-
-	return store.parse_cas_zip(raw, resp.ContentLength)
+	return store.parse_cas_zip(buf, l)
 }
 
 func (store CAStore) list_crls() map[string]bool {

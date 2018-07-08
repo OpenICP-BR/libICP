@@ -26,27 +26,23 @@ func idCeCRLDistributionPoint() asn1.ObjectIdentifier {
 }
 
 type attributeT struct {
-	RawContent asn1.RawContent
-	Type       asn1.ObjectIdentifier
-	Values     []interface{} `asn1:"set"`
+	Type   asn1.ObjectIdentifier
+	Values []interface{} `asn1:"set"`
 }
 
 type extensionT struct {
-	RawContent asn1.RawContent
-	ExtnID     asn1.ObjectIdentifier
-	Critical   bool `asn1:"optional"`
-	ExtnValue  []byte
+	ExtnID    asn1.ObjectIdentifier
+	Critical  bool `asn1:"optional"`
+	ExtnValue []byte
 }
 
 type attributeCertificateV1_T struct {
-	RawContent         asn1.RawContent
 	AcInfo             attributeCertificateInfoV1_T
 	SignatureAlgorithm algorithmIdentifierT
 	Signature          asn1.BitString
 }
 
 type subjectOfAttributeCertificateInfoV1_T struct {
-	RawContent        asn1.RawContent
 	BaseCertificateID issuerSerialT  `asn1:"tag:0,optional,omitempty"`
 	SubjectName       []generalNameT `asn1:"tag:1,optional,omitempty"`
 }
@@ -113,7 +109,6 @@ func (ans *ExtKeyUsage) fromExtensionT(ext extensionT) CodedError {
 	_, err := asn1.Unmarshal(ext.ExtnValue, &seq)
 	if err != nil {
 		merr := NewMultiError("failed to parse key usage extention as bit sequence", ERR_PARSE_EXTENSION, nil, err)
-		merr.SetParam("raw-data", ext.RawContent)
 		merr.SetParam("raw-ExtnValue", ext.ExtnValue)
 		return merr
 	}
@@ -145,7 +140,6 @@ func (ans *ExtBasicConstraints) fromExtensionT(ext extensionT) CodedError {
 	_, err := asn1.Unmarshal(ext.ExtnValue, &raw)
 	if err != nil {
 		merr := NewMultiError("failed to parse basic constraints extention", ERR_PARSE_EXTENSION, nil, err)
-		merr.SetParam("raw-data", ext.RawContent)
 		merr.SetParam("raw-ExtnValue", ext.ExtnValue)
 		return merr
 	}
@@ -173,7 +167,6 @@ func (ans *ExtCRLDistributionPoints) fromExtensionT(ext extensionT) CodedError {
 	_, err := asn1.Unmarshal(ext.ExtnValue, &raw)
 	if err != nil {
 		merr := NewMultiError("failed to parse CRL distribution points extention", ERR_PARSE_EXTENSION, nil, err)
-		merr.SetParam("raw-data", ext.RawContent)
 		merr.SetParam("raw-ExtnValue", ext.ExtnValue)
 		return merr
 	}
@@ -203,7 +196,6 @@ func (ans *ExtAuthorityKeyId) fromExtensionT(ext extensionT) CodedError {
 	_, err := asn1.Unmarshal(ext.ExtnValue, &raw)
 	if err != nil {
 		merr := NewMultiError("failed to parse authority key id extention", ERR_PARSE_EXTENSION, nil, err)
-		merr.SetParam("raw-data", ext.RawContent)
 		merr.SetParam("raw-ExtnValue", ext.ExtnValue)
 		return merr
 	}
@@ -221,7 +213,6 @@ func (ans *ExtSubjectKeyId) fromExtensionT(ext extensionT) CodedError {
 	_, err := asn1.Unmarshal(ext.ExtnValue, &ans.KeyId)
 	if err != nil {
 		merr := NewMultiError("failed to parse subject key id extention", ERR_PARSE_EXTENSION, nil, err)
-		merr.SetParam("raw-data", ext.RawContent)
 		merr.SetParam("raw-ExtnValue", ext.ExtnValue)
 		return merr
 	}

@@ -1,17 +1,15 @@
 package icp
 
 import (
-	"crypto"
-	"crypto/rsa"
-	"crypto/sha1"
-	"crypto/sha256"
-	"crypto/sha512"
 	"encoding/asn1"
 	"encoding/pem"
-	"hash"
+	"fmt"
 	"io/ioutil"
 	"reflect"
+	"sync"
 	"time"
+
+	"github.com/LK4D4/trylock"
 )
 
 type CRLStatus int
@@ -35,6 +33,8 @@ type Certificate struct {
 	// These are calculated based on the CRL made by this cert issuer
 	crl_status     CRLStatus
 	crl_last_check time.Time
+	crl_lock       trylock.Mutex
+	crl_last_error CodedError
 }
 
 // Accepts PEM, DER and a mix of both.
@@ -196,29 +196,6 @@ func (cert Certificate) IsCA() bool {
 // Possible errors are: ERR_UNKOWN_ALGORITHM, ERR_NOT_CA, ERR_PARSE_RSA_PUBKEY, ERR_BAD_SIGNATURE
 func (cert Certificate) verifySignedBy(issuer Certificate) []CodedError {
 	ans_errs := make([]CodedError, 0)
-	// Check algorithm
-	alg := cert.base.SignatureAlgorithm.Algorithm
-	var tbs_hasher hash.Hash
-	var tbs_hash_alg crypto.Hash
-	switch {
-	case alg.Equal(idSha1WithRSAEncryption()):
-		tbs_hasher = sha1.New()
-		tbs_hash_alg = crypto.SHA1
-	case alg.Equal(idSha256WithRSAEncryption()):
-		tbs_hasher = sha256.New()
-		tbs_hash_alg = crypto.SHA256
-	case alg.Equal(idSha384WithRSAEncryption()):
-		tbs_hasher = sha512.New384()
-		tbs_hash_alg = crypto.SHA384
-	case alg.Equal(idSha512WithRSAEncryption()):
-		tbs_hasher = sha512.New()
-		tbs_hash_alg = crypto.SHA512
-	default:
-		merr := NewMultiError("unknown algorithm", ERR_UNKOWN_ALGORITHM, nil)
-		merr.SetParam("algorithm", alg)
-		ans_errs = append(ans_errs, merr)
-		return ans_errs
-	}
 
 	// Check CA permission from issuer
 	if !issuer.KeyUsage().Exists || !issuer.KeyUsage().KeyCertSign {
@@ -232,28 +209,22 @@ func (cert Certificate) verifySignedBy(issuer Certificate) []CodedError {
 		ans_errs = append(ans_errs, merr)
 	}
 
-	// Write raw value
-	tbs_hasher.Write(cert.base.TBSCertificate.RawContent)
-	hash_ans := make([]byte, 0)
-	hash_ans = tbs_hasher.Sum(hash_ans)
-
-	// Get key and signature
-	sig := cert.base.Signature.Bytes
+	// Get key
 	pubkey, err := issuer.base.TBSCertificate.SubjectPublicKeyInfo.RSAPubKey()
 	if err != nil {
-		ans_errs = append(ans_errs, NewMultiError("failed to parse public key", ERR_PARSE_RSA_PUBKEY, nil, err))
+		ans_errs = append(ans_errs, NewMultiError("failed to RSA parse public key", ERR_PARSE_RSA_PUBKEY, nil, err))
 	}
+
 	if len(ans_errs) > 0 {
 		return ans_errs
 	}
 
 	// Verify signature
-	err = rsa.VerifyPKCS1v15(&pubkey, tbs_hash_alg, hash_ans, sig)
-	if err != nil {
-		return []CodedError{NewMultiError("failed to verify signature", ERR_BAD_SIGNATURE, nil, err)}
-
+	cerr := verify_signaure(cert.base, pubkey)
+	if err == nil {
+		return nil
 	}
-	return nil
+	return []CodedError{cerr}
 }
 
 func (cert *Certificate) finish_parsing() CodedError {
@@ -296,20 +267,59 @@ func (cert *Certificate) parse_extensions() CodedError {
 	return nil
 }
 
-func (cert *Certificate) verify_issuer_crl(issuer Certificate) {
+func (cert *Certificate) check_against_issuer_crl(issuer *Certificate) {
 }
 
-func (cert *Certificate) download_crl() {
+func (cert Certificate) CRLLastError() CodedError {
+	return cert.crl_last_error
 }
 
-func list_crls(certs []Certificate) map[string]bool {
-	urls_set := make(map[string]bool)
+func (cert *Certificate) parse_crl(data []byte) CodedError {
+	new_crl := certificateListT{}
 
-	for _, cert := range certs {
-		for _, url := range cert.CRLDistributionPoints().URLs {
-			urls_set[url] = true
-		}
+	// Unmarshal data
+	_, err := asn1.Unmarshal(data, &new_crl)
+	if err != nil {
+		merr := NewMultiError("failed to parse CRL", ERR_PARSE_CRL, nil, err)
+		merr.SetParam("raw-data", data)
+		return merr
 	}
 
-	return urls_set
+	// Verify signature
+	pubkey, err := cert.base.TBSCertificate.SubjectPublicKeyInfo.RSAPubKey()
+	if err != nil {
+		return NewMultiError("failed to RSA parse public key", ERR_PARSE_RSA_PUBKEY, nil, err)
+	}
+	fmt.Println(cert.SubjectMap()["CN"])
+	fmt.Println(new_crl.TBSCertList.Issuer.Map()["CN"])
+	cerr := verify_signaure(new_crl, pubkey)
+	if cerr != nil {
+		fmt.Println(cerr.Error())
+		return cerr
+	}
+	cert.crl = new_crl
+	return nil
+}
+
+func (cert *Certificate) download_crl(wg *sync.WaitGroup) {
+	defer wg.Done()
+
+	if !cert.crl_lock.TryLock() {
+		return
+	}
+	defer cert.crl_lock.Unlock()
+
+	var last_error CodedError
+	for _, url := range cert.CRLDistributionPoints().URLs {
+		var buf []byte
+		buf, _, last_error = http_get(url)
+		if last_error != nil {
+			continue
+		}
+		last_error = cert.parse_crl(buf)
+		if last_error == nil {
+			break
+		}
+	}
+	cert.crl_last_error = last_error
 }
