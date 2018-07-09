@@ -85,3 +85,10 @@ func Test_TBSCertList_SetAppropriateVersion_4(t *testing.T) {
 	lcerts.SetAppropriateVersion()
 	assert.Equal(t, 1, lcerts.Version, "The version MUST be 1 when revokedCertificates.crlEntryExtensions is present (see RFC3280 Section 5.1 Page 49)")
 }
+
+func Test_Certificate_Signable(t *testing.T) {
+	cert := Certificate{}
+	assert.Equal(t, cert.TBSCertificate.RawContent, cert.GetRawContent())
+	assert.Equal(t, cert.SignatureAlgorithm, cert.GetSignatureAlgorithm())
+	assert.Equal(t, cert.Signature, cert.GetSignature())
+}

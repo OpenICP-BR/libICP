@@ -38,6 +38,26 @@ func Test_IdSha512WithRSAEncryption(t *testing.T) {
 	assert.Equal(t, "1.2.840.113549.1.1.13", IdSha512WithRSAEncryption().String())
 }
 
+func Test_IdSubjectKeyIdentifier(t *testing.T) {
+	assert.Equal(t, "2.5.29.14", IdSubjectKeyIdentifier().String())
+}
+
+func Test_IdAuthorityKeyIdentifier(t *testing.T) {
+	assert.Equal(t, "2.5.29.35", IdAuthorityKeyIdentifier().String())
+}
+
+func Test_IdCeBasicConstraints(t *testing.T) {
+	assert.Equal(t, "2.5.29.19", IdCeBasicConstraints().String())
+}
+
+func Test_IdCeKeyUsage(t *testing.T) {
+	assert.Equal(t, "2.5.29.15", IdCeKeyUsage().String())
+}
+
+func Test_IdCeCRLDistributionPoint(t *testing.T) {
+	assert.Equal(t, "2.5.29.31", IdCeCRLDistributionPoint().String())
+}
+
 func Test_IdCtContentInfo(t *testing.T) {
 	ans := "1.2.840.113549.1.9.16.1.6"
 	assert.Equal(t, ans, IdCtContentInfo().String(), "id-ct-contentInfo MUST be "+ans+" (see RFC5652 Section 3 Page 6)")
@@ -60,4 +80,5 @@ func Test_OID_Key2String(t *testing.T) {
 	assert.Equal(t, "O", OID_Key2String(IdOrganizationName()))
 	assert.Equal(t, "OU", OID_Key2String(IdOrganizationalUnitName()))
 	assert.Equal(t, "CN", OID_Key2String(IdCommonName()))
+	assert.Equal(t, "1.2.840.113549.1.7.1", OID_Key2String(IdData()))
 }
