@@ -85,7 +85,7 @@ type ExtKeyUsage struct {
 	CRLSign          bool
 }
 
-func (ans *ExtKeyUsage) FromExtensionT(ext Extension) CodedError {
+func (ans *ExtKeyUsage) FromExtension(ext Extension) CodedError {
 	seq := asn1.BitString{}
 	_, err := asn1.Unmarshal(ext.ExtnValue, &seq)
 	if err != nil {
@@ -116,7 +116,7 @@ type ExtBasicConstraintsRaw struct {
 	PathLen int `asn1:"optional"`
 }
 
-func (ans *ExtBasicConstraints) FromExtensionT(ext Extension) CodedError {
+func (ans *ExtBasicConstraints) FromExtension(ext Extension) CodedError {
 	raw := ExtBasicConstraintsRaw{}
 	_, err := asn1.Unmarshal(ext.ExtnValue, &raw)
 	if err != nil {
@@ -143,7 +143,7 @@ type ExtDistributionPoint struct {
 	FullName GeneralName `asn1:"optional,tag:0"`
 }
 
-func (ans *ExtCRLDistributionPoints) FromExtensionT(ext Extension) CodedError {
+func (ans *ExtCRLDistributionPoints) FromExtension(ext Extension) CodedError {
 	raw := []ExtCRLDistributionPointsRaw{}
 	_, err := asn1.Unmarshal(ext.ExtnValue, &raw)
 	if err != nil {
@@ -172,7 +172,7 @@ type ExtAuthorityKeyId struct {
 	KeyId  []byte
 }
 
-func (ans *ExtAuthorityKeyId) FromExtensionT(ext Extension) CodedError {
+func (ans *ExtAuthorityKeyId) FromExtension(ext Extension) CodedError {
 	raw := ExtAuthorityKeyIdRaw{}
 	_, err := asn1.Unmarshal(ext.ExtnValue, &raw)
 	if err != nil {
@@ -190,7 +190,7 @@ type ExtSubjectKeyId struct {
 	KeyId  []byte
 }
 
-func (ans *ExtSubjectKeyId) FromExtensionT(ext Extension) CodedError {
+func (ans *ExtSubjectKeyId) FromExtension(ext Extension) CodedError {
 	_, err := asn1.Unmarshal(ext.ExtnValue, &ans.KeyId)
 	if err != nil {
 		merr := NewMultiError("failed to parse subject key id extention", ERR_PARSE_EXTENSION, nil, err)
