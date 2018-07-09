@@ -1,96 +1,77 @@
-package icp
+package icp_internals
 
 import (
 	"encoding/asn1"
 	"math/big"
 )
 
-func idSubjectKeyIdentifier() asn1.ObjectIdentifier {
-	return asn1.ObjectIdentifier{2, 5, 29, 14}
+type Attribute struct {
+	RawContent asn1.RawContent
+	Type       asn1.ObjectIdentifier
+	Values     []interface{} `asn1:"set"`
 }
 
-func idAuthorityKeyIdentifier() asn1.ObjectIdentifier {
-	return asn1.ObjectIdentifier{2, 5, 29, 35}
-}
-
-func idCeBasicConstraints() asn1.ObjectIdentifier {
-	return asn1.ObjectIdentifier{2, 5, 29, 19}
-}
-
-func idCeKeyUsage() asn1.ObjectIdentifier {
-	return asn1.ObjectIdentifier{2, 5, 29, 15}
-}
-
-func idCeCRLDistributionPoint() asn1.ObjectIdentifier {
-	return asn1.ObjectIdentifier{2, 5, 29, 31}
-}
-
-type attributeT struct {
-	Type   asn1.ObjectIdentifier
-	Values []interface{} `asn1:"set"`
-}
-
-type extensionT struct {
+type Extension struct {
 	ExtnID    asn1.ObjectIdentifier
 	Critical  bool `asn1:"optional"`
 	ExtnValue []byte
 }
 
-type attributeCertificateV1_T struct {
-	AcInfo             attributeCertificateInfoV1_T
-	SignatureAlgorithm algorithmIdentifierT
+type AttributeCertificateV1 struct {
+	AcInfo             AttributeCertificateInfoV1
+	SignatureAlgorithm AlgorithmIdentifier
 	Signature          asn1.BitString
 }
 
-type subjectOfAttributeCertificateInfoV1_T struct {
-	BaseCertificateID issuerSerialT  `asn1:"tag:0,optional,omitempty"`
-	SubjectName       []generalNameT `asn1:"tag:1,optional,omitempty"`
+type SubjectOfAttributeCertificateInfoV1 struct {
+	BaseCertificateID IssuerAndSerial `asn1:"tag:0,optional,omitempty"`
+	SubjectName       []GeneralName   `asn1:"tag:1,optional,omitempty"`
 }
 
-type attributeCertificateInfoV1_T struct {
+type AttributeCertificateInfoV1 struct {
 	RawContent            asn1.RawContent
 	Version               int
-	Subject               subjectOfAttributeCertificateInfoV1_T
-	Issuer                []generalNameT
-	Signature             algorithmIdentifierT
+	Subject               SubjectOfAttributeCertificateInfoV1
+	Issuer                []GeneralName
+	Signature             AlgorithmIdentifier
 	SerialNumber          int
-	AttCertValidityPeriod generalizedValidityT
-	Attributes            []attributeT
+	AttCertValidityPeriod GeneralizedValidity
+	Attributes            []Attribute
 	IssuerUniqueID        asn1.BitString `asn1:"optional"`
-	Extensions            []extensionT   `asn1:"optional"`
+	Extensions            []Extension    `asn1:"optional"`
 }
 
 // Also known as AttributeCertificate
-type attributeCertificateV2_T struct {
+type AttributeCertificateV2 struct {
 	RawContent         asn1.RawContent
-	ACInfo             attributeCertificateInfoT
-	SignatureAlgorithm algorithmIdentifierT
+	ACInfo             AttributeCertificateInfo
+	SignatureAlgorithm AlgorithmIdentifier
 	SignatureValue     asn1.BitString
 }
 
-type attributeCertificateInfoT struct {
+type AttributeCertificateInfo struct {
 	RawContent             asn1.RawContent
 	Version                int
-	Holder                 holderT
-	IssuerV1               []generalNameT `asn1:"optional,omitempty"`
-	IssuerV2               v2FormT        `asn1:"optional,omitempty,tag:0"`
-	Signature              algorithmIdentifierT
+	Holder                 Holder
+	IssuerV1               []GeneralName `asn1:"optional,omitempty"`
+	IssuerV2               V2Form        `asn1:"optional,omitempty,tag:0"`
+	Signature              AlgorithmIdentifier
 	SerialNumber           int
-	AttrCertValidityPeriod generalizedValidityT
-	Attributes             []attributeT
+	AttrCertValidityPeriod GeneralizedValidity
+	Attributes             []Attribute
 	IssuerUniqueID         asn1.BitString `asn1:"optional,omitempty"`
-	Extensions             []extensionT   `asn1:"optional,omitempty"`
+	Extensions             []Extension    `asn1:"optional,omitempty"`
 }
 
-func (acert *attributeCertificateInfoT) SetAppropriateVersion() {
+func (acert *AttributeCertificateInfo) SetAppropriateVersion() {
 	acert.Version = 1
 }
 
-type v2FormT struct {
+type V2Form struct {
 	RawContent        asn1.RawContent
-	IssuerName        []generalNameT    `asn1:"optional,omitempty"`
-	BaseCertificateID issuerSerialT     `asn1:"optional,omitempty,tag:0"`
-	ObjectDigestInfo  objectDigestInfoT `asn1:"optional,omitempty,tag:1"`
+	IssuerName        []GeneralName    `asn1:"optional,omitempty"`
+	BaseCertificateID IssuerAndSerial  `asn1:"optional,omitempty,tag:0"`
+	ObjectDigestInfo  ObjectDigestInfo `asn1:"optional,omitempty,tag:1"`
 }
 
 type ExtKeyUsage struct {
@@ -104,7 +85,7 @@ type ExtKeyUsage struct {
 	CRLSign          bool
 }
 
-func (ans *ExtKeyUsage) fromExtensionT(ext extensionT) CodedError {
+func (ans *ExtKeyUsage) FromExtensionT(ext Extension) CodedError {
 	seq := asn1.BitString{}
 	_, err := asn1.Unmarshal(ext.ExtnValue, &seq)
 	if err != nil {
@@ -130,13 +111,13 @@ type ExtBasicConstraints struct {
 }
 
 // I had to created this struct because encoding/asn1 does can't ignore fields with `asn1:"-"`
-type extBasicConstraintsRawT struct {
+type ExtBasicConstraintsRaw struct {
 	CA      bool
 	PathLen int `asn1:"optional"`
 }
 
-func (ans *ExtBasicConstraints) fromExtensionT(ext extensionT) CodedError {
-	raw := extBasicConstraintsRawT{}
+func (ans *ExtBasicConstraints) FromExtensionT(ext Extension) CodedError {
+	raw := ExtBasicConstraintsRaw{}
 	_, err := asn1.Unmarshal(ext.ExtnValue, &raw)
 	if err != nil {
 		merr := NewMultiError("failed to parse basic constraints extention", ERR_PARSE_EXTENSION, nil, err)
@@ -154,16 +135,16 @@ type ExtCRLDistributionPoints struct {
 	URLs   []string
 }
 
-type extCRLDistributionPointsRawT struct {
-	DistributionPoint extDistributionPointT `asn1:"optional,tag:0"`
+type ExtCRLDistributionPointsRaw struct {
+	DistributionPoint ExtDistributionPoint `asn1:"optional,tag:0"`
 }
 
-type extDistributionPointT struct {
-	FullName generalNameT `asn1:"optional,tag:0"`
+type ExtDistributionPoint struct {
+	FullName GeneralName `asn1:"optional,tag:0"`
 }
 
-func (ans *ExtCRLDistributionPoints) fromExtensionT(ext extensionT) CodedError {
-	raw := []extCRLDistributionPointsRawT{}
+func (ans *ExtCRLDistributionPoints) FromExtensionT(ext Extension) CodedError {
+	raw := []ExtCRLDistributionPointsRaw{}
 	_, err := asn1.Unmarshal(ext.ExtnValue, &raw)
 	if err != nil {
 		merr := NewMultiError("failed to parse CRL distribution points extention", ERR_PARSE_EXTENSION, nil, err)
@@ -180,10 +161,10 @@ func (ans *ExtCRLDistributionPoints) fromExtensionT(ext extensionT) CodedError {
 	return nil
 }
 
-type extAuthorityKeyIdRawT struct {
-	KeyId          []byte         `asn1:"tag:0,optional"`
-	AuthCertIssuer []generalNameT `asn1:"tag:1,optional"`
-	AuthCertSerial *big.Int       `asn1:"tag:2,optional"`
+type ExtAuthorityKeyIdRaw struct {
+	KeyId          []byte        `asn1:"tag:0,optional"`
+	AuthCertIssuer []GeneralName `asn1:"tag:1,optional"`
+	AuthCertSerial *big.Int      `asn1:"tag:2,optional"`
 }
 
 type ExtAuthorityKeyId struct {
@@ -191,8 +172,8 @@ type ExtAuthorityKeyId struct {
 	KeyId  []byte
 }
 
-func (ans *ExtAuthorityKeyId) fromExtensionT(ext extensionT) CodedError {
-	raw := extAuthorityKeyIdRawT{}
+func (ans *ExtAuthorityKeyId) FromExtensionT(ext Extension) CodedError {
+	raw := ExtAuthorityKeyIdRaw{}
 	_, err := asn1.Unmarshal(ext.ExtnValue, &raw)
 	if err != nil {
 		merr := NewMultiError("failed to parse authority key id extention", ERR_PARSE_EXTENSION, nil, err)
@@ -209,7 +190,7 @@ type ExtSubjectKeyId struct {
 	KeyId  []byte
 }
 
-func (ans *ExtSubjectKeyId) fromExtensionT(ext extensionT) CodedError {
+func (ans *ExtSubjectKeyId) FromExtensionT(ext Extension) CodedError {
 	_, err := asn1.Unmarshal(ext.ExtnValue, &ans.KeyId)
 	if err != nil {
 		merr := NewMultiError("failed to parse subject key id extention", ERR_PARSE_EXTENSION, nil, err)
