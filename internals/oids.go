@@ -101,17 +101,17 @@ func IdSignedData() asn1.ObjectIdentifier {
 
 func OID_Key2String(oid asn1.ObjectIdentifier) string {
 	switch {
-	case oid.Equal(idCountryName()):
+	case oid.Equal(IdCountryName()):
 		return "C"
-	case oid.Equal(idStateOrProvinceName()):
+	case oid.Equal(IdStateOrProvinceName()):
 		return "S"
-	case oid.Equal(idLocalityName()):
+	case oid.Equal(IdLocalityName()):
 		return "L"
-	case oid.Equal(idOrganizationName()):
+	case oid.Equal(IdOrganizationName()):
 		return "O"
-	case oid.Equal(idOrganizationalUnitName()):
+	case oid.Equal(IdOrganizationalUnitName()):
 		return "OU"
-	case oid.Equal(idCommonName()):
+	case oid.Equal(IdCommonName()):
 		return "CN"
 	default:
 		return oid.String()

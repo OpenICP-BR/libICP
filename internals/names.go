@@ -16,7 +16,7 @@ type ATV struct {
 func (this Name) Map() map[string]string {
 	m := make(map[string]string)
 	for _, item := range this {
-		k := oid2str_key(item[0].Type)
+		k := OID_Key2String(item[0].Type)
 		m[k] = fmt.Sprintf("%s", item[0].Value)
 	}
 	return m

@@ -1,5 +1,7 @@
 libicp.a
 libicp.dll.a
+libicp_internals.a
+libicp_internals.dll.a
 coverage.out
 
 # Created by https://www.gitignore.io/api/go,linux,macos,sublimetext

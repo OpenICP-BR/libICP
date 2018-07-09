@@ -14,7 +14,7 @@ func Test_AttributeCertificateInfo_SetAppropriateVersion(t *testing.T) {
 }
 
 func Test_ExtKeyUsage_FromExtensionT(t *testing.T) {
-	raw_ext := extensionT{}
+	raw_ext := Extension{}
 	ext := ExtKeyUsage{}
 	err := ext.FromExtensionT(raw_ext)
 	require.NotNil(t, err)
@@ -22,7 +22,7 @@ func Test_ExtKeyUsage_FromExtensionT(t *testing.T) {
 }
 
 func Test_ExtBasicConstraints_FromExtensionT(t *testing.T) {
-	raw_ext := extensionT{}
+	raw_ext := Extension{}
 	ext := ExtBasicConstraints{}
 	err := ext.FromExtensionT(raw_ext)
 	require.NotNil(t, err)
@@ -30,7 +30,7 @@ func Test_ExtBasicConstraints_FromExtensionT(t *testing.T) {
 }
 
 func Test_ExtCRLDistributionPoints_FromExtensionT(t *testing.T) {
-	raw_ext := extensionT{}
+	raw_ext := Extension{}
 	ext := ExtCRLDistributionPoints{}
 	err := ext.FromExtensionT(raw_ext)
 	require.NotNil(t, err)

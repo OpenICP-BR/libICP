@@ -24,7 +24,7 @@ func Test_SignedData_SetAppropriateVersion_2(t *testing.T) {
 
 func Test_SignedData_SetAppropriateVersion_3(t *testing.T) {
 	sd := SignedData{}
-	sd.SignerInfos = make([]signerInfoT, 1)
+	sd.SignerInfos = make([]SignerInfo, 1)
 	sd.SignerInfos[0].Version = 3
 	sd.SetAppropriateVersion()
 	assert.Equal(t, 3, sd.Version, "The version MUST be 3 in this case as: any SignerInfo structures are version 3 (see RFC5625 Section 5.1 Page 9)")

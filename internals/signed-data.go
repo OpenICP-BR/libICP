@@ -31,7 +31,7 @@ func (sd *SignedData) SetAppropriateVersion() {
 
 func (sd *SignedData) HasOtherTypeCRL() bool {
 	for _, crl := range sd.CRLs {
-		if !isZeroOfUnderlyingType(crl.Other) {
+		if !IsZeroOfUnderlyingType(crl.Other) {
 			return true
 		}
 	}
@@ -40,7 +40,7 @@ func (sd *SignedData) HasOtherTypeCRL() bool {
 
 func (sd *SignedData) HasOtherTypeCert() bool {
 	for _, cert := range sd.Certificates {
-		if !isZeroOfUnderlyingType(cert.Other) {
+		if !IsZeroOfUnderlyingType(cert.Other) {
 			return true
 		}
 	}
@@ -49,7 +49,7 @@ func (sd *SignedData) HasOtherTypeCert() bool {
 
 func (sd *SignedData) HasV1Cert() bool {
 	for _, cert := range sd.Certificates {
-		if !isZeroOfUnderlyingType(cert.V1AttrCert) {
+		if !IsZeroOfUnderlyingType(cert.V1AttrCert) {
 			return true
 		}
 	}
@@ -58,7 +58,7 @@ func (sd *SignedData) HasV1Cert() bool {
 
 func (sd *SignedData) HasV2Cert() bool {
 	for _, cert := range sd.Certificates {
-		if !isZeroOfUnderlyingType(cert.V2AttrCert) {
+		if !IsZeroOfUnderlyingType(cert.V2AttrCert) {
 			return true
 		}
 	}
