@@ -12,7 +12,7 @@ A golang library for CAdES (CMS Advanced Electronic Signatures) for the Brazilia
   - [X] Validity check.
   - [X] Integrity/signature check.
   - [X] Download all CAs on request.
-  - [ ] Check CRLs.
+  - [X] Check CRLs.
   - [ ] Auto download CRLs.
   - [ ] Auto download CAs when needed.
   - [ ] Support certificate extensions.

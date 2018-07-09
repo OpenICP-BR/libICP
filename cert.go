@@ -67,16 +67,26 @@ type certificateListT struct {
 	Signature          asn1.BitString
 }
 
-func (cert certificateListT) raw_content() asn1.RawContent {
-	return cert.TBSCertList.RawContent
+func (list *certificateListT) loadFromDER(data []byte) ([]byte, CodedError) {
+	rest, err := asn1.Unmarshal(data, list)
+	if err != nil {
+		merr := NewMultiError("failed to parse DER CRL", ERR_PARSE_CRL, nil, err)
+		merr.SetParam("raw-data", data)
+		return rest, merr
+	}
+	return rest, nil
 }
 
-func (cert certificateListT) signature_algorithm() algorithmIdentifierT {
-	return cert.SignatureAlgorithm
+func (list certificateListT) raw_content() asn1.RawContent {
+	return list.TBSCertList.RawContent
 }
 
-func (cert certificateListT) signature() asn1.BitString {
-	return cert.Signature
+func (list certificateListT) signature_algorithm() algorithmIdentifierT {
+	return list.SignatureAlgorithm
+}
+
+func (list certificateListT) signature() asn1.BitString {
+	return list.Signature
 }
 
 type tbsCertListT struct {
@@ -109,13 +119,13 @@ func (lcerts *tbsCertListT) SetAppropriateVersion() {
 	}
 }
 
-func (lcerts tbsCertListT) HasCriticalExtension() bool {
+func (lcerts tbsCertListT) HasCriticalExtension() asn1.ObjectIdentifier {
 	for _, ext := range lcerts.CRLExtensions {
 		if ext.Critical {
-			return true
+			return ext.ExtnID
 		}
 	}
-	return false
+	return nil
 }
 
 func (lcerts tbsCertListT) HasCert(serial *big.Int) bool {

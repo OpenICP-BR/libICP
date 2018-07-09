@@ -1,0 +1,2 @@
+V	190719012012Z		1002	unknown	/C=BR/O=Fake-ICP-Brasil/OU=FakeBank Certificados Digitais/CN=Beltrano Freitas:12345678900
+R	190719012430Z	180709012437Z	1003	unknown	/C=BR/O=Fake-ICP-Brasil/OU=L\xC3\xA1L\xC3\xA1L\xC3\xA1?/CN=Fulano da S\xC3\xADlva

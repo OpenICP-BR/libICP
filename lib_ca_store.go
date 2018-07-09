@@ -116,7 +116,7 @@ func (store CAStore) verifyCertAt(cert_to_verify *Certificate, now time.Time) ([
 		}
 
 		if issuer.is_crl_outdated(now) && store.AutoDownload {
-			issuer.download_crl(nil)
+			go issuer.download_crl(&store.wg)
 		}
 		cert.check_against_issuer_crl(issuer)
 
