@@ -10,6 +10,11 @@ func Test_Version(t *testing.T) {
 	assert.Equal(t, "0.0.1", Version())
 }
 
+func Test_NiceHex(t *testing.T) {
+	b := []byte{0xAA, 0xFF, 0x1E}
+	assert.Equal(t, "AA:FF:1E", NiceHex(b))
+}
+
 func Test_EncapsulatedContentInfo_AdjustForNoSigners(t *testing.T) {
 	ec := EncapsulatedContentInfo{}
 	ec.AdjustForNoSigners()

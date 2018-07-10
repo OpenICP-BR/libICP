@@ -19,10 +19,12 @@ const VERSION_MAJOR = 0
 const VERSION_MINOR = 0
 const VERSION_PATCH = 1
 
+// Returns this library version as a string
 func Version() string {
 	return fmt.Sprintf("%d.%d.%d", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH)
 }
 
+// Outputs a byte sequence as pairs of hexadecimal digits separated by colons. Ex: AA:FF:1E
 func NiceHex(buf []byte) string {
 	ans := ""
 	for i := 0; i < len(buf); i++ {
