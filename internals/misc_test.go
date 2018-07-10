@@ -6,6 +6,10 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func Test_Version(t *testing.T) {
+	assert.Equal(t, "0.0.1", Version())
+}
+
 func Test_EncapsulatedContentInfo_AdjustForNoSigners(t *testing.T) {
 	ec := EncapsulatedContentInfo{}
 	ec.AdjustForNoSigners()
