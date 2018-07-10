@@ -44,7 +44,7 @@ type OtherRevocationInfoFormat struct {
 	OtherRevInfo       interface{} `asn1:"optional,omitempty"`
 }
 
-type Certificate struct {
+type CertificatePack struct {
 	TBSCertificate     TBSCertificate
 	SignatureAlgorithm AlgorithmIdentifier
 	Signature          asn1.BitString
@@ -74,15 +74,15 @@ func (cert *TBSCertificate) SetAppropriateVersion() {
 	}
 }
 
-func (cert Certificate) GetRawContent() asn1.RawContent {
+func (cert CertificatePack) GetRawContent() asn1.RawContent {
 	return cert.TBSCertificate.RawContent
 }
 
-func (cert Certificate) GetSignatureAlgorithm() AlgorithmIdentifier {
+func (cert CertificatePack) GetSignatureAlgorithm() AlgorithmIdentifier {
 	return cert.SignatureAlgorithm
 }
 
-func (cert Certificate) GetSignature() asn1.BitString {
+func (cert CertificatePack) GetSignature() asn1.BitString {
 	return cert.Signature
 }
 

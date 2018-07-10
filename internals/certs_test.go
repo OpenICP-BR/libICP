@@ -87,7 +87,7 @@ func Test_TBSCertList_SetAppropriateVersion_4(t *testing.T) {
 }
 
 func Test_Certificate_Signable(t *testing.T) {
-	cert := Certificate{}
+	cert := CertificatePack{}
 	assert.Equal(t, cert.TBSCertificate.RawContent, cert.GetRawContent())
 	assert.Equal(t, cert.SignatureAlgorithm, cert.GetSignatureAlgorithm())
 	assert.Equal(t, cert.Signature, cert.GetSignature())

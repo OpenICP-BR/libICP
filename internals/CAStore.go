@@ -1,4 +1,4 @@
-package icp
+package icp_internals
 
 import (
 	"archive/zip"
@@ -16,9 +16,9 @@ const ALL_CAs_ZIP_URL = "http://acraiz.icpbrasil.gov.br/credenciadas/Certificado
 type CAStore struct {
 	// If true, it will attempt to download missing CAs and CRLs
 	AutoDownload bool
-	cas          map[string]*Certificate
+	CAs          map[string]*Certificate
 	inited       bool
-	wg           sync.WaitGroup
+	Wg           sync.WaitGroup
 }
 
 // Calls CAStore.Init() for you.
@@ -47,9 +47,9 @@ func (store *CAStore) Init() {
 		panic(errs)
 	}
 	// Save them
-	store.cas = make(map[string]*Certificate)
+	store.CAs = make(map[string]*Certificate)
 	for i, _ := range certs {
-		store.raw_add_ca(&certs[i])
+		store.DirectAddCA(&certs[i])
 	}
 	store.inited = true
 }
@@ -58,14 +58,14 @@ func (store *CAStore) Init() {
 //
 // Some of the error codes this may return are: ERR_NOT_BEFORE_DATE, ERR_NOT_AFTER_DATE, ERR_BAD_SIGNATURE, ERR_ISSUER_NOT_FOUND, ERR_MAX_DEPTH_REACHED
 func (store CAStore) VerifyCert(cert *Certificate) ([]*Certificate, []CodedError, []CodedWarning) {
-	return store.verifyCertAt(cert, time.Now())
+	return store.VerifyCertAt(cert, time.Now())
 }
 
-func (store CAStore) verifyCertAt(cert_to_verify *Certificate, now time.Time) ([]*Certificate, []CodedError, []CodedWarning) {
+func (store CAStore) VerifyCertAt(cert_to_verify *Certificate, now time.Time) ([]*Certificate, []CodedError, []CodedWarning) {
 	ans_errs := make([]CodedError, 0)
 	ans_warns := make([]CodedWarning, 0)
 	// Get certification path
-	path, err := store.buildPath(cert_to_verify, _PATH_BUILDING_MAX_DEPTH)
+	path, err := store.BuildPath(cert_to_verify, _PATH_BUILDING_MAX_DEPTH)
 	if err != nil {
 		ans_errs = append(ans_errs, err)
 		return nil, ans_errs, nil
@@ -111,28 +111,28 @@ func (store CAStore) verifyCertAt(cert_to_verify *Certificate, now time.Time) ([
 		} else {
 			issuer = path[i+1]
 		}
-		if errs := cert.verifySignedBy(*issuer); errs != nil {
+		if errs := cert.VerifySignedBy(*issuer); errs != nil {
 			ans_errs = append(ans_errs, errs...)
 		}
 
-		if issuer.is_crl_outdated(now) && store.AutoDownload {
-			go issuer.download_crl(&store.wg)
+		if issuer.IsCRLOutdated(now) && store.AutoDownload {
+			go issuer.DownloadCRL(&store.Wg)
 		}
-		cert.check_against_issuer_crl(issuer)
+		cert.CheckAgainstIssuerCRL(issuer)
 
 		status, _ := cert.CRLStatus()
 		if status == CRL_REVOKED {
 			merr := NewMultiError("certificate revoked (source: CRL)", ERR_REVOKED, nil)
 			merr.SetParam("cert.Subject", cert.Subject)
 			merr.SetParam("cert.Issuer", cert.Issuer)
-			merr.SetParam("crl.ThisUpdate", issuer.crl_this_update())
+			merr.SetParam("crl.ThisUpdate", issuer.CRLThisUpdate())
 			ans_errs = append(ans_errs, merr)
 		}
 		if status == CRL_UNSURE_OR_NOT_FOUND {
 			merr := NewMultiError("certificate possibly revoked", ERR_UNKOWN_REVOCATION_STATUS, nil)
 			merr.SetParam("cert.Subject", cert.Subject)
 			merr.SetParam("cert.Issuer", cert.Issuer)
-			merr.SetParam("crl.ThisUpdate", issuer.crl_this_update())
+			merr.SetParam("crl.ThisUpdate", issuer.CRLThisUpdate())
 			ans_warns = append(ans_warns, merr)
 		}
 	}
@@ -148,7 +148,7 @@ func (store CAStore) verifyCertAt(cert_to_verify *Certificate, now time.Time) ([
 
 // Adds a new CA (certificate authority) if, and only if, it is valid when check against the existing CAs.
 func (store *CAStore) AddCA(cert *Certificate) []CodedError {
-	return store.addCAatTime(cert, time.Now())
+	return store.AddCAatTime(cert, time.Now())
 }
 
 // Adds a new root CA for testing proposes. It MUST have as subject and issuer: TESTING_ROOT_CA_SUBJECT
@@ -163,23 +163,23 @@ func (store *CAStore) AddTestingRootCA(cert *Certificate) []CodedError {
 		return []CodedError{merr}
 	}
 
-	store.raw_add_ca(cert)
+	store.DirectAddCA(cert)
 
 	return nil
 }
 
-func (store *CAStore) addCAatTime(cert *Certificate, now time.Time) []CodedError {
+func (store *CAStore) AddCAatTime(cert *Certificate, now time.Time) []CodedError {
 	if !cert.IsCA() {
 		return []CodedError{NewMultiError("certificate is not a certificate authority", ERR_NOT_CA, nil)}
 	}
-	if _, errs, _ := store.verifyCertAt(cert, now); errs != nil {
+	if _, errs, _ := store.VerifyCertAt(cert, now); errs != nil {
 		return errs
 	}
-	store.raw_add_ca(cert)
+	store.DirectAddCA(cert)
 	return nil
 }
 
-func (store *CAStore) raw_add_ca(cert *Certificate) {
+func (store *CAStore) DirectAddCA(cert *Certificate) {
 	if cert == nil {
 		return
 	}
@@ -187,23 +187,23 @@ func (store *CAStore) raw_add_ca(cert *Certificate) {
 	// Attempt to download CRL
 	if store.AutoDownload {
 		println("Downloading CRL for", cert.SubjectMap()["CN"])
-		store.wg.Add(1)
-		go cert.download_crl(&store.wg)
-		store.wg.Add(1)
-		go cert.download_crl(&store.wg)
+		store.Wg.Add(1)
+		go cert.DownloadCRL(&store.Wg)
+		store.Wg.Add(1)
+		go cert.DownloadCRL(&store.Wg)
 	}
 
-	store.cas[cert.SubjectKeyId()] = cert
-	store.cas[cert.Subject()] = cert
+	store.CAs[cert.SubjectKeyId()] = cert
+	store.CAs[cert.Subject()] = cert
 }
 
 func (store CAStore) WaitDownloads() {
-	store.wg.Wait()
+	store.Wg.Wait()
 }
 
 const _PATH_BUILDING_MAX_DEPTH = 16
 
-func (store CAStore) buildPath(end_cert *Certificate, max_depth int) ([]*Certificate, CodedError) {
+func (store CAStore) BuildPath(end_cert *Certificate, max_depth int) ([]*Certificate, CodedError) {
 	if max_depth < 0 {
 		merr := NewMultiError("reached maximum depth", ERR_MAX_DEPTH_REACHED, nil)
 		merr.SetParam("SubjectKeyID", end_cert.SubjectKeyId())
@@ -211,10 +211,10 @@ func (store CAStore) buildPath(end_cert *Certificate, max_depth int) ([]*Certifi
 		return nil, merr
 	}
 
-	issuer, ok := store.cas[end_cert.AuthorityKeyId()]
+	issuer, ok := store.CAs[end_cert.AuthorityKeyId()]
 	if !ok {
 		// Try again
-		issuer, ok = store.cas[end_cert.Issuer()]
+		issuer, ok = store.CAs[end_cert.Issuer()]
 	}
 	if !ok {
 		merr := NewMultiError("issuer not found", ERR_ISSUER_NOT_FOUND, nil)
@@ -228,7 +228,7 @@ func (store CAStore) buildPath(end_cert *Certificate, max_depth int) ([]*Certifi
 		return ans, nil
 	}
 	// RECURSION!
-	extra_path, err := store.buildPath(issuer, max_depth-1)
+	extra_path, err := store.BuildPath(issuer, max_depth-1)
 	if extra_path == nil {
 		// We failed to build the path
 		if err.Code() == ERR_MAX_DEPTH_REACHED {
@@ -241,7 +241,7 @@ func (store CAStore) buildPath(end_cert *Certificate, max_depth int) ([]*Certifi
 	return ans, nil
 }
 
-func (store *CAStore) zip_step(file *zip.File) bool {
+func (store *CAStore) AddCAsInZipFile(file *zip.File) bool {
 	if file == nil {
 		return false
 	}
@@ -270,7 +270,7 @@ func (store *CAStore) zip_step(file *zip.File) bool {
 	return true
 }
 
-func (store *CAStore) parse_cas_zip(raw []byte, raw_len int64) error {
+func (store *CAStore) ParseCAsZip(raw []byte, raw_len int64) error {
 	// Load zip
 	zreader, err := zip.NewReader(bytes.NewReader(raw), raw_len)
 	if err != nil {
@@ -279,12 +279,12 @@ func (store *CAStore) parse_cas_zip(raw []byte, raw_len int64) error {
 
 	// Try to add CAs until it is clear that no more are possible
 	last_total := -1
-	for i := 0; len(store.cas) != last_total && i < 10; i++ {
-		last_total = len(store.cas)
+	for i := 0; len(store.CAs) != last_total && i < 10; i++ {
+		last_total = len(store.CAs)
 		// For each file in the zip archive
 		for _, file := range zreader.File {
 			// Try to add its CA
-			store.zip_step(file)
+			store.AddCAsInZipFile(file)
 		}
 	}
 
@@ -293,17 +293,17 @@ func (store *CAStore) parse_cas_zip(raw []byte, raw_len int64) error {
 
 // This function will attempt download all CAs from ALL_CAs_ZIP_URL. This runs regardless of CAStore.AutoDownload
 func (store *CAStore) DownloadAllCAs() error {
-	buf, l, err := http_get(ALL_CAs_ZIP_URL)
+	buf, l, err := HTTPGet(ALL_CAs_ZIP_URL)
 	if err != nil {
 		return err
 	}
-	return store.parse_cas_zip(buf, l)
+	return store.ParseCAsZip(buf, l)
 }
 
-func (store CAStore) list_crls() map[string]bool {
+func (store CAStore) ListCRLs() map[string]bool {
 	urls_set := make(map[string]bool)
 
-	for _, ca := range store.cas {
+	for _, ca := range store.CAs {
 		for _, url := range ca.CRLDistributionPoints().URLs {
 			urls_set[url] = true
 		}
