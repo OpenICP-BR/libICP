@@ -4,7 +4,7 @@ go:
   - 1.10.x
 
 before_install:
-  - go get -t -v .
+  - go get -t -v . ./iicp/.
 
 script:
   - cd iicp && go test -race -coverprofile=coverage.txt -covermode=atomic
