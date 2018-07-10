@@ -11,25 +11,21 @@ endif
 
 .PHONY: all test test-html
 
-all: libicp.a
-docs:
-	xdg-open "http://localhost:6060/pkg/github.com/gjvnq/libICP/"
-docs-server:
-	godoc -http=:6060
-test: coverage.out iicp/coverage.out errs/coverage.out
+all: libicp_errs.a
+test: coverage.out
 test-html: coverage.out
 	@$(ECHO) -e $(ANSI_GREEN)"Generating coverage report..."$(ANSI_RESET)
 	go tool cover -html=coverage.out
 	@$(ECHO) -e $(ANSI_BLUE)"Finished target $@"$(ANSI_RESET)
 
 
-libicp.a: *.go
+libicp_errs.a: *.go
 	@$(ECHO) -e $(ANSI_GREEN)"Fixing imports..."$(ANSI_RESET)
 	goimports -w .
 	@$(ECHO) -e $(ANSI_GREEN)"Formatting code..."$(ANSI_RESET)
 	go fmt
 	@$(ECHO) -e $(ANSI_GREEN)"Compiling code..."$(ANSI_RESET)
-	go build -o libicp.a
+	go build -o libicp_errs.a
 	@$(ECHO) -e $(ANSI_BLUE)"Finished target $@"$(ANSI_RESET)
 
 coverage.out: *.go
@@ -40,9 +36,3 @@ coverage.out: *.go
 	@$(ECHO) -e $(ANSI_GREEN)"Testing code..."$(ANSI_RESET)
 	go test -cover -coverprofile=coverage.out
 	@$(ECHO) -e $(ANSI_BLUE)"Finished target $@"$(ANSI_RESET)
-
-iicp/coverage.out: iicp/*.go
-	cd iicp && make coverage.out
-
-errs/coverage.out: errs/*.go
-	cd errs && make coverage.out

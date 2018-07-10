@@ -1,10 +1,11 @@
-package icp_internals
+package iicp
 
 import (
 	"io/ioutil"
 	"testing"
 	"time"
 
+	std_errs "github.com/gjvnq/libICP/errs"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -15,7 +16,7 @@ func Test_CAStore_BuildPath_1(t *testing.T) {
 	certs, errs := NewCertificateFromBytes([]byte(ROOT_CA_BR_ICP_V1))
 	require.Nil(t, errs)
 	end_cert := certs[0]
-	ans, err := store.BuildPath(&end_cert, _PATH_BUILDING_MAX_DEPTH)
+	ans, err := store.BuildPath(&end_cert, PATH_BUILDING_MAX_DEPTH)
 	require.Nil(t, err)
 	right_ans := make([]*Certificate, 1)
 	right_ans[0] = &end_cert
@@ -29,7 +30,7 @@ func Test_CAStore_BuildPath_2(t *testing.T) {
 	require.Nil(t, err)
 	end_cert := certs[0]
 	root := certs[1]
-	ans, errs := store.BuildPath(&end_cert, _PATH_BUILDING_MAX_DEPTH)
+	ans, errs := store.BuildPath(&end_cert, PATH_BUILDING_MAX_DEPTH)
 	require.Nil(t, errs)
 	right_ans := make([]*Certificate, 2)
 	right_ans[0] = &end_cert
@@ -51,7 +52,7 @@ func Test_CAStore_BuildPath_3(t *testing.T) {
 	middle_ca := certs[1]
 	root := certs[2]
 	store.DirectAddCA(&middle_ca)
-	ans, errs := store.BuildPath(&end_cert, _PATH_BUILDING_MAX_DEPTH)
+	ans, errs := store.BuildPath(&end_cert, PATH_BUILDING_MAX_DEPTH)
 	assert.Nil(t, errs)
 	right_ans := make([]*Certificate, 3)
 	right_ans[0] = &end_cert
@@ -75,15 +76,15 @@ func Test_CAStore_VerifyCertAt_1(t *testing.T) {
 	assert.Nil(t, errs)
 	assert.Equal(t, right_ans, path)
 	assert.Equal(t, 1, len(warns))
-	assert.EqualValues(t, ERR_UNKOWN_REVOCATION_STATUS, warns[0].Code())
+	assert.EqualValues(t, std_errs.ERR_UNKOWN_REVOCATION_STATUS, warns[0].Code())
 
 	right_ans = []*Certificate{end_cert, root}
 	path, errs, warns = store.VerifyCertAt(end_cert, some_time)
 	assert.Nil(t, errs)
 	assert.Equal(t, right_ans, path)
 	assert.Equal(t, 2, len(warns))
-	assert.EqualValues(t, ERR_UNKOWN_REVOCATION_STATUS, warns[0].Code())
-	assert.EqualValues(t, ERR_UNKOWN_REVOCATION_STATUS, warns[1].Code())
+	assert.EqualValues(t, std_errs.ERR_UNKOWN_REVOCATION_STATUS, warns[0].Code())
+	assert.EqualValues(t, std_errs.ERR_UNKOWN_REVOCATION_STATUS, warns[1].Code())
 }
 
 func Test_CAStore_VerifyCertAt_2(t *testing.T) {
@@ -99,19 +100,19 @@ func Test_CAStore_VerifyCertAt_2(t *testing.T) {
 	path, errs, warns := store.VerifyCertAt(root, some_time)
 	assert.Equal(t, 1, len(warns))
 	assert.Equal(t, right_ans, path)
-	assert.EqualValues(t, ERR_UNKOWN_REVOCATION_STATUS, warns[0].Code())
+	assert.EqualValues(t, std_errs.ERR_UNKOWN_REVOCATION_STATUS, warns[0].Code())
 	assert.Equal(t, 1, len(errs), "there should be only one error")
-	assert.EqualValues(t, ERR_NOT_BEFORE_DATE, errs[0].Code())
+	assert.EqualValues(t, std_errs.ERR_NOT_BEFORE_DATE, errs[0].Code())
 
 	right_ans = []*Certificate{end_cert, root}
 	path, errs, warns = store.VerifyCertAt(end_cert, some_time)
 	assert.Equal(t, 2, len(warns))
 	assert.Equal(t, right_ans, path)
-	assert.EqualValues(t, ERR_UNKOWN_REVOCATION_STATUS, warns[0].Code())
-	assert.EqualValues(t, ERR_UNKOWN_REVOCATION_STATUS, warns[1].Code())
+	assert.EqualValues(t, std_errs.ERR_UNKOWN_REVOCATION_STATUS, warns[0].Code())
+	assert.EqualValues(t, std_errs.ERR_UNKOWN_REVOCATION_STATUS, warns[1].Code())
 	assert.Equal(t, 2, len(errs), "there should be only two error")
-	assert.EqualValues(t, ERR_NOT_BEFORE_DATE, errs[0].Code())
-	assert.EqualValues(t, ERR_NOT_BEFORE_DATE, errs[1].Code())
+	assert.EqualValues(t, std_errs.ERR_NOT_BEFORE_DATE, errs[0].Code())
+	assert.EqualValues(t, std_errs.ERR_NOT_BEFORE_DATE, errs[1].Code())
 }
 
 func Test_CAStore_VerifyCertAt_3(t *testing.T) {
@@ -127,7 +128,7 @@ func Test_CAStore_VerifyCertAt_3(t *testing.T) {
 	assert.Nil(t, path)
 	assert.NotNil(t, errs)
 	assert.Equal(t, 1, len(errs), "there should be only one error")
-	assert.EqualValues(t, ERR_ISSUER_NOT_FOUND, errs[0].Code())
+	assert.EqualValues(t, std_errs.ERR_ISSUER_NOT_FOUND, errs[0].Code())
 }
 
 func Test_CAStore_AddCAatTime(t *testing.T) {
@@ -141,7 +142,7 @@ func Test_CAStore_AddCAatTime(t *testing.T) {
 
 	errs := store.AddCAatTime(&end_ca, some_time)
 	assert.Equal(t, len(errs), 1)
-	assert.EqualValues(t, errs[0].Code(), ERR_ISSUER_NOT_FOUND)
+	assert.EqualValues(t, errs[0].Code(), std_errs.ERR_ISSUER_NOT_FOUND)
 
 	errs = store.AddCAatTime(&middle_ca, some_time)
 	assert.Nil(t, errs)
@@ -189,7 +190,7 @@ func Test_CAStore_AddTestingRootCA_2(t *testing.T) {
 	store := NewCAStore(false)
 	errs = store.AddTestingRootCA(&certs[0])
 	assert.Equal(t, 1, len(errs))
-	assert.EqualValues(t, ERR_TEST_CA_IMPROPPER_NAME, errs[0].Code())
+	assert.EqualValues(t, std_errs.ERR_TEST_CA_IMPROPPER_NAME, errs[0].Code())
 	assert.Equal(t, 6, len(store.CAs))
 }
 

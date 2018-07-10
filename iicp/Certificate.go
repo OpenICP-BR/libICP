@@ -1,4 +1,4 @@
-package icp_internals
+package iicp
 
 import (
 	"encoding/asn1"
@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/LK4D4/trylock"
+	std_errs "github.com/gjvnq/libICP/errs"
 )
 
 type CRLStatus int
@@ -49,25 +50,25 @@ type Certificate struct {
 	CRL_Status    CRLStatus
 	CRL_LastCheck time.Time
 	CRL_Lock      trylock.Mutex
-	CRL_LastError CodedError
+	CRL_LastError std_errs.CodedError
 }
 
 // Accepts PEM, DER and a mix of both.
-func NewCertificateFromFile(path string) ([]Certificate, []CodedError) {
+func NewCertificateFromFile(path string) ([]Certificate, []std_errs.CodedError) {
 	dat, err := ioutil.ReadFile(path)
 	if err != nil {
-		merr := NewMultiError("failed to read certificate file", ERR_READ_CERT_FILE, nil, err)
+		merr := std_errs.NewMultiError("failed to read certificate file", std_errs.ERR_READ_CERT_FILE, nil, err)
 		merr.SetParam("path", path)
-		return nil, []CodedError{merr}
+		return nil, []std_errs.CodedError{merr}
 	}
 	return NewCertificateFromBytes(dat)
 }
 
 // Accepts PEM, DER and a mix of both.
-func NewCertificateFromBytes(raw []byte) ([]Certificate, []CodedError) {
+func NewCertificateFromBytes(raw []byte) ([]Certificate, []std_errs.CodedError) {
 	var block *pem.Block
 	certs := make([]Certificate, 0)
-	merrs := make([]CodedError, 0)
+	merrs := make([]std_errs.CodedError, 0)
 
 	// Try decoding all certificate PEM blocks
 	rest := raw
@@ -86,7 +87,7 @@ func NewCertificateFromBytes(raw []byte) ([]Certificate, []CodedError) {
 
 	// Try decoding the rest as DER certificates
 	for {
-		var merr CodedError
+		var merr std_errs.CodedError
 		// Finished reading file?
 		if rest == nil || len(rest) < 42 {
 			break
@@ -107,21 +108,21 @@ func NewCertificateFromBytes(raw []byte) ([]Certificate, []CodedError) {
 }
 
 // Accepts PEM, DER and a mix of both.
-func NewCRLFromFile(path string) ([]CertificateList, []CodedError) {
+func NewCRLFromFile(path string) ([]CertificateList, []std_errs.CodedError) {
 	dat, err := ioutil.ReadFile(path)
 	if err != nil {
-		merr := NewMultiError("failed to read CRL file", ERR_READ_CERT_FILE, nil, err)
+		merr := std_errs.NewMultiError("failed to read CRL file", std_errs.ERR_READ_CERT_FILE, nil, err)
 		merr.SetParam("path", path)
-		return nil, []CodedError{merr}
+		return nil, []std_errs.CodedError{merr}
 	}
 	return NewCRLFromBytes(dat)
 }
 
 // Accepts PEM, DER and a mix of both.
-func NewCRLFromBytes(raw []byte) ([]CertificateList, []CodedError) {
+func NewCRLFromBytes(raw []byte) ([]CertificateList, []std_errs.CodedError) {
 	var block *pem.Block
 	crls := make([]CertificateList, 0)
-	merrs := make([]CodedError, 0)
+	merrs := make([]std_errs.CodedError, 0)
 
 	// Try decoding all CRLs PEM blocks
 	rest := raw
@@ -140,7 +141,7 @@ func NewCRLFromBytes(raw []byte) ([]CertificateList, []CodedError) {
 
 	// Try decoding the rest as DER CRL
 	for {
-		var merr CodedError
+		var merr std_errs.CodedError
 		// Finished reading file?
 		if rest == nil || len(rest) < 42 {
 			break
@@ -160,10 +161,10 @@ func NewCRLFromBytes(raw []byte) ([]CertificateList, []CodedError) {
 	return crls, nil
 }
 
-func (cert *Certificate) LoadFromDER(data []byte) ([]byte, CodedError) {
+func (cert *Certificate) LoadFromDER(data []byte) ([]byte, std_errs.CodedError) {
 	rest, err := asn1.Unmarshal(data, &cert.Base)
 	if err != nil {
-		merr := NewMultiError("failed to parse DER certificate", ERR_PARSE_CERT, nil, err)
+		merr := std_errs.NewMultiError("failed to parse DER certificate", std_errs.ERR_PARSE_CERT, nil, err)
 		merr.SetParam("raw-data", data)
 		return rest, merr
 	}
@@ -241,8 +242,12 @@ func (cert Certificate) CRLDistributionPoints() ExtCRLDistributionPoints {
 	return cert.ExtCRLDistributionPoints
 }
 
-func (cert Certificate) CRLStatus() (CRLStatus, time.Time) {
-	return cert.CRL_Status, cert.CRL_LastCheck
+func (cert Certificate) CRLStatus() CRLStatus {
+	return cert.CRL_Status
+}
+
+func (cert Certificate) CRLLastCheck() time.Time {
+	return cert.CRL_LastCheck
 }
 
 func (cert Certificate) IsCRLOutdated(now time.Time) bool {
@@ -266,18 +271,18 @@ func (cert Certificate) IsCA() bool {
 
 // This checks ONLY the digital signature and if the issuer is a CA (via the BasicConstraints and KeyUsage extensions). It will fail if any of those two extensions are not present.
 //
-// Possible errors are: ERR_UNKOWN_ALGORITHM, ERR_NOT_CA, ERR_PARSE_RSA_PUBKEY, ERR_BAD_SIGNATURE
-func (cert Certificate) VerifySignedBy(issuer Certificate) []CodedError {
-	ans_errs := make([]CodedError, 0)
+// Possible errors are: std_errs.ERR_UNKOWN_ALGORITHM, std_errs.ERR_NOT_CA, std_errs.ERR_PARSE_RSA_PUBKEY, std_errs.ERR_BAD_SIGNATURE
+func (cert Certificate) VerifySignedBy(issuer Certificate) []std_errs.CodedError {
+	ans_errs := make([]std_errs.CodedError, 0)
 
 	// Check CA permission from issuer
 	if !issuer.KeyUsage().Exists || !issuer.KeyUsage().KeyCertSign {
-		merr := NewMultiError("issuer is not a certificate authority (Key Usage extension)", ERR_NOT_CA, nil)
+		merr := std_errs.NewMultiError("issuer is not a certificate authority (Key Usage extension)", std_errs.ERR_NOT_CA, nil)
 		merr.SetParam("issuer.Subject", issuer.Subject)
 		ans_errs = append(ans_errs, merr)
 	}
 	if !issuer.BasicConstraints().Exists || !issuer.BasicConstraints().CA {
-		merr := NewMultiError("issuer is not a certificate authority (Basic Constraints extension)", ERR_NOT_CA, nil)
+		merr := std_errs.NewMultiError("issuer is not a certificate authority (Basic Constraints extension)", std_errs.ERR_NOT_CA, nil)
 		merr.SetParam("issuer.Subject", issuer.Subject)
 		ans_errs = append(ans_errs, merr)
 	}
@@ -285,7 +290,7 @@ func (cert Certificate) VerifySignedBy(issuer Certificate) []CodedError {
 	// Get key
 	pubkey, err := issuer.Base.TBSCertificate.SubjectPublicKeyInfo.RSAPubKey()
 	if err != nil {
-		ans_errs = append(ans_errs, NewMultiError("failed to RSA parse public key", ERR_PARSE_RSA_PUBKEY, nil, err))
+		ans_errs = append(ans_errs, std_errs.NewMultiError("failed to RSA parse public key", std_errs.ERR_PARSE_RSA_PUBKEY, nil, err))
 	}
 
 	if len(ans_errs) > 0 {
@@ -297,14 +302,14 @@ func (cert Certificate) VerifySignedBy(issuer Certificate) []CodedError {
 	if err == nil {
 		return nil
 	}
-	return []CodedError{cerr}
+	return []std_errs.CodedError{cerr}
 }
 
-func (cert *Certificate) FinishParsing() CodedError {
-	return cert.parse_extensions()
+func (cert *Certificate) FinishParsing() std_errs.CodedError {
+	return cert.ParseExtensions()
 }
 
-func (cert *Certificate) parse_extensions() CodedError {
+func (cert *Certificate) ParseExtensions() std_errs.CodedError {
 	for _, ext := range cert.Base.TBSCertificate.Extensions {
 		id := ext.ExtnID
 		switch {
@@ -330,7 +335,7 @@ func (cert *Certificate) parse_extensions() CodedError {
 			}
 		default:
 			if ext.Critical {
-				merr := NewMultiError("unsupported critical extension", ERR_UNSUPORTED_CRITICAL_EXTENSION, nil)
+				merr := std_errs.NewMultiError("unsupported critical extension", std_errs.ERR_UNSUPORTED_CRITICAL_EXTENSION, nil)
 				merr.SetParam("extension id", id)
 				return merr
 			}
@@ -352,7 +357,7 @@ func (cert *Certificate) CheckAgainstIssuerCRL(issuer *Certificate) {
 	}
 }
 
-func (cert Certificate) CRLLastError() CodedError {
+func (cert Certificate) CRLLastError() std_errs.CodedError {
 	return cert.CRL_LastError
 }
 
@@ -360,11 +365,11 @@ func (cert Certificate) CRLHasCert(end_cert Certificate) bool {
 	return cert.CRL.TBSCertList.HasCert(end_cert.serial_as_big_int())
 }
 
-func (cert *Certificate) ProcessCRL(new_crl CertificateList) CodedError {
+func (cert *Certificate) ProcessCRL(new_crl CertificateList) std_errs.CodedError {
 	// Verify signature
 	pubkey, err := cert.Base.TBSCertificate.SubjectPublicKeyInfo.RSAPubKey()
 	if err != nil {
-		return NewMultiError("failed to RSA parse public key", ERR_PARSE_RSA_PUBKEY, nil, err)
+		return std_errs.NewMultiError("failed to RSA parse public key", std_errs.ERR_PARSE_RSA_PUBKEY, nil, err)
 	}
 	cerr := VerifySignaure(new_crl, pubkey)
 	if cerr != nil {
@@ -373,7 +378,7 @@ func (cert *Certificate) ProcessCRL(new_crl CertificateList) CodedError {
 
 	// Check for critical extensions
 	if ext := cert.CRL.TBSCertList.HasCriticalExtension(); ext != nil {
-		merr := NewMultiError("unsupported critical extension on CRL", ERR_UNSUPORTED_CRITICAL_EXTENSION, nil)
+		merr := std_errs.NewMultiError("unsupported critical extension on CRL", std_errs.ERR_UNSUPORTED_CRITICAL_EXTENSION, nil)
 		merr.SetParam("ExtnId", ext)
 		return merr
 	}
@@ -389,7 +394,7 @@ func (cert *Certificate) DownloadCRL(wg *sync.WaitGroup) {
 	}
 	defer cert.CRL_Lock.Unlock()
 
-	var last_error CodedError
+	var last_error std_errs.CodedError
 	for _, url := range cert.CRLDistributionPoints().URLs {
 		var buf []byte
 		buf, _, last_error = HTTPGet(url)

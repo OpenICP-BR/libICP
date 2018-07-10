@@ -1,4 +1,4 @@
-package icp_internals
+package iicp
 
 import (
 	"archive/zip"
@@ -6,6 +6,8 @@ import (
 	"io/ioutil"
 	"sync"
 	"time"
+
+	std_errs "github.com/gjvnq/libICP/errs"
 )
 
 const TESTING_ROOT_CA_SUBJECT = "C=BR/O=Fake-ICP-Brasil/OU=Apenas para testes - SEM VALOR LEGAL/CN=Autoridade Certificadora Raiz de Testes - SEM VALOR LEGAL"
@@ -56,16 +58,12 @@ func (store *CAStore) Init() {
 
 // For now, this functions verifies: validity, integrity, propper chain of certification.
 //
-// Some of the error codes this may return are: ERR_NOT_BEFORE_DATE, ERR_NOT_AFTER_DATE, ERR_BAD_SIGNATURE, ERR_ISSUER_NOT_FOUND, ERR_MAX_DEPTH_REACHED
-func (store CAStore) VerifyCert(cert *Certificate) ([]*Certificate, []CodedError, []CodedWarning) {
-	return store.VerifyCertAt(cert, time.Now())
-}
-
-func (store CAStore) VerifyCertAt(cert_to_verify *Certificate, now time.Time) ([]*Certificate, []CodedError, []CodedWarning) {
-	ans_errs := make([]CodedError, 0)
-	ans_warns := make([]CodedWarning, 0)
+// Some of the error codes this may return are: std_errs.ERR_NOT_BEFORE_DATE, std_errs.ERR_NOT_AFTER_DATE, std_errs.ERR_BAD_SIGNATURE, std_errs.ERR_ISSUER_NOT_FOUND, std_errs.ERR_MAX_DEPTH_REACHED
+func (store CAStore) VerifyCertAt(cert_to_verify *Certificate, now time.Time) ([]*Certificate, []std_errs.CodedError, []std_errs.CodedWarning) {
+	ans_errs := make([]std_errs.CodedError, 0)
+	ans_warns := make([]std_errs.CodedWarning, 0)
 	// Get certification path
-	path, err := store.BuildPath(cert_to_verify, _PATH_BUILDING_MAX_DEPTH)
+	path, err := store.BuildPath(cert_to_verify, PATH_BUILDING_MAX_DEPTH)
 	if err != nil {
 		ans_errs = append(ans_errs, err)
 		return nil, ans_errs, nil
@@ -76,14 +74,14 @@ func (store CAStore) VerifyCertAt(cert_to_verify *Certificate, now time.Time) ([
 	// Check each certificate
 	for i, cert := range path {
 		if !now.After(cert.NotBefore()) {
-			merr := NewMultiError("certificate not yet valid", ERR_NOT_BEFORE_DATE, nil)
+			merr := std_errs.NewMultiError("certificate not yet valid", std_errs.ERR_NOT_BEFORE_DATE, nil)
 			merr.SetParam("cert.NotBefore", cert.NotBefore())
 			merr.SetParam("now", now)
 			merr.SetParam("cert.Subject", cert.Subject())
 			ans_errs = append(ans_errs, merr)
 		}
 		if !now.Before(cert.NotAfter()) {
-			merr := NewMultiError("certificate has expired", ERR_NOT_AFTER_DATE, nil)
+			merr := std_errs.NewMultiError("certificate has expired", std_errs.ERR_NOT_AFTER_DATE, nil)
 			merr.SetParam("cert.NotAfter", cert.NotAfter())
 			merr.SetParam("now", now)
 			merr.SetParam("cert.Subject", cert.Subject())
@@ -99,7 +97,7 @@ func (store CAStore) VerifyCertAt(cert_to_verify *Certificate, now time.Time) ([
 			}
 		}
 		if cert.IsCA() && i > last_ca_max_ca_i && last_ca_max_ca_i >= 0 {
-			merr := NewMultiError("exceded max path basic constraint", ERR_BASIC_CONSTRAINTS_MAX_PATH_EXCEDED, nil)
+			merr := std_errs.NewMultiError("exceded max path basic constraint", std_errs.ERR_BASIC_CONSTRAINTS_MAX_PATH_EXCEDED, nil)
 			merr.SetParam("cert.Subject", cert.Subject)
 			merr.SetParam("last_ca.Subject", last_ca_subj)
 			ans_errs = append(ans_errs, merr)
@@ -120,16 +118,16 @@ func (store CAStore) VerifyCertAt(cert_to_verify *Certificate, now time.Time) ([
 		}
 		cert.CheckAgainstIssuerCRL(issuer)
 
-		status, _ := cert.CRLStatus()
+		status := cert.CRLStatus()
 		if status == CRL_REVOKED {
-			merr := NewMultiError("certificate revoked (source: CRL)", ERR_REVOKED, nil)
+			merr := std_errs.NewMultiError("certificate revoked (source: CRL)", std_errs.ERR_REVOKED, nil)
 			merr.SetParam("cert.Subject", cert.Subject)
 			merr.SetParam("cert.Issuer", cert.Issuer)
 			merr.SetParam("crl.ThisUpdate", issuer.CRLThisUpdate())
 			ans_errs = append(ans_errs, merr)
 		}
 		if status == CRL_UNSURE_OR_NOT_FOUND {
-			merr := NewMultiError("certificate possibly revoked", ERR_UNKOWN_REVOCATION_STATUS, nil)
+			merr := std_errs.NewMultiError("certificate possibly revoked", std_errs.ERR_UNKOWN_REVOCATION_STATUS, nil)
 			merr.SetParam("cert.Subject", cert.Subject)
 			merr.SetParam("cert.Issuer", cert.Issuer)
 			merr.SetParam("crl.ThisUpdate", issuer.CRLThisUpdate())
@@ -146,21 +144,16 @@ func (store CAStore) VerifyCertAt(cert_to_verify *Certificate, now time.Time) ([
 	return path, ans_errs, ans_warns
 }
 
-// Adds a new CA (certificate authority) if, and only if, it is valid when check against the existing CAs.
-func (store *CAStore) AddCA(cert *Certificate) []CodedError {
-	return store.AddCAatTime(cert, time.Now())
-}
-
 // Adds a new root CA for testing proposes. It MUST have as subject and issuer: TESTING_ROOT_CA_SUBJECT
 //
 // This should NEVER be used in production!
-func (store *CAStore) AddTestingRootCA(cert *Certificate) []CodedError {
+func (store *CAStore) AddTestingRootCA(cert *Certificate) []std_errs.CodedError {
 	if cert.Subject() != cert.Issuer() || cert.Subject() != TESTING_ROOT_CA_SUBJECT {
-		merr := NewMultiError("AddTestingRootCA REQUIRES the testing CA to have a specific subject and issuer", ERR_TEST_CA_IMPROPPER_NAME, nil)
+		merr := std_errs.NewMultiError("AddTestingRootCA REQUIRES the testing CA to have a specific subject and issuer", std_errs.ERR_TEST_CA_IMPROPPER_NAME, nil)
 		merr.SetParam("expected-value", TESTING_ROOT_CA_SUBJECT)
 		merr.SetParam("actual-subject", cert.Subject)
 		merr.SetParam("actual-issuer", cert.Issuer)
-		return []CodedError{merr}
+		return []std_errs.CodedError{merr}
 	}
 
 	store.DirectAddCA(cert)
@@ -168,9 +161,10 @@ func (store *CAStore) AddTestingRootCA(cert *Certificate) []CodedError {
 	return nil
 }
 
-func (store *CAStore) AddCAatTime(cert *Certificate, now time.Time) []CodedError {
+// Adds a new CA (certificate authority) if, and only if, it is valid when check against the existing CAs.
+func (store *CAStore) AddCAatTime(cert *Certificate, now time.Time) []std_errs.CodedError {
 	if !cert.IsCA() {
-		return []CodedError{NewMultiError("certificate is not a certificate authority", ERR_NOT_CA, nil)}
+		return []std_errs.CodedError{std_errs.NewMultiError("certificate is not a certificate authority", std_errs.ERR_NOT_CA, nil)}
 	}
 	if _, errs, _ := store.VerifyCertAt(cert, now); errs != nil {
 		return errs
@@ -201,11 +195,11 @@ func (store CAStore) WaitDownloads() {
 	store.Wg.Wait()
 }
 
-const _PATH_BUILDING_MAX_DEPTH = 16
+const PATH_BUILDING_MAX_DEPTH = 16
 
-func (store CAStore) BuildPath(end_cert *Certificate, max_depth int) ([]*Certificate, CodedError) {
+func (store CAStore) BuildPath(end_cert *Certificate, max_depth int) ([]*Certificate, std_errs.CodedError) {
 	if max_depth < 0 {
-		merr := NewMultiError("reached maximum depth", ERR_MAX_DEPTH_REACHED, nil)
+		merr := std_errs.NewMultiError("reached maximum depth", std_errs.ERR_MAX_DEPTH_REACHED, nil)
 		merr.SetParam("SubjectKeyID", end_cert.SubjectKeyId())
 		merr.SetParam("AuthorityKeyID", end_cert.AuthorityKeyId())
 		return nil, merr
@@ -217,7 +211,7 @@ func (store CAStore) BuildPath(end_cert *Certificate, max_depth int) ([]*Certifi
 		issuer, ok = store.CAs[end_cert.Issuer()]
 	}
 	if !ok {
-		merr := NewMultiError("issuer not found", ERR_ISSUER_NOT_FOUND, nil)
+		merr := std_errs.NewMultiError("issuer not found", std_errs.ERR_ISSUER_NOT_FOUND, nil)
 		merr.SetParam("AuthorityKeyID", end_cert.AuthorityKeyId())
 		return nil, merr
 	}
@@ -231,10 +225,10 @@ func (store CAStore) BuildPath(end_cert *Certificate, max_depth int) ([]*Certifi
 	extra_path, err := store.BuildPath(issuer, max_depth-1)
 	if extra_path == nil {
 		// We failed to build the path
-		if err.Code() == ERR_MAX_DEPTH_REACHED {
+		if err.Code() == std_errs.ERR_MAX_DEPTH_REACHED {
 			return nil, err
 		}
-		return nil, NewMultiError("failure on recursion", err.Code(), nil, err)
+		return nil, std_errs.NewMultiError("failure on recursion", err.Code(), nil, err)
 	}
 	// Add the recursion result
 	ans = append(ans, extra_path...)
@@ -264,7 +258,7 @@ func (store *CAStore) AddCAsInZipFile(file *zip.File) bool {
 
 	// Add them all!
 	for _, cert := range certs {
-		store.AddCA(&cert)
+		store.AddCAatTime(&cert, time.Now())
 	}
 
 	return true

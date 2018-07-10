@@ -1,4 +1,4 @@
-package icp_internals
+package icp_errs
 
 import "strconv"
 

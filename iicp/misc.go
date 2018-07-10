@@ -1,4 +1,4 @@
-package icp_internals
+package iicp
 
 import (
 	"crypto"
@@ -13,6 +13,8 @@ import (
 	"net/http"
 	"reflect"
 	"time"
+
+	"github.com/gjvnq/libICP/errs"
 )
 
 const VERSION_MAJOR = 0
@@ -67,7 +69,7 @@ type Signable interface {
 	GetSignature() asn1.BitString
 }
 
-func VerifySignaure(object Signable, pubkey rsa.PublicKey) CodedError {
+func VerifySignaure(object Signable, pubkey rsa.PublicKey) icp_errs.CodedError {
 	// Check algorithm
 	alg := object.GetSignatureAlgorithm().Algorithm
 	var tbs_hasher hash.Hash
@@ -86,7 +88,7 @@ func VerifySignaure(object Signable, pubkey rsa.PublicKey) CodedError {
 		tbs_hasher = sha512.New()
 		tbs_hash_alg = crypto.SHA512
 	default:
-		merr := NewMultiError("unknown algorithm", ERR_UNKOWN_ALGORITHM, nil)
+		merr := icp_errs.NewMultiError("unknown algorithm", icp_errs.ERR_UNKOWN_ALGORITHM, nil)
 		merr.SetParam("algorithm", alg)
 		return merr
 	}
@@ -100,26 +102,26 @@ func VerifySignaure(object Signable, pubkey rsa.PublicKey) CodedError {
 	sig := object.GetSignature().Bytes
 	err := rsa.VerifyPKCS1v15(&pubkey, tbs_hash_alg, hash_ans, sig)
 	if err != nil {
-		return NewMultiError("failed to verify signature", ERR_BAD_SIGNATURE, nil, err)
+		return icp_errs.NewMultiError("failed to verify signature", icp_errs.ERR_BAD_SIGNATURE, nil, err)
 	}
 	return nil
 }
 
-func HTTPGet(url string) ([]byte, int64, CodedError) {
+func HTTPGet(url string) ([]byte, int64, icp_errs.CodedError) {
 	// Get the data
 	client := &http.Client{
 		Timeout: 5 * time.Second,
 	}
 	resp, err := client.Get(url)
 	if err != nil {
-		merr := NewMultiError("failed to use GET method", ERR_HTTP, nil, err)
+		merr := icp_errs.NewMultiError("failed to use GET method", icp_errs.ERR_HTTP, nil, err)
 		merr.SetParam("URL", url)
 		return nil, 0, merr
 	}
 	raw, err := ioutil.ReadAll(resp.Body)
 	resp.Body.Close()
 	if err != nil {
-		merr := NewMultiError("failed to read http response", ERR_HTTP, nil, err)
+		merr := icp_errs.NewMultiError("failed to read http response", icp_errs.ERR_HTTP, nil, err)
 		merr.SetParam("URL", url)
 		return nil, 0, merr
 	}

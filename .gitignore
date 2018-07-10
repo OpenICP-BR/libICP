@@ -1,5 +1,7 @@
 libicp.a
 libicp.dll.a
+libicp_errs.a
+libicp_errs.dll.a
 libicp_internals.a
 libicp_internals.dll.a
 coverage.out

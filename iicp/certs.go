@@ -1,4 +1,4 @@
-package icp_internals
+package iicp
 
 import (
 	"encoding/asn1"

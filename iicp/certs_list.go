@@ -1,9 +1,11 @@
-package icp_internals
+package iicp
 
 import (
 	"encoding/asn1"
 	"math/big"
 	"time"
+
+	"github.com/gjvnq/libICP/errs"
 )
 
 type CertificateList struct {
@@ -13,10 +15,10 @@ type CertificateList struct {
 	Signature          asn1.BitString
 }
 
-func (list *CertificateList) LoadFromDER(data []byte) ([]byte, CodedError) {
+func (list *CertificateList) LoadFromDER(data []byte) ([]byte, icp_errs.CodedError) {
 	rest, err := asn1.Unmarshal(data, list)
 	if err != nil {
-		merr := NewMultiError("failed to parse DER CRL", ERR_PARSE_CRL, nil, err)
+		merr := icp_errs.NewMultiError("failed to parse DER CRL", icp_errs.ERR_PARSE_CRL, nil, err)
 		merr.SetParam("raw-data", data)
 		return rest, merr
 	}
