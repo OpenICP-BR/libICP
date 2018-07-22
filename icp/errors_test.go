@@ -1,4 +1,4 @@
-package iicp
+package icp
 
 import (
 	"errors"
@@ -33,7 +33,7 @@ func Test_NewMultiError_1(t *testing.T) {
 	tmp := strings.Split(merr.Error(), "\n")
 	r := regexp.MustCompile("[.]go:[0-9]*")
 	tmp[0] = r.ReplaceAllString(tmp[0], ".go:?")
-	assert.Equal(t, tmp[0], "github.com/gjvnq/libICP/iicp.Test_NewMultiError_1 (errors_test.go:?): ERR_OK: hi")
+	assert.Equal(t, tmp[0], "github.com/gjvnq/libICP/icp.Test_NewMultiError_1 (errors_test.go:?): ERR_OK: hi")
 	assert.EqualValues(t, ERR_OK, merr.Code())
 }
 
@@ -53,6 +53,6 @@ func Test_NewMultiError_2(t *testing.T) {
 	tmp := strings.Split(merr.Error(), "\n")
 	r := regexp.MustCompile("[.]go:[0-9]*")
 	tmp[0] = r.ReplaceAllString(tmp[0], ".go:?")
-	assert.Equal(t, tmp[0], "github.com/gjvnq/libICP/iicp.Test_NewMultiError_2 (errors_test.go:?): ERR_OK: hi")
+	assert.Equal(t, tmp[0], "github.com/gjvnq/libICP/icp.Test_NewMultiError_2 (errors_test.go:?): ERR_OK: hi")
 	assert.EqualValues(t, ERR_OK, merr.Code())
 }

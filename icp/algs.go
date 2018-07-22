@@ -1,4 +1,4 @@
-package iicp
+package icp
 
 import (
 	"crypto/rsa"
