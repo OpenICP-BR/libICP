@@ -4,10 +4,10 @@ go:
   - 1.10.x
 
 before_install:
-  - go get -t -v . ./iicp/.
+  - go get -t -v . ./icp/.
 
 script:
-  - cd iicp && go test -race -coverprofile=coverage.txt -covermode=atomic
+  - make test
 
 after_success:
   - bash <(curl -s https://codecov.io/bash)
