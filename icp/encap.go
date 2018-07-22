@@ -3,14 +3,27 @@ package icp
 import "github.com/gjvnq/asn1"
 
 type EncapsulatedContentInfo struct {
-	RawContent    asn1.RawContent
-	EContentType  asn1.ObjectIdentifier
-	EContent      []byte `asn1:"explicit,optional,omitempty"`
-	fallback_file string
-	final_hash    []byte
+	RawContent   asn1.RawContent
+	EContentType asn1.ObjectIdentifier
+	EContent     []byte `asn1:"explicit,optional,omitempty"`
+	FallbackFile string
+	hashes       map[string][]byte
 }
 
-func (encap EncapsulatedContentInfo) HashAs(alg_id AlgorithmIdentifier) {
+func (encap EncapsulatedContentInfo) IsDetached() bool {
+	return encap.EContent == nil
+}
+
+func (encap *EncapsulatedContentInfo) HashAs(alg_id AlgorithmIdentifier) ([]byte, CodedError) {
+	if encap.hashes == nil {
+		encap.hashes = make(map[string][]byte)
+	}
+	// Check if the hash was already calculated
+	if ans, ok := encap.hashes[alg_id.ToHex()]; ok {
+		return ans, nil
+	}
+	// Get hasher
+	return nil, NewMultiError("HashAs not implemented", ERR_NOT_IMPLEMENTED, nil)
 }
 
 /*	According to RFC 5652 Section 5.2 Page 11 Paragraph 2:
