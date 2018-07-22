@@ -3,7 +3,6 @@ package iicp
 import (
 	"testing"
 
-	"github.com/gjvnq/libICP/errs"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -19,7 +18,7 @@ func Test_ExtKeyUsage_FromExtension_1(t *testing.T) {
 	ext := ExtKeyUsage{}
 	err := ext.FromExtension(raw_ext)
 	require.NotNil(t, err)
-	assert.EqualValues(t, icp_errs.ERR_PARSE_EXTENSION, err.Code())
+	assert.EqualValues(t, ERR_PARSE_EXTENSION, err.Code())
 }
 
 func Test_ExtKeyUsage_FromExtension_2(t *testing.T) {
@@ -43,7 +42,7 @@ func Test_ExtBasicConstraints_FromExtension_1(t *testing.T) {
 	ext := ExtBasicConstraints{}
 	err := ext.FromExtension(raw_ext)
 	require.NotNil(t, err)
-	assert.EqualValues(t, icp_errs.ERR_PARSE_EXTENSION, err.Code())
+	assert.EqualValues(t, ERR_PARSE_EXTENSION, err.Code())
 }
 
 func Test_ExtBasicConstraints_FromExtension_2(t *testing.T) {
@@ -62,7 +61,7 @@ func Test_ExtCRLDistributionPoints_FromExtension_1(t *testing.T) {
 	ext := ExtCRLDistributionPoints{}
 	err := ext.FromExtension(raw_ext)
 	require.NotNil(t, err)
-	assert.EqualValues(t, icp_errs.ERR_PARSE_EXTENSION, err.Code())
+	assert.EqualValues(t, ERR_PARSE_EXTENSION, err.Code())
 }
 
 func Test_ExtCRLDistributionPoints_FromExtension_2(t *testing.T) {
@@ -80,7 +79,7 @@ func Test_ExtAuthorityKeyId_FromExtension_1(t *testing.T) {
 	ext := ExtAuthorityKeyId{}
 	err := ext.FromExtension(raw_ext)
 	require.NotNil(t, err)
-	assert.EqualValues(t, icp_errs.ERR_PARSE_EXTENSION, err.Code())
+	assert.EqualValues(t, ERR_PARSE_EXTENSION, err.Code())
 }
 
 func Test_ExtAuthorityKeyId_FromExtension_2(t *testing.T) {
@@ -98,7 +97,7 @@ func Test_ExtSubjectKeyId_FromExtension_1(t *testing.T) {
 	ext := ExtSubjectKeyId{}
 	err := ext.FromExtension(raw_ext)
 	require.NotNil(t, err)
-	assert.EqualValues(t, icp_errs.ERR_PARSE_EXTENSION, err.Code())
+	assert.EqualValues(t, ERR_PARSE_EXTENSION, err.Code())
 }
 
 func Test_ExtSubjectKeyId_FromExtension_2(t *testing.T) {

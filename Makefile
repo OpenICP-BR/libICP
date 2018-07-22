@@ -16,7 +16,7 @@ docs:
 	xdg-open "http://localhost:6060/pkg/github.com/gjvnq/libICP/"
 docs-server:
 	godoc -http=:6060
-test: coverage.out iicp/coverage.out errs/coverage.out
+test: coverage.out iicp/coverage.out
 test-html: coverage.out
 	@$(ECHO) -e $(ANSI_GREEN)"Generating coverage report..."$(ANSI_RESET)
 	go tool cover -html=coverage.out
@@ -43,6 +43,3 @@ coverage.out: *.go
 
 iicp/coverage.out: iicp/*.go
 	cd iicp && make coverage.out
-
-errs/coverage.out: errs/*.go
-	cd errs && make coverage.out

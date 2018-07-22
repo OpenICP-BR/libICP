@@ -3,7 +3,6 @@ package icp
 import (
 	"time"
 
-	icp_errs "github.com/gjvnq/libICP/errs"
 	iicp "github.com/gjvnq/libICP/iicp"
 )
 
@@ -96,6 +95,6 @@ func (cert Certificate) IsCA() bool {
 	return cert.base.IsCA()
 }
 
-func (cert Certificate) CRLLastError() icp_errs.CodedError {
+func (cert Certificate) CRLLastError() iicp.CodedError {
 	return cert.base.CRLLastError()
 }

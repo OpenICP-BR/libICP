@@ -3,8 +3,6 @@ package iicp
 import (
 	"encoding/asn1"
 	"math/big"
-
-	"github.com/gjvnq/libICP/errs"
 )
 
 type Attribute struct {
@@ -87,11 +85,11 @@ type ExtKeyUsage struct {
 	CRLSign          bool
 }
 
-func (ans *ExtKeyUsage) FromExtension(ext Extension) icp_errs.CodedError {
+func (ans *ExtKeyUsage) FromExtension(ext Extension) CodedError {
 	seq := asn1.BitString{}
 	_, err := asn1.Unmarshal(ext.ExtnValue, &seq)
 	if err != nil {
-		merr := icp_errs.NewMultiError("failed to parse key usage extention as bit sequence", icp_errs.ERR_PARSE_EXTENSION, nil, err)
+		merr := NewMultiError("failed to parse key usage extention as bit sequence", ERR_PARSE_EXTENSION, nil, err)
 		merr.SetParam("raw-ExtnValue", ext.ExtnValue)
 		return merr
 	}
@@ -118,11 +116,11 @@ type ExtBasicConstraintsRaw struct {
 	PathLen int `asn1:"optional"`
 }
 
-func (ans *ExtBasicConstraints) FromExtension(ext Extension) icp_errs.CodedError {
+func (ans *ExtBasicConstraints) FromExtension(ext Extension) CodedError {
 	raw := ExtBasicConstraintsRaw{}
 	_, err := asn1.Unmarshal(ext.ExtnValue, &raw)
 	if err != nil {
-		merr := icp_errs.NewMultiError("failed to parse basic constraints extention", icp_errs.ERR_PARSE_EXTENSION, nil, err)
+		merr := NewMultiError("failed to parse basic constraints extention", ERR_PARSE_EXTENSION, nil, err)
 		merr.SetParam("raw-ExtnValue", ext.ExtnValue)
 		return merr
 	}
@@ -145,11 +143,11 @@ type ExtDistributionPoint struct {
 	FullName GeneralName `asn1:"optional,tag:0"`
 }
 
-func (ans *ExtCRLDistributionPoints) FromExtension(ext Extension) icp_errs.CodedError {
+func (ans *ExtCRLDistributionPoints) FromExtension(ext Extension) CodedError {
 	raw := []ExtCRLDistributionPointsRaw{}
 	_, err := asn1.Unmarshal(ext.ExtnValue, &raw)
 	if err != nil {
-		merr := icp_errs.NewMultiError("failed to parse CRL distribution points extention", icp_errs.ERR_PARSE_EXTENSION, nil, err)
+		merr := NewMultiError("failed to parse CRL distribution points extention", ERR_PARSE_EXTENSION, nil, err)
 		merr.SetParam("raw-ExtnValue", ext.ExtnValue)
 		return merr
 	}
@@ -174,11 +172,11 @@ type ExtAuthorityKeyId struct {
 	KeyId  []byte
 }
 
-func (ans *ExtAuthorityKeyId) FromExtension(ext Extension) icp_errs.CodedError {
+func (ans *ExtAuthorityKeyId) FromExtension(ext Extension) CodedError {
 	raw := ExtAuthorityKeyIdRaw{}
 	_, err := asn1.Unmarshal(ext.ExtnValue, &raw)
 	if err != nil {
-		merr := icp_errs.NewMultiError("failed to parse authority key id extention", icp_errs.ERR_PARSE_EXTENSION, nil, err)
+		merr := NewMultiError("failed to parse authority key id extention", ERR_PARSE_EXTENSION, nil, err)
 		merr.SetParam("raw-ExtnValue", ext.ExtnValue)
 		return merr
 	}
@@ -192,10 +190,10 @@ type ExtSubjectKeyId struct {
 	KeyId  []byte
 }
 
-func (ans *ExtSubjectKeyId) FromExtension(ext Extension) icp_errs.CodedError {
+func (ans *ExtSubjectKeyId) FromExtension(ext Extension) CodedError {
 	_, err := asn1.Unmarshal(ext.ExtnValue, &ans.KeyId)
 	if err != nil {
-		merr := icp_errs.NewMultiError("failed to parse subject key id extention", icp_errs.ERR_PARSE_EXTENSION, nil, err)
+		merr := NewMultiError("failed to parse subject key id extention", ERR_PARSE_EXTENSION, nil, err)
 		merr.SetParam("raw-ExtnValue", ext.ExtnValue)
 		return merr
 	}
