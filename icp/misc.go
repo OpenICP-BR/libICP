@@ -6,13 +6,15 @@ import (
 	"crypto/sha1"
 	"crypto/sha256"
 	"crypto/sha512"
-	"encoding/asn1"
 	"fmt"
 	"hash"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"reflect"
 	"time"
+
+	"github.com/gjvnq/asn1"
 )
 
 const VERSION_MAJOR = 0
@@ -39,26 +41,7 @@ func NiceHex(buf []byte) string {
 type ContentInfo struct {
 	RawContent  asn1.RawContent
 	ContentType asn1.ObjectIdentifier
-	Content     interface{}
-}
-
-type EncapsulatedContentInfo struct {
-	RawContent   asn1.RawContent
-	EContentType asn1.ObjectIdentifier
-	EContent     []byte `asn1:"explicit,optional,omitempty"`
-}
-
-/*	According to RFC 5652 Section 5.2 Page 11 Paragraph 2:
-
-	In the degenerate case where there are no signers, the
-	EncapsulatedContentInfo value being "signed" is irrelevant.  In this
-	case, the content type within the EncapsulatedContentInfo value being
-	"signed" MUST be id-data (as defined in Section 4), and the content
-	field of the EncapsulatedContentInfo value MUST be omitted.
-*/
-func (ec *EncapsulatedContentInfo) AdjustForNoSigners() {
-	ec.EContentType = IdData()
-	ec.EContent = nil
+	Content     asn1.RawValue
 }
 
 type Signable interface {
@@ -67,34 +50,51 @@ type Signable interface {
 	GetSignature() asn1.BitString
 }
 
-func VerifySignaure(object Signable, pubkey rsa.PublicKey) CodedError {
+func GetHasher(alg_id AlgorithmIdentifier) (hash.Hash, crypto.Hash, CodedError) {
 	// Check algorithm
-	alg := object.GetSignatureAlgorithm().Algorithm
-	var tbs_hasher hash.Hash
-	var tbs_hash_alg crypto.Hash
+	alg := alg_id.Algorithm
+	var hasher hash.Hash
+	var hash_alg crypto.Hash
 	switch {
 	case alg.Equal(IdSha1WithRSAEncryption()):
-		tbs_hasher = sha1.New()
-		tbs_hash_alg = crypto.SHA1
+		hasher = sha1.New()
+		hash_alg = crypto.SHA1
 	case alg.Equal(IdSha256WithRSAEncryption()):
-		tbs_hasher = sha256.New()
-		tbs_hash_alg = crypto.SHA256
+		hasher = sha256.New()
+		hash_alg = crypto.SHA256
 	case alg.Equal(IdSha384WithRSAEncryption()):
-		tbs_hasher = sha512.New384()
-		tbs_hash_alg = crypto.SHA384
+		hasher = sha512.New384()
+		hash_alg = crypto.SHA384
 	case alg.Equal(IdSha512WithRSAEncryption()):
-		tbs_hasher = sha512.New()
-		tbs_hash_alg = crypto.SHA512
+		hasher = sha512.New()
+		hash_alg = crypto.SHA512
 	default:
 		merr := NewMultiError("unknown algorithm", ERR_UNKOWN_ALGORITHM, nil)
 		merr.SetParam("algorithm", alg)
+		return nil, crypto.Hash(0), merr
+	}
+	return hasher, hash_alg, nil
+}
+
+func RunHash(hasher hash.Hash, data []byte) []byte {
+	hasher.Write(data)
+	return hasher.Sum(nil)
+}
+
+func RunHashWithReader(hasher hash.Hash, input io.Reader) ([]byte, error) {
+	_, err := io.Copy(hasher, input)
+	return hasher.Sum(nil), err
+}
+
+func VerifySignaure(object Signable, pubkey rsa.PublicKey) CodedError {
+	// Check algorithm
+	tbs_hasher, tbs_hash_alg, merr := GetHasher(object.GetSignatureAlgorithm())
+	if merr != nil {
 		return merr
 	}
 
 	// Write raw value
-	tbs_hasher.Write(object.GetRawContent())
-	hash_ans := make([]byte, 0)
-	hash_ans = tbs_hasher.Sum(hash_ans)
+	hash_ans := RunHash(tbs_hasher, object.GetRawContent())
 
 	// Verify signature
 	sig := object.GetSignature().Bytes

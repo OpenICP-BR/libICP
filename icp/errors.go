@@ -1,11 +1,12 @@
 package icp
 
 import (
-	"encoding/asn1"
 	"encoding/base64"
 	"fmt"
 	"runtime"
 	"strings"
+
+	"github.com/gjvnq/asn1"
 )
 
 type stringI interface {

@@ -1,40 +1,17 @@
 package icp
 
 import (
-	"encoding/asn1"
 	"encoding/pem"
 	"io/ioutil"
 	"math/big"
 	"reflect"
-	"strconv"
 	"sync"
 	"time"
 
+	"github.com/gjvnq/asn1"
+
 	"github.com/LK4D4/trylock"
 )
-
-type CRLStatus int
-
-const (
-	CRL_UNSURE_OR_NOT_FOUND = 0
-	// CRL_NOT_REVOKED is also used when the CA offers no means to check revocation status.
-	CRL_NOT_REVOKED = 1
-	CRL_REVOKED     = 2
-)
-
-var crl_map_string = map[CRLStatus]string{
-	CRL_UNSURE_OR_NOT_FOUND: "CRL_UNSURE_OR_NOT_FOUND",
-	CRL_NOT_REVOKED:         "CRL_NOT_REVOKED",
-	CRL_REVOKED:             "CRL_REVOKED",
-}
-
-func (err CRLStatus) String() string {
-	ans, ok := crl_map_string[err]
-	if !ok {
-		ans = "CRL_" + strconv.Itoa(int(err))
-	}
-	return ans
-}
 
 type Certificate struct {
 	Base                     CertificatePack

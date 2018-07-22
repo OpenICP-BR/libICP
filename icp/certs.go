@@ -1,8 +1,9 @@
 package icp
 
 import (
-	"encoding/asn1"
 	"math/big"
+
+	"github.com/gjvnq/asn1"
 )
 
 type CertificateChoice struct {

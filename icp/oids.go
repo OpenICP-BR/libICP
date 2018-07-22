@@ -1,6 +1,6 @@
 package icp
 
-import "encoding/asn1"
+import "github.com/gjvnq/asn1"
 
 func IdRSAEncryption() asn1.ObjectIdentifier {
 	return asn1.ObjectIdentifier{1, 2, 840, 113549, 1, 1, 1}
@@ -57,6 +57,26 @@ func IdCeCRLDistributionPoint() asn1.ObjectIdentifier {
 // Returns the an ObjectIdentifier for id-ct-contentInfo { iso(1) member-body(2) us(840) rsadsi(113549) pkcs(1) pkcs9(9) smime(16) ct(1) 6 }
 func IdCtContentInfo() asn1.ObjectIdentifier {
 	return asn1.ObjectIdentifier{1, 2, 840, 113549, 1, 9, 16, 1, 6}
+}
+
+// Returns the an ObjectIdentifier for id-contentType { iso(1) member-body(2) us(840) rsadsi(113549) pkcs(1) pkcs9(9) 3 }
+func IdContentType() asn1.ObjectIdentifier {
+	return asn1.ObjectIdentifier{1, 2, 840, 113549, 1, 9, 3}
+}
+
+// Returns the an ObjectIdentifier for id-messageDigest { iso(1) member-body(2) us(840) rsadsi(113549) pkcs(1) pkcs9(9) 4 }
+func IdMessageDigest() asn1.ObjectIdentifier {
+	return asn1.ObjectIdentifier{1, 2, 840, 113549, 1, 9, 4}
+}
+
+// Returns the an ObjectIdentifier for id-signingTime { iso(1) member-body(2) us(840) rsadsi(113549) pkcs(1) pkcs9(9) 5 }
+func IdSigningTime() asn1.ObjectIdentifier {
+	return asn1.ObjectIdentifier{1, 2, 840, 113549, 1, 9, 5}
+}
+
+// Returns the an ObjectIdentifier for id-countersignature { iso(1) member-body(2) us(840) rsadsi(113549) pkcs(1) pkcs9(9) 6 }
+func IdCounterSignature() asn1.ObjectIdentifier {
+	return asn1.ObjectIdentifier{1, 2, 840, 113549, 1, 9, 5}
 }
 
 // Returns the an ObjectIdentifier for id-data { iso(1) member-body(2) us(840) rsadsi(113549) pkcs(1) pkcs7(7) 1 }

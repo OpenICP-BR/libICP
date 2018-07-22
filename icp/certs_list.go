@@ -1,9 +1,10 @@
 package icp
 
 import (
-	"encoding/asn1"
 	"math/big"
 	"time"
+
+	"github.com/gjvnq/asn1"
 )
 
 type CertificateList struct {

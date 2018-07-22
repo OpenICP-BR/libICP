@@ -1,8 +1,9 @@
 package icp
 
 import (
-	"encoding/asn1"
 	"math/big"
+
+	"github.com/gjvnq/asn1"
 )
 
 type Attribute struct {
@@ -110,7 +111,7 @@ type ExtBasicConstraints struct {
 	PathLen int
 }
 
-// I had to created this struct because encoding/asn1 does can't ignore fields with `asn1:"-"`
+// I had to created this struct because github.com/gjvnq/asn1 does can't ignore fields with `asn1:"-"`
 type ExtBasicConstraintsRaw struct {
 	CA      bool
 	PathLen int `asn1:"optional"`

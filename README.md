@@ -25,6 +25,12 @@ A golang library for CAdES (CMS Advanced Electronic Signatures) for the Brazilia
     - [ ] Certificate Policies.
     - [X] CRL Distribution Points.
     - [X] Fail when critical extensions are not supported.
+- [ ] CMS Content type support.
+  - [ ] protection content
+  - [ ] ContentInfo
+  - [ ] data
+  - [ ] signed-data
+  - [ ] enveloped-data
 - [ ] Join multiple signatures files into a single signature file.¹
 - [ ] Support for smartcard certificates.
 - [ ] Support for usb certificates.

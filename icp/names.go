@@ -1,8 +1,9 @@
 package icp
 
 import (
-	"encoding/asn1"
 	"fmt"
+
+	"github.com/gjvnq/asn1"
 )
 
 type Name []RDN_SET

@@ -2,13 +2,18 @@ package icp
 
 import (
 	"crypto/rsa"
-	"encoding/asn1"
+
+	"github.com/gjvnq/asn1"
 )
 
 type AlgorithmIdentifier struct {
 	RawContent asn1.RawContent
 	Algorithm  asn1.ObjectIdentifier
 	Parameters interface{} `asn1:optional,omitempty`
+}
+
+func (ai AlgorithmIdentifier) ToHex() string {
+	return NiceHex(ai.RawContent)
 }
 
 type PairAlgPubKey struct {

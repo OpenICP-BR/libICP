@@ -1,6 +1,6 @@
 package icp
 
-import "encoding/asn1"
+import "github.com/gjvnq/asn1"
 
 type SignedData struct {
 	RawContent       asn1.RawContent
@@ -74,15 +74,84 @@ func (sd *SignedData) HasV3SignerInfo() bool {
 	return false
 }
 
+func (sd *SignedData) UpdateAlgs() {
+	used := make(map[string]bool)
+	algs := make(map[string]AlgorithmIdentifier)
+
+	for _, info := range sd.SignerInfos {
+		used[info.DigestAlgorithm.ToHex()] = true
+	}
+	sd.DigestAlgorithms = make([]AlgorithmIdentifier, len(used))
+	i := 0
+	for k, _ := range used {
+		sd.DigestAlgorithms[i] = algs[k]
+		i++
+	}
+}
+
 type SignerInfo struct {
 	RawContent         asn1.RawContent
 	Version            int
-	Sid_V1             IssuerAndSerial `asn1:"tag:choice"`
-	Sid_V3             []byte          `asn1:"tag:choice"`
-	Sid                interface{}     `asn1:"tag:end_choice"`
+	Sid_V1             IssuerAndSerial `asn1:"optional,omitempty"`
+	Sid_V3             []byte          `asn1:"tag:0,optional,omitempty"`
 	DigestAlgorithm    AlgorithmIdentifier
-	SignedAttrs        []Attribute `asn1:"tag:0,set,optional"`
+	SignedAttrs        []Attribute `asn1:"tag:0,set,optional,omitempty"`
 	SignatureAlgorithm AlgorithmIdentifier
 	Signature          []byte
-	UnsignedAttrs      []Attribute `asn1:"tag:1,set,optional"`
+	UnsignedAttrs      []Attribute `asn1:"tag:1,set,optional,omitempty"`
+}
+
+// Apply rule described on RFC5625 Section 5.3 Page 13. This function MUST be called before marshaling.
+func (si *SignerInfo) SetAppropriateVersion() {
+	si.Version = 0
+	if !IsZeroOfUnderlyingType(si.Sid_V1) {
+		si.Version = 1
+	}
+	if !IsZeroOfUnderlyingType(si.Sid_V3) {
+		si.Version = 3
+	}
+}
+
+func (si *SignerInfo) BeforeMarshaling() error {
+	si.SetAppropriateVersion()
+	return nil
+}
+
+func (si *SignerInfo) RemoveSignedAttrByType(attr_type asn1.ObjectIdentifier) {
+	for i, attr := range si.SignedAttrs {
+		if attr.Type.Equal(attr_type) {
+			si.SignedAttrs[i].Values = nil
+			si.SignedAttrs = append(si.SignedAttrs[:i], si.SignedAttrs[i+1:]...)
+		}
+	}
+}
+
+func (si *SignerInfo) SetContentTypeAttr(content_type asn1.ObjectIdentifier) {
+	// Ensure we will have exactly one content type signed attribute
+	si.RemoveSignedAttrByType(IdContentType())
+	// Add content type
+	attr := Attribute{}
+	attr.Type = IdContentType()
+	attr.Values = make([]interface{}, 1)
+	attr.Values[0] = content_type
+	si.SignedAttrs = append(si.SignedAttrs, attr)
+}
+
+func (si SignerInfo) DigestEncapContent(encap EncapsulatedContentInfo) {
+	// return encap.HashAs(si.DigestAlgorithm)
+}
+
+func (si *SignerInfo) SetMessageDigestAttr(encap_digest []byte) {
+	// Ensure we will have exactly one message digest signed attribute
+	si.RemoveSignedAttrByType(IdMessageDigest())
+	// Add message digest
+	attr := Attribute{}
+	attr.Type = IdMessageDigest()
+	attr.Values = make([]interface{}, 1)
+	attr.Values[0] = encap_digest
+	si.SignedAttrs = append(si.SignedAttrs, attr)
+}
+
+func (si SignerInfo) GetFinalMessageDigest() ([]byte, []CodedError) {
+	return nil, nil
 }
