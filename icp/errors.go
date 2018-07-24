@@ -136,10 +136,11 @@ func (merr *MultiError) AppendError(err error) error {
 	return nil
 }
 
-// Sets the line number and function to match where this function is called and prevents further editing.
-func (merr *MultiError) Finish() {
+// Sets the line number and function to match where this function is called and prevents further editing. Also returns itself.
+func (merr *MultiError) Finish() *MultiError {
 	merr.mark_position()
 	merr.locked = true
+	return merr
 }
 
 func get_stack_pos(depth int) (string, string, int) {

@@ -81,9 +81,12 @@ func RunHash(hasher hash.Hash, data []byte) []byte {
 	return hasher.Sum(nil)
 }
 
-func RunHashWithReader(hasher hash.Hash, input io.Reader) ([]byte, error) {
+func RunHashWithReader(hasher hash.Hash, input io.Reader) ([]byte, CodedError) {
 	_, err := io.Copy(hasher, input)
-	return hasher.Sum(nil), err
+	if err != nil {
+		return nil, NewMultiError("failed to hash file", ERR_FAILED_HASH, nil)
+	}
+	return hasher.Sum(nil), nil
 }
 
 func VerifySignaure(object Signable, pubkey rsa.PublicKey) CodedError {

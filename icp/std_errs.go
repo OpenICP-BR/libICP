@@ -29,6 +29,10 @@ const (
 	ERR_UNKOWN_REVOCATION_STATUS
 	ERR_PARSE_CRL
 	ERR_HTTP
+	ERR_FAILED_ABS_PATH
+	ERR_FILE_NOT_EXISTS
+	ERR_FAILED_TO_OPEN_FILE
+	ERR_FAILED_HASH
 )
 
 var errors_map_string = map[ErrorCode]string{
@@ -56,6 +60,10 @@ var errors_map_string = map[ErrorCode]string{
 	ERR_UNKOWN_REVOCATION_STATUS:           "ERR_UNKOWN_REVOCATION_STATUS",
 	ERR_PARSE_CRL:                          "ERR_PARSE_CRL",
 	ERR_HTTP:                               "ERR_HTTP",
+	ERR_FAILED_ABS_PATH:                    "ERR_FAILED_ABS_PATH",
+	ERR_FILE_NOT_EXISTS:                    "ERR_FILE_NOT_EXISTS",
+	ERR_FAILED_TO_OPEN_FILE:                "ERR_FAILED_TO_OPEN_FILE",
+	ERR_FAILED_HASH:                        "ERR_FAILED_HASH",
 }
 
 func (err ErrorCode) String() string {
