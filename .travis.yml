@@ -4,6 +4,7 @@ go:
   - 1.10.x
 
 before_install:
+  - go get -t -v golang.org/x/tools/cmd/goimports
   - go get -t -v . ./icp/.
 
 script:

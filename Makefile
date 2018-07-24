@@ -25,7 +25,7 @@ test-html: coverage.out
 
 libicp.a: *.go
 	@$(ECHO) -e $(ANSI_GREEN)"Fixing imports..."$(ANSI_RESET)
-	- goimports -w .
+	goimports -w .
 	@$(ECHO) -e $(ANSI_GREEN)"Formatting code..."$(ANSI_RESET)
 	go fmt
 	@$(ECHO) -e $(ANSI_GREEN)"Compiling code..."$(ANSI_RESET)
@@ -34,7 +34,7 @@ libicp.a: *.go
 
 coverage.out: *.go
 	@$(ECHO) -e $(ANSI_GREEN)"Fixing imports..."$(ANSI_RESET)
-	- goimports -w .
+	goimports -w .
 	@$(ECHO) -e $(ANSI_GREEN)"Formatting code..."$(ANSI_RESET)
 	go fmt
 	@$(ECHO) -e $(ANSI_GREEN)"Testing code..."$(ANSI_RESET)
