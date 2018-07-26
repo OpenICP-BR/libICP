@@ -1,8 +1,9 @@
 package icp
 
 import (
-	"github.com/gjvnq/asn1"
 	"testing"
+
+	"github.com/gjvnq/asn1"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
