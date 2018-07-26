@@ -10,6 +10,50 @@ func Test_IdRSAEncryption(t *testing.T) {
 	assert.Equal(t, "1.2.840.113549.1.1.1", IdRSAEncryption().String())
 }
 
+func Test_IdSha1(t *testing.T) {
+	assert.Equal(t, "1.3.14.3.2.26", IdSha1().String())
+}
+
+func Test_IdSha256(t *testing.T) {
+	assert.Equal(t, "2.16.840.1.101.3.4.2.1", IdSha256().String())
+}
+
+func Test_IdSha384(t *testing.T) {
+	assert.Equal(t, "2.16.840.1.101.3.4.2.2", IdSha384().String())
+}
+
+func Test_IdSha512(t *testing.T) {
+	assert.Equal(t, "2.16.840.1.101.3.4.2.3", IdSha512().String())
+}
+
+func Test_IdSha224(t *testing.T) {
+	assert.Equal(t, "2.16.840.1.101.3.4.2.4", IdSha224().String())
+}
+
+func Test_IdSha512_224(t *testing.T) {
+	assert.Equal(t, "2.16.840.1.101.3.4.2.5", IdSha512_224().String())
+}
+
+func Test_IdSha512_256(t *testing.T) {
+	assert.Equal(t, "2.16.840.1.101.3.4.2.6", IdSha512_256().String())
+}
+
+func Test_IdSha3_224(t *testing.T) {
+	assert.Equal(t, "2.16.840.1.101.3.4.2.7", IdSha3_224().String())
+}
+
+func Test_IdSha3_256(t *testing.T) {
+	assert.Equal(t, "2.16.840.1.101.3.4.2.8", IdSha3_256().String())
+}
+
+func Test_IdSha3_384(t *testing.T) {
+	assert.Equal(t, "2.16.840.1.101.3.4.2.9", IdSha3_384().String())
+}
+
+func Test_IdSha3_512(t *testing.T) {
+	assert.Equal(t, "2.16.840.1.101.3.4.2.10", IdSha3_512().String())
+}
+
 func Test_IdMd2WithRSAEncryption(t *testing.T) {
 	assert.Equal(t, "1.2.840.113549.1.1.2", IdMd2WithRSAEncryption().String())
 }

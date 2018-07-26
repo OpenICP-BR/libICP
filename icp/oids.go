@@ -6,6 +6,50 @@ func IdRSAEncryption() asn1.ObjectIdentifier {
 	return asn1.ObjectIdentifier{1, 2, 840, 113549, 1, 1, 1}
 }
 
+func IdSha1() asn1.ObjectIdentifier {
+	return asn1.ObjectIdentifier{1, 3, 14, 3, 2, 26}
+}
+
+func IdSha256() asn1.ObjectIdentifier {
+	return asn1.ObjectIdentifier{2, 16, 840, 1, 101, 3, 4, 2, 1}
+}
+
+func IdSha384() asn1.ObjectIdentifier {
+	return asn1.ObjectIdentifier{2, 16, 840, 1, 101, 3, 4, 2, 2}
+}
+
+func IdSha512() asn1.ObjectIdentifier {
+	return asn1.ObjectIdentifier{2, 16, 840, 1, 101, 3, 4, 2, 3}
+}
+
+func IdSha224() asn1.ObjectIdentifier {
+	return asn1.ObjectIdentifier{2, 16, 840, 1, 101, 3, 4, 2, 4}
+}
+
+func IdSha512_224() asn1.ObjectIdentifier {
+	return asn1.ObjectIdentifier{2, 16, 840, 1, 101, 3, 4, 2, 5}
+}
+
+func IdSha512_256() asn1.ObjectIdentifier {
+	return asn1.ObjectIdentifier{2, 16, 840, 1, 101, 3, 4, 2, 6}
+}
+
+func IdSha3_224() asn1.ObjectIdentifier {
+	return asn1.ObjectIdentifier{2, 16, 840, 1, 101, 3, 4, 2, 7}
+}
+
+func IdSha3_256() asn1.ObjectIdentifier {
+	return asn1.ObjectIdentifier{2, 16, 840, 1, 101, 3, 4, 2, 8}
+}
+
+func IdSha3_384() asn1.ObjectIdentifier {
+	return asn1.ObjectIdentifier{2, 16, 840, 1, 101, 3, 4, 2, 9}
+}
+
+func IdSha3_512() asn1.ObjectIdentifier {
+	return asn1.ObjectIdentifier{2, 16, 840, 1, 101, 3, 4, 2, 10}
+}
+
 func IdMd2WithRSAEncryption() asn1.ObjectIdentifier {
 	return asn1.ObjectIdentifier{1, 2, 840, 113549, 1, 1, 2}
 }
