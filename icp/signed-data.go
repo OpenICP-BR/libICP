@@ -1,6 +1,8 @@
 package icp
 
-import "github.com/gjvnq/asn1"
+import (
+	"github.com/gjvnq/asn1"
+)
 
 type SignedData struct {
 	RawContent       asn1.RawContent
@@ -137,21 +139,49 @@ func (si *SignerInfo) SetContentTypeAttr(content_type asn1.ObjectIdentifier) {
 	si.SignedAttrs = append(si.SignedAttrs, attr)
 }
 
-func (si SignerInfo) DigestEncapContent(encap EncapsulatedContentInfo) {
-	// return encap.HashAs(si.DigestAlgorithm)
+func (si SignerInfo) DigestEncapContent(encap *EncapsulatedContentInfo) ([]byte, CodedError) {
+	return encap.HashAs(si.DigestAlgorithm)
 }
 
-func (si *SignerInfo) SetMessageDigestAttr(encap_digest []byte) {
+func (si *SignerInfo) SetMessageDigestAttr(encap *EncapsulatedContentInfo) CodedError {
+	var err CodedError
+
 	// Ensure we will have exactly one message digest signed attribute
 	si.RemoveSignedAttrByType(IdMessageDigest())
 	// Add message digest
 	attr := Attribute{}
 	attr.Type = IdMessageDigest()
 	attr.Values = make([]interface{}, 1)
-	attr.Values[0] = encap_digest
+	attr.Values[0], err = encap.HashAs(si.DigestAlgorithm)
+	if err != nil {
+		return err
+	}
 	si.SignedAttrs = append(si.SignedAttrs, attr)
+	return nil
 }
 
-func (si SignerInfo) GetFinalMessageDigest() ([]byte, []CodedError) {
-	return nil, nil
+func (si *SignerInfo) GetFinalMessageDigest(encap *EncapsulatedContentInfo) ([]byte, CodedError) {
+	var dgst []byte
+
+	if si.SignedAttrs == nil && encap == nil {
+		merr := NewMultiError("signed attributes and encap can't both be nil", ERR_NO_CONTENT, nil)
+		merr.SetParam("signer_info", si)
+		return nil, merr
+	}
+	if si.SignedAttrs == nil {
+		return encap.HashAs(si.DigestAlgorithm)
+	}
+
+	cerr := si.SetMessageDigestAttr(encap)
+	if cerr != nil {
+		return nil, cerr
+	}
+
+	dgst, err := asn1.MarshalWithParams(si.SignedAttrs, "set,explicit")
+	if err != nil {
+		merr := NewMultiError("failed to mashal signed attributes", ERR_FAILED_TO_ENCODE, nil, err)
+		merr.SetParam("signer_info", si)
+		return nil, merr
+	}
+	return GetHasherAndRun(si.DigestAlgorithm, dgst)
 }

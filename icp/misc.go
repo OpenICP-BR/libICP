@@ -6,12 +6,14 @@ import (
 	"crypto/sha1"
 	"crypto/sha256"
 	"crypto/sha512"
+	"encoding/hex"
 	"fmt"
 	"hash"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"reflect"
+	"regexp"
 	"time"
 
 	"github.com/gjvnq/asn1"
@@ -38,6 +40,17 @@ func NiceHex(buf []byte) string {
 	return ans
 }
 
+// Returns nil in case of failure
+func FromHex(s string) []byte {
+	re := regexp.MustCompile("[^A-Fa-f0-9]")
+	s = re.ReplaceAllString(s, "")
+	ans, err := hex.DecodeString(s)
+	if err != nil {
+		return nil
+	}
+	return ans
+}
+
 type ContentInfo struct {
 	RawContent  asn1.RawContent
 	ContentType asn1.ObjectIdentifier
@@ -56,16 +69,16 @@ func GetHasher(alg_id AlgorithmIdentifier) (hash.Hash, crypto.Hash, CodedError) 
 	var hasher hash.Hash
 	var hash_alg crypto.Hash
 	switch {
-	case alg.Equal(IdSha1WithRSAEncryption()):
+	case alg.Equal(IdSha1WithRSAEncryption()) || alg.Equal(IdSha1()):
 		hasher = sha1.New()
 		hash_alg = crypto.SHA1
-	case alg.Equal(IdSha256WithRSAEncryption()):
+	case alg.Equal(IdSha256WithRSAEncryption()) || alg.Equal(IdSha256()):
 		hasher = sha256.New()
 		hash_alg = crypto.SHA256
-	case alg.Equal(IdSha384WithRSAEncryption()):
+	case alg.Equal(IdSha384WithRSAEncryption()) || alg.Equal(IdSha384()):
 		hasher = sha512.New384()
 		hash_alg = crypto.SHA384
-	case alg.Equal(IdSha512WithRSAEncryption()):
+	case alg.Equal(IdSha512WithRSAEncryption()) || alg.Equal(IdSha512()):
 		hasher = sha512.New()
 		hash_alg = crypto.SHA512
 	default:
@@ -79,6 +92,15 @@ func GetHasher(alg_id AlgorithmIdentifier) (hash.Hash, crypto.Hash, CodedError) 
 func RunHash(hasher hash.Hash, data []byte) []byte {
 	hasher.Write(data)
 	return hasher.Sum(nil)
+}
+
+func GetHasherAndRun(alg_id AlgorithmIdentifier, data []byte) ([]byte, CodedError) {
+	hasher, _, cerr := GetHasher(alg_id)
+	if cerr != nil {
+		return nil, cerr
+	}
+	hasher.Write(data)
+	return hasher.Sum(nil), nil
 }
 
 func RunHashWithReader(hasher hash.Hash, input io.Reader) ([]byte, CodedError) {
