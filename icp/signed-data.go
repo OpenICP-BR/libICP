@@ -1,6 +1,7 @@
 package icp
 
 import (
+	"crypto/rsa"
 	"time"
 
 	"github.com/gjvnq/asn1"
@@ -11,8 +12,8 @@ type SignedData struct {
 	Version          int
 	DigestAlgorithms []AlgorithmIdentifier `asn1:set`
 	EncapContentInfo EncapsulatedContentInfo
-	Certificates     []CertificateChoice    `asn1:"tag:0,optional,set"`
-	CRLs             []RevocationInfoChoice `asn1:"tag:1,optional"`
+	Certificates     []CertificateChoice    `asn1:"tag:0,optional,set,omitempty"`
+	CRLs             []RevocationInfoChoice `asn1:"tag:1,optional,omitempty"`
 	SignerInfos      []SignerInfo           `asn1:set`
 }
 
@@ -100,6 +101,7 @@ type SignerInfo struct {
 	Sid_V3             []byte          `asn1:"tag:0,optional,omitempty"`
 	DigestAlgorithm    AlgorithmIdentifier
 	SignedAttrs        []Attribute `asn1:"tag:0,set,optional,omitempty"`
+	SignedRaw          []byte      `asn1:"-"`
 	SignatureAlgorithm AlgorithmIdentifier
 	Signature          []byte
 	UnsignedAttrs      []Attribute `asn1:"tag:1,set,optional,omitempty"`
@@ -114,6 +116,20 @@ func (si *SignerInfo) SetAppropriateVersion() {
 	if !IsZeroOfUnderlyingType(si.Sid_V3) {
 		si.Version = 3
 	}
+}
+
+func (si SignerInfo) GetBytesToSign() []byte {
+	// fmt.Println(ToHex(si.SignedRaw))
+	return si.SignedRaw[2:]
+}
+
+func (si SignerInfo) GetSignatureAlgorithm() AlgorithmIdentifier {
+	// This may seem counter intuitive, but the Sign function gets the hasher through this function
+	return si.DigestAlgorithm
+}
+
+func (si *SignerInfo) SetSignature(sig []byte) {
+	si.Signature = sig
 }
 
 func (si *SignerInfo) BeforeMarshaling() error {
@@ -152,7 +168,7 @@ func (si *SignerInfo) SetSigningTime(sig_time time.Time) {
 	attr := Attribute{}
 	attr.Type = IdSigningTime()
 	attr.Values = make([]interface{}, 1)
-	attr.Values[0] = sig_time
+	attr.Values[0] = sig_time.UTC()
 	si.SignedAttrs = append(si.SignedAttrs, attr)
 }
 
@@ -174,7 +190,7 @@ func (si *SignerInfo) SetMessageDigestAttr(encap *EncapsulatedContentInfo) Coded
 }
 
 func (si *SignerInfo) GetFinalMessageDigest(encap *EncapsulatedContentInfo) ([]byte, CodedError) {
-	var dgst []byte
+	var err error
 
 	if si.SignedAttrs == nil && encap == nil {
 		merr := NewMultiError("signed attributes and encap can't both be nil", ERR_NO_CONTENT, nil)
@@ -190,11 +206,15 @@ func (si *SignerInfo) GetFinalMessageDigest(encap *EncapsulatedContentInfo) ([]b
 		return nil, cerr
 	}
 
-	dgst, err := asn1.MarshalWithParams(si.SignedAttrs, "set,explicit")
+	si.SignedRaw, err = asn1.MarshalWithParams(si.SignedAttrs, "set,explicit")
 	if err != nil {
 		merr := NewMultiError("failed to mashal signed attributes", ERR_FAILED_TO_ENCODE, nil, err)
 		merr.SetParam("signer_info", si)
 		return nil, merr
 	}
-	return GetHasherAndRun(si.DigestAlgorithm, dgst)
+	return GetHasherAndRun(si.DigestAlgorithm, si.SignedRaw)
+}
+
+func (si *SignerInfo) Sign(privkey *rsa.PrivateKey) CodedError {
+	return Sign(si, privkey)
 }

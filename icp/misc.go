@@ -2,6 +2,7 @@ package icp
 
 import (
 	"crypto"
+	"crypto/rand"
 	"crypto/rsa"
 	"crypto/sha1"
 	"crypto/sha256"
@@ -40,6 +41,15 @@ func NiceHex(buf []byte) string {
 	return ans
 }
 
+// Outputs a byte sequence as pairs of hexadecimal digitss. Ex: AAFF1E
+func ToHex(buf []byte) string {
+	ans := ""
+	for i := 0; i < len(buf); i++ {
+		ans += fmt.Sprintf("%X", buf[i:i+1])
+	}
+	return ans
+}
+
 // Returns nil in case of failure
 func FromHex(s string) []byte {
 	re := regexp.MustCompile("[^A-Fa-f0-9]")
@@ -57,10 +67,16 @@ type ContentInfo struct {
 	Content     asn1.RawValue
 }
 
-type Signable interface {
+type SignatureVerifiable interface {
 	GetRawContent() []byte
 	GetSignatureAlgorithm() AlgorithmIdentifier
 	GetSignature() []byte
+}
+
+type Signable interface {
+	GetBytesToSign() []byte
+	GetSignatureAlgorithm() AlgorithmIdentifier
+	SetSignature(sig []byte)
 }
 
 func GetHasher(alg_id AlgorithmIdentifier) (hash.Hash, crypto.Hash, CodedError) {
@@ -111,22 +127,42 @@ func RunHashWithReader(hasher hash.Hash, input io.Reader) ([]byte, CodedError) {
 	return hasher.Sum(nil), nil
 }
 
-func VerifySignaure(object Signable, pubkey rsa.PublicKey) CodedError {
+func VerifySignaure(object SignatureVerifiable, pubkey rsa.PublicKey) CodedError {
 	// Check algorithm
-	tbs_hasher, tbs_hash_alg, merr := GetHasher(object.GetSignatureAlgorithm())
+	hasher, hash_alg, merr := GetHasher(object.GetSignatureAlgorithm())
 	if merr != nil {
 		return merr
 	}
 
 	// Write raw value
-	hash_ans := RunHash(tbs_hasher, object.GetRawContent())
+	hash_ans := RunHash(hasher, object.GetRawContent())
 
 	// Verify signature
 	sig := object.GetSignature()
-	err := rsa.VerifyPKCS1v15(&pubkey, tbs_hash_alg, hash_ans, sig)
+	err := rsa.VerifyPKCS1v15(&pubkey, hash_alg, hash_ans, sig)
 	if err != nil {
 		return NewMultiError("failed to verify signature", ERR_BAD_SIGNATURE, nil, err)
 	}
+	return nil
+}
+
+func Sign(object Signable, privkey *rsa.PrivateKey) CodedError {
+	// Check algorithm
+	hasher, hash_alg, merr := GetHasher(object.GetSignatureAlgorithm())
+	if merr != nil {
+		return merr
+	}
+
+	// Hash it
+	hash_ans := RunHash(hasher, object.GetBytesToSign())
+
+	// Generate signature
+	sig, err := rsa.SignPKCS1v15(rand.Reader, privkey, hash_alg, hash_ans)
+	if err != nil {
+		return NewMultiError("failed to sign RSA message", ERR_FAILED_TO_SIGN, nil, err)
+	}
+
+	object.SetSignature(sig)
 	return nil
 }
 

@@ -9,7 +9,7 @@ import (
 type AlgorithmIdentifier struct {
 	RawContent asn1.RawContent
 	Algorithm  asn1.ObjectIdentifier
-	Parameters interface{} `asn1:optional,omitempty`
+	Parameters []interface{} `asn1:"optional,omitempty"`
 }
 
 func (ai AlgorithmIdentifier) ToHex() string {
