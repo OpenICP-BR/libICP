@@ -58,9 +58,9 @@ type ContentInfo struct {
 }
 
 type Signable interface {
-	GetRawContent() asn1.RawContent
+	GetRawContent() []byte
 	GetSignatureAlgorithm() AlgorithmIdentifier
-	GetSignature() asn1.BitString
+	GetSignature() []byte
 }
 
 func GetHasher(alg_id AlgorithmIdentifier) (hash.Hash, crypto.Hash, CodedError) {
@@ -122,7 +122,7 @@ func VerifySignaure(object Signable, pubkey rsa.PublicKey) CodedError {
 	hash_ans := RunHash(tbs_hasher, object.GetRawContent())
 
 	// Verify signature
-	sig := object.GetSignature().Bytes
+	sig := object.GetSignature()
 	err := rsa.VerifyPKCS1v15(&pubkey, tbs_hash_alg, hash_ans, sig)
 	if err != nil {
 		return NewMultiError("failed to verify signature", ERR_BAD_SIGNATURE, nil, err)

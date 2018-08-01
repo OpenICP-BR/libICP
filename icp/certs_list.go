@@ -24,7 +24,7 @@ func (list *CertificateList) LoadFromDER(data []byte) ([]byte, CodedError) {
 	return rest, nil
 }
 
-func (list CertificateList) GetRawContent() asn1.RawContent {
+func (list CertificateList) GetRawContent() []byte {
 	return list.TBSCertList.RawContent
 }
 
@@ -32,8 +32,8 @@ func (list CertificateList) GetSignatureAlgorithm() AlgorithmIdentifier {
 	return list.SignatureAlgorithm
 }
 
-func (list CertificateList) GetSignature() asn1.BitString {
-	return list.Signature
+func (list CertificateList) GetSignature() []byte {
+	return list.Signature.Bytes
 }
 
 type TBSCertList struct {

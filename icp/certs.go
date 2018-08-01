@@ -75,7 +75,7 @@ func (cert *TBSCertificate) SetAppropriateVersion() {
 	}
 }
 
-func (cert CertificatePack) GetRawContent() asn1.RawContent {
+func (cert CertificatePack) GetRawContent() []byte {
 	return cert.TBSCertificate.RawContent
 }
 
@@ -83,8 +83,8 @@ func (cert CertificatePack) GetSignatureAlgorithm() AlgorithmIdentifier {
 	return cert.SignatureAlgorithm
 }
 
-func (cert CertificatePack) GetSignature() asn1.BitString {
-	return cert.Signature
+func (cert CertificatePack) GetSignature() []byte {
+	return cert.Signature.Bytes
 }
 
 type IssuerAndSerial struct {
