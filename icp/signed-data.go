@@ -1,6 +1,8 @@
 package icp
 
 import (
+	"time"
+
 	"github.com/gjvnq/asn1"
 )
 
@@ -141,6 +143,17 @@ func (si *SignerInfo) SetContentTypeAttr(content_type asn1.ObjectIdentifier) {
 
 func (si SignerInfo) DigestEncapContent(encap *EncapsulatedContentInfo) ([]byte, CodedError) {
 	return encap.HashAs(si.DigestAlgorithm)
+}
+
+func (si *SignerInfo) SetSigningTime(sig_time time.Time) {
+	// Ensure we will have exactly one singing time signed attribute
+	si.RemoveSignedAttrByType(IdSigningTime())
+	// Add singing time
+	attr := Attribute{}
+	attr.Type = IdSigningTime()
+	attr.Values = make([]interface{}, 1)
+	attr.Values[0] = sig_time
+	si.SignedAttrs = append(si.SignedAttrs, attr)
 }
 
 func (si *SignerInfo) SetMessageDigestAttr(encap *EncapsulatedContentInfo) CodedError {

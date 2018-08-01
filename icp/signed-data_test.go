@@ -2,6 +2,7 @@ package icp
 
 import (
 	"testing"
+	"time"
 
 	"github.com/gjvnq/asn1"
 
@@ -77,7 +78,7 @@ func Test_SignedData_GetFinalMessageDigest_2(t *testing.T) {
 	right_ans := FromHex("da39a3ee5e6b4b0d3255bfef95601890afd80709")
 	ans, cerr := si.GetFinalMessageDigest(&e)
 	require.Nil(t, cerr)
-	require.Equal(t, right_ans, ans)
+	assert.Equal(t, right_ans, ans)
 }
 
 func Test_SignedData_GetFinalMessageDigest_3(t *testing.T) {
@@ -88,7 +89,7 @@ func Test_SignedData_GetFinalMessageDigest_3(t *testing.T) {
 	right_ans := FromHex("da39a3ee5e6b4b0d3255bfef95601890afd80709")
 	ans, cerr := si.GetFinalMessageDigest(&e)
 	require.Nil(t, cerr)
-	require.NotEqual(t, right_ans, ans)
+	assert.NotEqual(t, right_ans, ans)
 }
 
 func Test_SignedData_GetFinalMessageDigest_4(t *testing.T) {
@@ -104,4 +105,28 @@ func Test_SignedData_GetFinalMessageDigest_4(t *testing.T) {
 	require.Nil(t, cerr)
 	assert.Equal(t, right_ans, si.SignedAttrs[1].Values[0])
 	assert.Equal(t, right_ans2, ans)
+}
+
+func Test_SignedData_GetFinalMessageDigest_5(t *testing.T) {
+	si := SignerInfo{}
+	si.DigestAlgorithm = AlgorithmIdentifier{Algorithm: IdSha256()}
+	e := EncapsulatedContentInfo{}
+	e.EContent = []byte("Lorem Ipsum Dolor Est\n")
+	right_ans := FromHex("22C74533DA0788488A861D37330AE642F41BB1E1070B31EF4A3EF62D454129A3")
+	ans, cerr := si.GetFinalMessageDigest(&e)
+	require.Nil(t, cerr)
+	assert.Equal(t, right_ans, ans)
+}
+
+func Test_SignerInfo_SetSigningTime(t *testing.T) {
+	si := SignerInfo{}
+	le_time := time.Unix(1533132660, 0)
+	si.SetSigningTime(le_time)
+	right_ans := []Attribute{
+		Attribute{
+			Type:   IdSigningTime(),
+			Values: []interface{}{le_time},
+		},
+	}
+	assert.Equal(t, right_ans, si.SignedAttrs)
 }
