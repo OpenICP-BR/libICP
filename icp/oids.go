@@ -163,6 +163,11 @@ func IdSignedData() asn1.ObjectIdentifier {
 	return asn1.ObjectIdentifier{1, 2, 840, 113549, 1, 7, 2}
 }
 
+// Only for compatibility reasons. (From PKCS#9)
+func IdEmailName() asn1.ObjectIdentifier {
+	return asn1.ObjectIdentifier{1, 2, 840, 113549, 1, 9, 1}
+}
+
 func OID_Key2String(oid asn1.ObjectIdentifier) string {
 	switch {
 	case oid.Equal(IdCountryName()):
@@ -177,6 +182,8 @@ func OID_Key2String(oid asn1.ObjectIdentifier) string {
 		return "OU"
 	case oid.Equal(IdCommonName()):
 		return "CN"
+	case oid.Equal(IdEmailName()):
+		return "EMAIL"
 	default:
 		return oid.String()
 	}

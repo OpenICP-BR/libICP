@@ -2,6 +2,8 @@ package icp
 
 import (
 	"fmt"
+	"sort"
+	"strings"
 
 	"github.com/gjvnq/asn1"
 )
@@ -14,6 +16,7 @@ type ATV struct {
 	Value      interface{}
 }
 
+// Returns a copy/new map from a name.
 func (this Name) Map() map[string]string {
 	m := make(map[string]string)
 	for _, item := range this {
@@ -23,28 +26,45 @@ func (this Name) Map() map[string]string {
 	return m
 }
 
-// TODO(x): Unkown oids should be sorted so calls to this function always returns the same thing.
+// Remvove both CR and LF from a given string
+func RemoveNewLines(s string) string {
+	s = strings.Replace(s, "\r", "", -1)
+	s = strings.Replace(s, "\n", "", -1)
+	return s
+}
+
+// Returns a name as a single line string. Ex: "C=BR/O=ICP-Brasil/OU=Autoridade Certificadora Raiz Brasileira v2/CN=AC CAIXA v2" Unknown OIDs will always be included in order.
 func (this Name) String() string {
 	// Prepare stuff
 	ans := ""
 	first := true
 	m := this.Map()
-	order := []string{"C", "S", "L", "O", "OU", "CN"}
+	order := []string{"C", "S", "L", "O", "OU", "CN", "EMAIL"}
 	// Add each element in the prefered order
 	for _, k := range order {
 		if v, ok := m[k]; ok {
 			if !first {
 				ans += "/"
 			}
-			ans += k + "=" + v
+			ans += k + "=" + RemoveNewLines(v)
 			delete(m, k)
 			first = false
 		}
 	}
+	// Sort remaining keys
+	keys := make([]string, 0, len(m))
+	for k, _ := range m {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
 	// Add any remaining elements
-	for k, v := range m {
-		ans += k + "=" + v
-		delete(m, k)
+	for _, k := range keys {
+		v := m[k]
+		if !first {
+			ans += "/"
+		}
+		ans += k + "=" + RemoveNewLines(v)
+		first = false
 	}
 
 	return ans
