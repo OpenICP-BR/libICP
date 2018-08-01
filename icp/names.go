@@ -2,6 +2,7 @@ package icp
 
 import (
 	"fmt"
+	"sort"
 
 	"github.com/gjvnq/asn1"
 )
@@ -23,13 +24,12 @@ func (this Name) Map() map[string]string {
 	return m
 }
 
-// TODO(x): Unkown oids should be sorted so calls to this function always returns the same thing.
 func (this Name) String() string {
 	// Prepare stuff
 	ans := ""
 	first := true
 	m := this.Map()
-	order := []string{"C", "S", "L", "O", "OU", "CN"}
+	order := []string{"C", "S", "L", "O", "OU", "CN", "EMAIL"}
 	// Add each element in the prefered order
 	for _, k := range order {
 		if v, ok := m[k]; ok {
@@ -41,10 +41,20 @@ func (this Name) String() string {
 			first = false
 		}
 	}
+	// Sort remaining keys
+	keys := make([]string, 0, len(m))
+	for k, _ := range m {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
 	// Add any remaining elements
-	for k, v := range m {
+	for _, k := range keys {
+		v := m[k]
+		if !first {
+			ans += "/"
+		}
 		ans += k + "=" + v
-		delete(m, k)
+		first = false
 	}
 
 	return ans
