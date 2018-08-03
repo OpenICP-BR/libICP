@@ -9,27 +9,27 @@ else
 	ECHO="/bin/echo"
 endif
 
-.PHONY: all test test-html
+.PHONY: all test test-html docs
 
-all: libicp.a
+all: libICP.a rawICP/rawICP.a
 docs:
 	xdg-open "http://localhost:6060/pkg/github.com/gjvnq/libICP/"
 docs-server:
 	godoc -http=:6060
-test: coverage.out icp/coverage.out
+test: coverage.out rawICP/coverage.out
 test-html: coverage.out
 	@$(ECHO) -e $(ANSI_GREEN)"Generating coverage report..."$(ANSI_RESET)
 	go tool cover -html=coverage.out
 	@$(ECHO) -e $(ANSI_BLUE)"Finished target $@"$(ANSI_RESET)
 
 
-libicp.a: *.go
+libICP.a: *.go
 	@$(ECHO) -e $(ANSI_GREEN)"Fixing imports..."$(ANSI_RESET)
 	goimports -w .
 	@$(ECHO) -e $(ANSI_GREEN)"Formatting code..."$(ANSI_RESET)
 	go fmt
 	@$(ECHO) -e $(ANSI_GREEN)"Compiling code..."$(ANSI_RESET)
-	go build -o libicp.a
+	go build -o libICP.a
 	@$(ECHO) -e $(ANSI_BLUE)"Finished target $@"$(ANSI_RESET)
 
 coverage.out: *.go
@@ -41,5 +41,8 @@ coverage.out: *.go
 	go test -cover -coverprofile=coverage.out
 	@$(ECHO) -e $(ANSI_BLUE)"Finished target $@"$(ANSI_RESET)
 
-icp/coverage.out: icp/*.go
-	cd icp && make coverage.out
+rawICP/coverage.out: rawICP/*.go
+	cd rawICP && make coverage.out
+
+rawICP/rawICP.a: rawICP/*.go
+	cd rawICP && make rawICP.a

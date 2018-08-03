@@ -1,4 +1,4 @@
-package icp
+package rawICP
 
 import "github.com/gjvnq/asn1"
 

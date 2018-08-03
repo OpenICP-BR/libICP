@@ -3,23 +3,23 @@ package libICP
 import (
 	"time"
 
-	icp "github.com/gjvnq/libICP/icp"
+	rawICP "github.com/gjvnq/libICP/rawICP"
 )
 
 type Certificate struct {
-	base *icp.Certificate
+	base *rawICP.Certificate
 }
 
-func icpCert2Cert(cert *icp.Certificate) *Certificate {
+func rawICPCert2Cert(cert *rawICP.Certificate) *Certificate {
 	new_cert := new(Certificate)
 	new_cert.base = cert
 	return new_cert
 }
 
-func icpCertSlice2CertSlice(certs []*icp.Certificate) []*Certificate {
+func rawICPCertSlice2CertSlice(certs []*rawICP.Certificate) []*Certificate {
 	new_certs := make([]*Certificate, len(certs))
 	for i := range certs {
-		new_certs[i] = icpCert2Cert(certs[i])
+		new_certs[i] = rawICPCert2Cert(certs[i])
 	}
 	return new_certs
 }
@@ -60,24 +60,24 @@ func (cert Certificate) SubjectKeyId() string {
 	return cert.base.SubjectKeyId()
 }
 
-func (cert Certificate) BasicConstraints() icp.ExtBasicConstraints {
+func (cert Certificate) BasicConstraints() rawICP.ExtBasicConstraints {
 	return cert.base.BasicConstraints()
 }
 
-func (cert Certificate) KeyUsage() icp.ExtKeyUsage {
+func (cert Certificate) KeyUsage() rawICP.ExtKeyUsage {
 	return cert.base.KeyUsage()
 }
 
-func (cert Certificate) CRLDistributionPoints() icp.ExtCRLDistributionPoints {
+func (cert Certificate) CRLDistributionPoints() rawICP.ExtCRLDistributionPoints {
 	val := cert.base.CRLDistributionPoints()
-	ans := icp.ExtCRLDistributionPoints{}
+	ans := rawICP.ExtCRLDistributionPoints{}
 	ans.Exists = val.Exists
 	ans.URLs = make([]string, len(val.URLs))
 	copy(ans.URLs, val.URLs)
 	return ans
 }
 
-func (cert Certificate) CRLStatus() icp.CRLStatus {
+func (cert Certificate) CRLStatus() rawICP.CRLStatus {
 	return cert.base.CRLStatus()
 }
 
@@ -95,6 +95,6 @@ func (cert Certificate) IsCA() bool {
 	return cert.base.IsCA()
 }
 
-func (cert Certificate) CRLLastError() icp.CodedError {
+func (cert Certificate) CRLLastError() rawICP.CodedError {
 	return cert.base.CRLLastError()
 }
