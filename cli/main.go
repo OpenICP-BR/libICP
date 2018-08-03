@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/mkideal/cli"
 )
@@ -11,8 +12,8 @@ var help = cli.HelpCommand("display help information")
 
 type rootT struct {
 	cli.Helper
-	CACache      string `cli:"C,ca-cahce" usage:"sets the directory that holds the CAs" dft:"$HOME/.cache/OpenICP-BR/CAs"`
-	AllowFakeICP bool   `cli:"use-fake-root" usage:"used only for testing (do not touch this)"`
+	CACache    string `cli:"C,ca-cahce" usage:"sets the directory that holds the CAs" dft:"$HOME/.cache/OpenICP-BR/CAs"`
+	FakeRootCA string `cli:"fake-root-ca" usage:"path to a testing CA (only for testing) (do not touch this)"`
 }
 
 var root = &cli.Command{
@@ -27,7 +28,7 @@ type signT struct {
 	cli.Helper
 	ContentFile   string `cli:"c,content" usage:"path to the content to be signed"`
 	SignatureFile string `cli:"s,signature" usage:"path to the signature (will be created if does not exist)"`
-	IsAttached    bool   `cli:"a,attach" usage:"if true (default), the content will NOT be included in the signature file. If false, the content will be included, resulting in a larger file"`
+	IsDetached    bool   `cli:"a,attach" usage:"if false, the content will NOT be included in the signature file. If true, the content will be included, resulting in a larger file"`
 }
 
 var sign = &cli.Command{
@@ -73,9 +74,29 @@ var verify = &cli.Command{
 	},
 }
 
+type genT struct {
+	cli.Helper
+	Subject   string    `cli:"s,subject" usage:"name of the certificate holder"`
+	RootCA    string    `cli:"r,root-ca" usage:"path to the root CA. If teh file does nto exist, a new testing CA will be generated"`
+	NotBefore time.Time `cli:"not-before" usage:"not-before certificate attribute, use YYYY-mm-dd format"`
+	NotAfter  time.Time `cli:"not-after" usage:"not-after certificate attribute, use YYYY-mm-dd format"`
+}
+
+var gen = &cli.Command{
+	Name: "gen",
+	Desc: "generates a new testing certificate",
+	Argv: func() interface{} { return new(genT) },
+	Fn: func(ctx *cli.Context) error {
+		argv := ctx.Argv().(*genT)
+		ctx.String("Hello, gen command, I am %+v\n", argv)
+		return nil
+	},
+}
+
 func main() {
 	if err := cli.Root(root,
 		cli.Tree(help),
+		cli.Tree(gen),
 		cli.Tree(sign),
 		cli.Tree(verify),
 		cli.Tree(joinSigs),
