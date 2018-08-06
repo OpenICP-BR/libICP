@@ -1,4 +1,4 @@
-package rawICP
+package libICP
 
 import (
 	"os"
@@ -85,6 +85,6 @@ func (ec *EncapsulatedContentInfo) HashAs(alg_id AlgorithmIdentifier) ([]byte, C
 	field of the EncapsulatedContentInfo value MUST be omitted.
 */
 func (ec *EncapsulatedContentInfo) AdjustForNoSigners() {
-	ec.EContentType = IdData()
+	ec.EContentType = idData
 	ec.EContent = nil
 }

@@ -1,4 +1,4 @@
-package rawICP
+package libICP
 
 import (
 	"math/big"

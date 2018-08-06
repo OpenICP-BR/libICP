@@ -1,4 +1,4 @@
-package rawICP
+package libICP
 
 import (
 	"io/ioutil"
@@ -153,7 +153,7 @@ func Test_CAStore_AddCAatTime(t *testing.T) {
 func Test_CAStore_ParseCAsZip(t *testing.T) {
 	store := CAStore{}
 	store.Init()
-	raw, err := ioutil.ReadFile("../data/ACcompactado.zip")
+	raw, err := ioutil.ReadFile("data/ACcompactado.zip")
 	require.Nil(t, err)
 
 	err = store.ParseCAsZip(raw, int64(len(raw)))
@@ -172,10 +172,10 @@ func Test_CAStore_list_crls(t *testing.T) {
 
 func Test_CAStore_AddTestingRootCA_1(t *testing.T) {
 	name := Name{
-		[]ATV{ATV{Type: IdCountryName(), Value: "BR"}},
-		[]ATV{ATV{Type: IdOrganizationName(), Value: "Fake ICP-Brasil"}},
-		[]ATV{ATV{Type: IdOrganizationalUnitName(), Value: "Apenas para testes - SEM VALOR LEGAL"}},
-		[]ATV{ATV{Type: IdCommonName(), Value: "Autoridade Certificadora Raiz de Testes - SEM VALOR LEGAL"}},
+		[]ATV{ATV{Type: idCountryName, Value: "BR"}},
+		[]ATV{ATV{Type: idOrganizationName, Value: "Fake ICP-Brasil"}},
+		[]ATV{ATV{Type: idOrganizationalUnitName, Value: "Apenas para testes - SEM VALOR LEGAL"}},
+		[]ATV{ATV{Type: idCommonName, Value: "Autoridade Certificadora Raiz de Testes - SEM VALOR LEGAL"}},
 	}
 
 	cert := Certificate{}

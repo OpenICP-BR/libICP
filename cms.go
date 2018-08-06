@@ -1,4 +1,4 @@
-package rawICP
+package libICP
 
 type Message struct {
 	Base ContentInfo

@@ -11,12 +11,12 @@ endif
 
 .PHONY: all test test-html docs
 
-all: libICP.a rawICP/rawICP.a
+all: libICP.a
 docs:
 	xdg-open "http://localhost:6060/pkg/github.com/gjvnq/libICP/"
 docs-server:
 	godoc -http=:6060
-test: coverage.out rawICP/coverage.out
+test: coverage.out
 test-html: coverage.out
 	@$(ECHO) -e $(ANSI_GREEN)"Generating coverage report..."$(ANSI_RESET)
 	go tool cover -html=coverage.out
@@ -40,9 +40,3 @@ coverage.out: *.go
 	@$(ECHO) -e $(ANSI_GREEN)"Testing code..."$(ANSI_RESET)
 	go test -cover -coverprofile=coverage.out
 	@$(ECHO) -e $(ANSI_BLUE)"Finished target $@"$(ANSI_RESET)
-
-rawICP/coverage.out: rawICP/*.go
-	cd rawICP && make coverage.out
-
-rawICP/rawICP.a: rawICP/*.go
-	cd rawICP && make rawICP.a

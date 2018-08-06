@@ -1,4 +1,4 @@
-package rawICP
+package libICP
 
 import (
 	"crypto/rsa"
@@ -14,10 +14,10 @@ type P12 struct {
 // Generates a new root ca with subject and issuer TESTING_ROOT_CA_SUBJECT
 func NewRootCA(not_before, not_after time.Time) (P12, CodedError) {
 	name := Name{
-		[]ATV{ATV{Type: IdCountryName(), Value: "BR"}},
-		[]ATV{ATV{Type: IdOrganizationName(), Value: "Fake ICP-Brasil"}},
-		[]ATV{ATV{Type: IdOrganizationalUnitName(), Value: "Apenas para testes - SEM VALOR LEGAL"}},
-		[]ATV{ATV{Type: IdCommonName(), Value: "Autoridade Certificadora Raiz de Testes - SEM VALOR LEGAL"}},
+		[]ATV{ATV{Type: idCountryName, Value: "BR"}},
+		[]ATV{ATV{Type: idOrganizationName, Value: "Fake ICP-Brasil"}},
+		[]ATV{ATV{Type: idOrganizationalUnitName, Value: "Apenas para testes - SEM VALOR LEGAL"}},
+		[]ATV{ATV{Type: idCommonName, Value: "Autoridade Certificadora Raiz de Testes - SEM VALOR LEGAL"}},
 	}
 	return NewCertAndKey(name, name, big.NewInt(1), not_before, not_after)
 }
@@ -34,8 +34,8 @@ func NewCertAndKey(subject, issuer Name, serial *big.Int, not_before, not_after 
 	p12.Cert.Base.TBSCertificate.Subject = subject
 	p12.Cert.Base.TBSCertificate.Issuer = issuer
 	p12.Cert.Base.TBSCertificate.SerialNumber = serial
-	p12.Cert.Base.SignatureAlgorithm.Algorithm = IdSha512WithRSAEncryption()
-	p12.Cert.Base.TBSCertificate.SubjectPublicKeyInfo.Algorithm.Algorithm = IdSha512WithRSAEncryption()
+	p12.Cert.Base.SignatureAlgorithm.Algorithm = idSha512WithRSAEncryption
+	p12.Cert.Base.TBSCertificate.SubjectPublicKeyInfo.Algorithm.Algorithm = idSha512WithRSAEncryption
 	p12.Cert.Base.TBSCertificate.SubjectPublicKeyInfo.PublicKey = pair.PublicKey
 	p12.Cert.Base.TBSCertificate.SetAppropriateVersion()
 

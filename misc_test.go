@@ -1,4 +1,4 @@
-package rawICP
+package libICP
 
 import (
 	"testing"
@@ -19,7 +19,7 @@ func Test_EncapsulatedContentInfo_AdjustForNoSigners(t *testing.T) {
 	ec := EncapsulatedContentInfo{}
 	ec.AdjustForNoSigners()
 
-	assert.Equal(t, IdData(), ec.EContentType, "see RFC 5652 Section 5.2 Page 11 Paragraph 2")
+	assert.Equal(t, idData, ec.EContentType, "see RFC 5652 Section 5.2 Page 11 Paragraph 2")
 	assert.Nil(t, ec.EContent, "see RFC 5652 Section 5.2 Page 11 Paragraph 2")
 }
 

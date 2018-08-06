@@ -1,4 +1,4 @@
-package rawICP
+package libICP
 
 import (
 	"crypto/rsa"
@@ -14,7 +14,7 @@ import (
 
 func Test_SignedData_SetAppropriateVersion_1(t *testing.T) {
 	sd := SignedData{}
-	sd.EncapContentInfo.EContentType = IdData()
+	sd.EncapContentInfo.EContentType = idData
 	sd.SetAppropriateVersion()
 	assert.Equal(t, 1, sd.Version, "The version MUST be 1 in this case (see RFC5625 Section 5.1 Page 9)")
 }
@@ -74,7 +74,7 @@ func Test_SignedData_GetFinalMessageDigest_1(t *testing.T) {
 
 func Test_SignedData_GetFinalMessageDigest_2(t *testing.T) {
 	si := SignerInfo{}
-	si.DigestAlgorithm = AlgorithmIdentifier{Algorithm: IdSha1WithRSAEncryption()}
+	si.DigestAlgorithm = AlgorithmIdentifier{Algorithm: idSha1WithRSAEncryption}
 	e := EncapsulatedContentInfo{}
 	e.EContent = []byte{}
 	right_ans := FromHex("da39a3ee5e6b4b0d3255bfef95601890afd80709")
@@ -85,7 +85,7 @@ func Test_SignedData_GetFinalMessageDigest_2(t *testing.T) {
 
 func Test_SignedData_GetFinalMessageDigest_3(t *testing.T) {
 	si := SignerInfo{}
-	si.DigestAlgorithm = AlgorithmIdentifier{Algorithm: IdSha1()}
+	si.DigestAlgorithm = AlgorithmIdentifier{Algorithm: idSha1}
 	e := EncapsulatedContentInfo{}
 	e.EContent = []byte("hi")
 	right_ans := FromHex("da39a3ee5e6b4b0d3255bfef95601890afd80709")
@@ -96,13 +96,13 @@ func Test_SignedData_GetFinalMessageDigest_3(t *testing.T) {
 
 func Test_SignedData_GetFinalMessageDigest_4(t *testing.T) {
 	si := SignerInfo{}
-	si.DigestAlgorithm = AlgorithmIdentifier{Algorithm: IdSha1()}
+	si.DigestAlgorithm = AlgorithmIdentifier{Algorithm: idSha1}
 	si.SignedAttrs = make([]Attribute, 0)
 	e := EncapsulatedContentInfo{}
 	e.EContent = []byte{}
 	right_ans := FromHex("da39a3ee5e6b4b0d3255bfef95601890afd80709")
 	right_ans2 := FromHex("27062FF2EB5D9D81B8B050D3CF4D1323A717611B")
-	si.SetContentTypeAttr(IdData())
+	si.SetContentTypeAttr(idData)
 	ans, cerr := si.GetFinalMessageDigest(&e)
 	require.Nil(t, cerr)
 	assert.Equal(t, right_ans, si.SignedAttrs[1].Values[0])
@@ -111,7 +111,7 @@ func Test_SignedData_GetFinalMessageDigest_4(t *testing.T) {
 
 func Test_SignedData_GetFinalMessageDigest_5(t *testing.T) {
 	si := SignerInfo{}
-	si.DigestAlgorithm = AlgorithmIdentifier{Algorithm: IdSha256()}
+	si.DigestAlgorithm = AlgorithmIdentifier{Algorithm: idSha256}
 	e := EncapsulatedContentInfo{}
 	e.EContent = []byte("Lorem Ipsum Dolor Est\n")
 	right_ans := FromHex("22C74533DA0788488A861D37330AE642F41BB1E1070B31EF4A3EF62D454129A3")
@@ -126,7 +126,7 @@ func Test_SignerInfo_SetSigningTime(t *testing.T) {
 	si.SetSigningTime(le_time)
 	right_ans := []Attribute{
 		Attribute{
-			Type:   IdSigningTime(),
+			Type:   idSigningTime,
 			Values: []interface{}{le_time},
 		},
 	}
@@ -160,12 +160,12 @@ func Test_SignerInfo_Sign(t *testing.T) {
 
 	// Create simple message
 	si := SignerInfo{}
-	si.SignatureAlgorithm = AlgorithmIdentifier{Algorithm: IdRSAEncryption()}
-	si.DigestAlgorithm = AlgorithmIdentifier{Algorithm: IdSha256()}
-	si.SetContentTypeAttr(IdData())
+	si.SignatureAlgorithm = AlgorithmIdentifier{Algorithm: idRSAEncryption}
+	si.DigestAlgorithm = AlgorithmIdentifier{Algorithm: idSha256}
+	si.SetContentTypeAttr(idData)
 	si.SetSigningTime(time.Date(2018, 8, 1, 20, 23, 11, 0, time.UTC))
 	e := EncapsulatedContentInfo{}
-	e.EContentType = IdData()
+	e.EContentType = idData
 	e.EContent = []byte("Lorem Ipsum Dolor Est\n")
 
 	// Sign

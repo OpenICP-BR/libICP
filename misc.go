@@ -1,4 +1,4 @@
-package rawICP
+package libICP
 
 import (
 	"crypto"
@@ -85,16 +85,16 @@ func GetHasher(alg_id AlgorithmIdentifier) (hash.Hash, crypto.Hash, CodedError) 
 	var hasher hash.Hash
 	var hash_alg crypto.Hash
 	switch {
-	case alg.Equal(IdSha1WithRSAEncryption()) || alg.Equal(IdSha1()):
+	case alg.Equal(idSha1WithRSAEncryption) || alg.Equal(idSha1):
 		hasher = sha1.New()
 		hash_alg = crypto.SHA1
-	case alg.Equal(IdSha256WithRSAEncryption()) || alg.Equal(IdSha256()):
+	case alg.Equal(idSha256WithRSAEncryption) || alg.Equal(idSha256):
 		hasher = sha256.New()
 		hash_alg = crypto.SHA256
-	case alg.Equal(IdSha384WithRSAEncryption()) || alg.Equal(IdSha384()):
+	case alg.Equal(idSha384WithRSAEncryption) || alg.Equal(idSha384):
 		hasher = sha512.New384()
 		hash_alg = crypto.SHA384
-	case alg.Equal(IdSha512WithRSAEncryption()) || alg.Equal(IdSha512()):
+	case alg.Equal(idSha512WithRSAEncryption) || alg.Equal(idSha512):
 		hasher = sha512.New()
 		hash_alg = crypto.SHA512
 	default:

@@ -1,4 +1,4 @@
-package rawICP
+package libICP
 
 import (
 	"io/ioutil"
@@ -42,18 +42,18 @@ func Test_NewCertificateFromFile_1(t *testing.T) {
 
 func Test_CheckAgainstIssuerCRL_1(t *testing.T) {
 	// Get cert
-	certs, errs := NewCertificateFromFile("../data/test-chain/intermediate/fakebank/certs/fakebank-ca.crt.pem")
+	certs, errs := NewCertificateFromFile("data/test-chain/intermediate/fakebank/certs/fakebank-ca.crt.pem")
 	require.Nil(t, errs)
 	require.Equal(t, 1, len(certs))
 	ca := certs[0]
 
 	// Get cert
-	certs, errs = NewCertificateFromFile("../data/test-chain/intermediate/fakebank/certs/fulano.crt.pem")
+	certs, errs = NewCertificateFromFile("data/test-chain/intermediate/fakebank/certs/fulano.crt.pem")
 	require.Equal(t, 1, len(certs))
 	fulano := certs[0]
 
 	// Get CRL
-	crls, errs := NewCRLFromFile("../data/test-chain/intermediate/fakebank/crl/fakebank-1.crl.pem")
+	crls, errs := NewCRLFromFile("data/test-chain/intermediate/fakebank/crl/fakebank-1.crl.pem")
 	require.Nil(t, errs)
 	require.Equal(t, 1, len(crls))
 
@@ -70,18 +70,18 @@ func Test_CheckAgainstIssuerCRL_1(t *testing.T) {
 
 func Test_CheckAgainstIssuerCRL_2(t *testing.T) {
 	// Get cert
-	certs, errs := NewCertificateFromFile("../data/test-chain/intermediate/fakebank/certs/fakebank-ca.crt.pem")
+	certs, errs := NewCertificateFromFile("data/test-chain/intermediate/fakebank/certs/fakebank-ca.crt.pem")
 	require.Nil(t, errs)
 	require.Equal(t, 1, len(certs))
 	ca := certs[0]
 
 	// Get cert
-	certs, errs = NewCertificateFromFile("../data/test-chain/intermediate/fakebank/certs/fulano.crt.pem")
+	certs, errs = NewCertificateFromFile("data/test-chain/intermediate/fakebank/certs/fulano.crt.pem")
 	require.Equal(t, 1, len(certs))
 	fulano := certs[0]
 
 	// Get CRL
-	crls, errs := NewCRLFromFile("../data/test-chain/intermediate/fakebank/crl/fakebank-2.crl.pem")
+	crls, errs := NewCRLFromFile("data/test-chain/intermediate/fakebank/crl/fakebank-2.crl.pem")
 	require.Nil(t, errs)
 	require.Equal(t, 1, len(crls))
 

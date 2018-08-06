@@ -1,4 +1,4 @@
-package rawICP
+package libICP
 
 import (
 	"crypto/rsa"
@@ -25,7 +25,7 @@ func (sd *SignedData) SetAppropriateVersion() {
 		if sd.HasV2Cert() {
 			sd.Version = 4
 		} else {
-			if sd.HasV1Cert() || sd.HasV3SignerInfo() || !sd.EncapContentInfo.EContentType.Equal(IdData()) {
+			if sd.HasV1Cert() || sd.HasV3SignerInfo() || !sd.EncapContentInfo.EContentType.Equal(idData) {
 				sd.Version = 3
 			} else {
 				sd.Version = 1
@@ -148,10 +148,10 @@ func (si *SignerInfo) RemoveSignedAttrByType(attr_type asn1.ObjectIdentifier) {
 
 func (si *SignerInfo) SetContentTypeAttr(content_type asn1.ObjectIdentifier) {
 	// Ensure we will have exactly one content type signed attribute
-	si.RemoveSignedAttrByType(IdContentType())
+	si.RemoveSignedAttrByType(idContentType)
 	// Add content type
 	attr := Attribute{}
-	attr.Type = IdContentType()
+	attr.Type = idContentType
 	attr.Values = make([]interface{}, 1)
 	attr.Values[0] = content_type
 	si.SignedAttrs = append(si.SignedAttrs, attr)
@@ -163,10 +163,10 @@ func (si SignerInfo) DigestEncapContent(encap *EncapsulatedContentInfo) ([]byte,
 
 func (si *SignerInfo) SetSigningTime(sig_time time.Time) {
 	// Ensure we will have exactly one singing time signed attribute
-	si.RemoveSignedAttrByType(IdSigningTime())
+	si.RemoveSignedAttrByType(idSigningTime)
 	// Add singing time
 	attr := Attribute{}
-	attr.Type = IdSigningTime()
+	attr.Type = idSigningTime
 	attr.Values = make([]interface{}, 1)
 	attr.Values[0] = sig_time.UTC()
 	si.SignedAttrs = append(si.SignedAttrs, attr)
@@ -176,10 +176,10 @@ func (si *SignerInfo) SetMessageDigestAttr(encap *EncapsulatedContentInfo) Coded
 	var err CodedError
 
 	// Ensure we will have exactly one message digest signed attribute
-	si.RemoveSignedAttrByType(IdMessageDigest())
+	si.RemoveSignedAttrByType(idMessageDigest)
 	// Add message digest
 	attr := Attribute{}
-	attr.Type = IdMessageDigest()
+	attr.Type = idMessageDigest
 	attr.Values = make([]interface{}, 1)
 	attr.Values[0], err = encap.HashAs(si.DigestAlgorithm)
 	if err != nil {

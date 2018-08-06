@@ -1,4 +1,4 @@
-package rawICP
+package libICP
 
 import (
 	"testing"
@@ -15,16 +15,16 @@ func Test_Name_String_1(t *testing.T) {
 func Test_Name_String_2(t *testing.T) {
 	n := Name{
 		RDN_SET{
-			ATV{Type: IdEmailName(), Value: "a@b.com"},
+			ATV{Type: idEmailName, Value: "a@b.com"},
 		},
 		RDN_SET{
-			ATV{Type: IdCountryName(), Value: "BR"},
+			ATV{Type: idCountryName, Value: "BR"},
 		},
 		RDN_SET{
-			ATV{Type: IdStateOrProvinceName(), Value: "SP"},
+			ATV{Type: idStateOrProvinceName, Value: "SP"},
 		},
 		RDN_SET{
-			ATV{Type: IdCommonName(), Value: "Random Cert"},
+			ATV{Type: idCommonName, Value: "Random Cert"},
 		},
 		RDN_SET{
 			ATV{Type: asn1.ObjectIdentifier{1, 2}, Value: "First unknown oid"},
