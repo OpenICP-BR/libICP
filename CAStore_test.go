@@ -15,7 +15,7 @@ func Test_CAStore_BuildPath_1(t *testing.T) {
 	certs, errs := NewCertificateFromBytes([]byte(ROOT_CA_BR_ICP_V1))
 	require.Nil(t, errs)
 	end_cert := certs[0]
-	ans, err := store.BuildPath(&end_cert, PATH_BUILDING_MAX_DEPTH)
+	ans, err := store.build_path(&end_cert, PATH_BUILDING_MAX_DEPTH)
 	require.Nil(t, err)
 	right_ans := make([]*Certificate, 1)
 	right_ans[0] = &end_cert
@@ -29,7 +29,7 @@ func Test_CAStore_BuildPath_2(t *testing.T) {
 	require.Nil(t, err)
 	end_cert := certs[0]
 	root := certs[1]
-	ans, errs := store.BuildPath(&end_cert, PATH_BUILDING_MAX_DEPTH)
+	ans, errs := store.build_path(&end_cert, PATH_BUILDING_MAX_DEPTH)
 	require.Nil(t, errs)
 	right_ans := make([]*Certificate, 2)
 	right_ans[0] = &end_cert
@@ -50,8 +50,8 @@ func Test_CAStore_BuildPath_3(t *testing.T) {
 	end_cert := certs[0]
 	middle_ca := certs[1]
 	root := certs[2]
-	store.DirectAddCA(&middle_ca)
-	ans, errs := store.BuildPath(&end_cert, PATH_BUILDING_MAX_DEPTH)
+	store.direct_add_ca(&middle_ca)
+	ans, errs := store.build_path(&end_cert, PATH_BUILDING_MAX_DEPTH)
 	assert.Nil(t, errs)
 	right_ans := make([]*Certificate, 3)
 	right_ans[0] = &end_cert
@@ -71,14 +71,14 @@ func Test_CAStore_VerifyCertAt_1(t *testing.T) {
 
 	right_ans := []*Certificate{root}
 	some_time := time.Unix(1528997864, 0)
-	path, errs, warns := store.VerifyCertAt(root, some_time)
+	path, errs, warns := store.verify_cert_at(root, some_time)
 	assert.Nil(t, errs)
 	assert.Equal(t, right_ans, path)
 	assert.Equal(t, 1, len(warns))
 	assert.EqualValues(t, ERR_UNKOWN_REVOCATION_STATUS, warns[0].Code())
 
 	right_ans = []*Certificate{end_cert, root}
-	path, errs, warns = store.VerifyCertAt(end_cert, some_time)
+	path, errs, warns = store.verify_cert_at(end_cert, some_time)
 	assert.Nil(t, errs)
 	assert.Equal(t, right_ans, path)
 	assert.Equal(t, 2, len(warns))
@@ -96,7 +96,7 @@ func Test_CAStore_VerifyCertAt_2(t *testing.T) {
 
 	right_ans := []*Certificate{root}
 	some_time := time.Unix(0, 0)
-	path, errs, warns := store.VerifyCertAt(root, some_time)
+	path, errs, warns := store.verify_cert_at(root, some_time)
 	assert.Equal(t, 1, len(warns))
 	assert.Equal(t, right_ans, path)
 	assert.EqualValues(t, ERR_UNKOWN_REVOCATION_STATUS, warns[0].Code())
@@ -104,7 +104,7 @@ func Test_CAStore_VerifyCertAt_2(t *testing.T) {
 	assert.EqualValues(t, ERR_NOT_BEFORE_DATE, errs[0].Code())
 
 	right_ans = []*Certificate{end_cert, root}
-	path, errs, warns = store.VerifyCertAt(end_cert, some_time)
+	path, errs, warns = store.verify_cert_at(end_cert, some_time)
 	assert.Equal(t, 2, len(warns))
 	assert.Equal(t, right_ans, path)
 	assert.EqualValues(t, ERR_UNKOWN_REVOCATION_STATUS, warns[0].Code())
@@ -122,7 +122,7 @@ func Test_CAStore_VerifyCertAt_3(t *testing.T) {
 	end_cert := &certs[0]
 
 	some_time := time.Unix(0, 0)
-	path, errs, warns := store.VerifyCertAt(end_cert, some_time)
+	path, errs, warns := store.verify_cert_at(end_cert, some_time)
 	assert.Nil(t, warns)
 	assert.Nil(t, path)
 	assert.NotNil(t, errs)
@@ -139,14 +139,14 @@ func Test_CAStore_AddCAatTime(t *testing.T) {
 	middle_ca := certs[1]
 	some_time := time.Unix(1528997864, 0)
 
-	errs := store.AddCAatTime(&end_ca, some_time)
+	errs := store.add_ca_at_time(&end_ca, some_time)
 	assert.Equal(t, len(errs), 1)
 	assert.EqualValues(t, errs[0].Code(), ERR_ISSUER_NOT_FOUND)
 
-	errs = store.AddCAatTime(&middle_ca, some_time)
+	errs = store.add_ca_at_time(&middle_ca, some_time)
 	assert.Nil(t, errs)
 
-	errs = store.AddCAatTime(&end_ca, some_time)
+	errs = store.add_ca_at_time(&end_ca, some_time)
 	assert.Nil(t, errs)
 }
 
@@ -156,7 +156,7 @@ func Test_CAStore_ParseCAsZip(t *testing.T) {
 	raw, err := ioutil.ReadFile("data/ACcompactado.zip")
 	require.Nil(t, err)
 
-	err = store.ParseCAsZip(raw, int64(len(raw)))
+	err = store.parse_CAs_zip(raw, int64(len(raw)))
 	require.Nil(t, err)
 }
 
@@ -171,11 +171,11 @@ func Test_CAStore_list_crls(t *testing.T) {
 }
 
 func Test_CAStore_AddTestingRootCA_1(t *testing.T) {
-	name := Name{
-		[]ATV{ATV{Type: idCountryName, Value: "BR"}},
-		[]ATV{ATV{Type: idOrganizationName, Value: "Fake ICP-Brasil"}},
-		[]ATV{ATV{Type: idOrganizationalUnitName, Value: "Apenas para testes - SEM VALOR LEGAL"}},
-		[]ATV{ATV{Type: idCommonName, Value: "Autoridade Certificadora Raiz de Testes - SEM VALOR LEGAL"}},
+	name := nameT{
+		[]atv{atv{Type: idCountryName, Value: "BR"}},
+		[]atv{atv{Type: idOrganizationName, Value: "Fake ICP-Brasil"}},
+		[]atv{atv{Type: idOrganizationalUnitName, Value: "Apenas para testes - SEM VALOR LEGAL"}},
+		[]atv{atv{Type: idCommonName, Value: "Autoridade Certificadora Raiz de Testes - SEM VALOR LEGAL"}},
 	}
 
 	cert := Certificate{}
@@ -185,10 +185,10 @@ func Test_CAStore_AddTestingRootCA_1(t *testing.T) {
 	cert.Base.TBSCertificate.Issuer = name
 
 	store := NewCAStore(false)
-	l1 := len(store.CAs)
+	l1 := len(store.cas)
 	err := store.AddTestingRootCA(&cert)
 	require.Nil(t, err)
-	l2 := len(store.CAs)
+	l2 := len(store.cas)
 	if !(l2 > l1) {
 		t.Error("no certificate was added")
 	}
@@ -203,7 +203,7 @@ func Test_CAStore_AddTestingRootCA_2(t *testing.T) {
 	errs = store.AddTestingRootCA(&certs[0])
 	assert.Equal(t, 1, len(errs))
 	assert.EqualValues(t, ERR_TEST_CA_IMPROPPER_NAME, errs[0].Code())
-	assert.Equal(t, 6, len(store.CAs))
+	assert.Equal(t, 6, len(store.cas))
 }
 
 const pem_ac_soluti = "-----BEGIN CERTIFICATE-----\nMIIGOzCCBCOgAwIBAgIBEDANBgkqhkiG9w0BAQ0FADCBlzELMAkGA1UEBhMCQlIx\nEzARBgNVBAoTCklDUC1CcmFzaWwxPTA7BgNVBAsTNEluc3RpdHV0byBOYWNpb25h\nbCBkZSBUZWNub2xvZ2lhIGRhIEluZm9ybWFjYW8gLSBJVEkxNDAyBgNVBAMTK0F1\ndG9yaWRhZGUgQ2VydGlmaWNhZG9yYSBSYWl6IEJyYXNpbGVpcmEgdjIwHhcNMTIx\nMjAzMTIzOTEzWhcNMjMwNjIwMjM1OTU5WjBsMQswCQYDVQQGEwJCUjETMBEGA1UE\nChMKSUNQLUJyYXNpbDE0MDIGA1UECxMrQXV0b3JpZGFkZSBDZXJ0aWZpY2Fkb3Jh\nIFJhaXogQnJhc2lsZWlyYSB2MjESMBAGA1UEAxMJQUMgU09MVVRJMIICIjANBgkq\nhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEAm+fP9BaY+XTsxfG1QkZbm4h8Ru6dZURx\nX+t+BBSni9YG0ojBKIKiY/mGTLfBfKydZ+lfVmT51uocPmtCbs4pUIDhtCZ1NP+8\n2sEpYry3wMLd5DvCVpuIQa08Y2RsrPIKCxZCgNV2GCw6aFL753LysYatGEOZ09pQ\nQDDiK9Lp2ETXwgwQsc4abMQhhe3M/jysUJwIKy7CAg0uBGdIsPl9WVbEhmK+S/Or\ny+lE/zAKtalVxatjUCQrBBu83kN6k0WM4mG5usoCeSHejX+F+PAwJcoAOBBFRNqw\nN2m95v3t0eL6MhNrxpM/wZGT574ARKIoKBuvemWnuA2GI8zCfTSFxkuc2oMJeqt9\nWR4ommK1VyxMHSQD+BKF+ae21mWpK5CePc4rj+O1zUwu3GJxJ4taXCs1e8kDuO39\nVOeJ7i3KxiF2PmckN1QdkHZBbVmEks9+lzD9kdtaj/5r2hu04ong7+DsoG0N55ut\n3gj/DQccxarvOCgkgox+Bse5fsk/2IVW7fNBav3TfGyQaNYRfl5zl8ReVnL7ibVS\n5qUFxeImeXBj8ofPFF98O2PN89Y9r3xngXkjaUlqFsTPFGvrYTRAv6KVOZYitIWi\nbAdNzpooXWmccMik+Rxgqn0M22IAxHAFUceFNg5E5yA0HRbOcI7oKdb/wSTMLoTj\nFXQAgLj+gU8CAwEAAaOBuzCBuDAUBgNVHSAEDTALMAkGBWBMAQEuMAAwPwYDVR0f\nBDgwNjA0oDKgMIYuaHR0cDovL2FjcmFpei5pY3BicmFzaWwuZ292LmJyL0xDUmFj\ncmFpenYyLmNybDAfBgNVHSMEGDAWgBQMOSA6twEfy9cofUGgx/pKrTIkvjAdBgNV\nHQ4EFgQUZKWFK33P30DFzaIqls7qQw/rlGowDwYDVR0TAQH/BAUwAwEB/zAOBgNV\nHQ8BAf8EBAMCAQYwDQYJKoZIhvcNAQENBQADggIBAGPZajNPNzW7Ir5TW3MTYvJ+\nJNngfHF7rbJKPjPo+Rb7A4rzorl0H1a0geBCGqN+FCCh0ltp9H641wcHfwSRYmF+\ng0JKUOd58FUxh1YYEkc5SyqI+Y0BRiM28vit07fHFqCTArrgaMwjcQ41N0ePSrCZ\nwZKD3aA+8m0a9NcKSusV3CjmhcQ+Kwnnk4tGYq5R4WullaumCn7k9PCySenMte8P\nZgvBOZGI6IHxPKOk9b3IrC+A7JYuuIQ1CueRuycdwOqyuN3X0IyU+N3TGXFOSu0u\nsQJj0W8Rj11RSIG3/aGVqjUVWQJiiaOJW4JGVF4GXFBRa4E/1Ieh4qhyFqDv5i5q\n+e5Cb20lA/RyhqWeTZ024At2/XIKj3N7SnDScL1n2z4ND9OAAPthIuMCzzGe9RyP\n78QTBCX+sATZ5LtlIiWP8hdt2frpargnt7f0wHfMiSCs1fOqLCUd6py6XWahEknF\n3daqSvxpT9RnYISZrNxNvtGKbghqPSfGOypH09h+JorKbb8dgCWjMfiJzw/XMpUe\nIPVT6HkQHDzMGI2CRYGGxr+cXmjiHF74+R2nZa7rD/ConBR02nucX/ry67g+LY+P\nHfTc19kWMeRI77RwA0w7rNw6UQUhPb6OyYI/1AAGR0tGgt/0crXRufz8n5P3U10d\nlZNUzDUzly3ClcwIGaJW\n-----END CERTIFICATE-----\n"

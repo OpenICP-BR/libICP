@@ -41,7 +41,7 @@ var idCommonName = asn1.ObjectIdentifier{2, 5, 4, 3}
 var idSignedData = asn1.ObjectIdentifier{1, 2, 840, 113549, 1, 7, 2}
 var idEmailName = asn1.ObjectIdentifier{1, 2, 840, 113549, 1, 9, 1}
 
-func OID_Key2String(oid asn1.ObjectIdentifier) string {
+func oid_key2str(oid asn1.ObjectIdentifier) string {
 	switch {
 	case oid.Equal(idCountryName):
 		return "C"

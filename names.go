@@ -8,33 +8,33 @@ import (
 	"github.com/gjvnq/asn1"
 )
 
-type Name []RDN_SET
-type RDN_SET []ATV
-type ATV struct {
+type nameT []rdn_set
+type rdn_set []atv
+type atv struct {
 	RawContent asn1.RawContent
 	Type       asn1.ObjectIdentifier
 	Value      interface{}
 }
 
 // Returns a copy/new map from a name.
-func (this Name) Map() map[string]string {
+func (this nameT) Map() map[string]string {
 	m := make(map[string]string)
 	for _, item := range this {
-		k := OID_Key2String(item[0].Type)
+		k := oid_key2str(item[0].Type)
 		m[k] = fmt.Sprintf("%s", item[0].Value)
 	}
 	return m
 }
 
 // Remvove both CR and LF from a given string
-func RemoveNewLines(s string) string {
+func rm_new_lines(s string) string {
 	s = strings.Replace(s, "\r", "", -1)
 	s = strings.Replace(s, "\n", "", -1)
 	return s
 }
 
 // Returns a name as a single line string. Ex: "C=BR/O=ICP-Brasil/OU=Autoridade Certificadora Raiz Brasileira v2/CN=AC CAIXA v2" Unknown OIDs will always be included in order.
-func (this Name) String() string {
+func (this nameT) String() string {
 	// Prepare stuff
 	ans := ""
 	first := true
@@ -46,7 +46,7 @@ func (this Name) String() string {
 			if !first {
 				ans += "/"
 			}
-			ans += k + "=" + RemoveNewLines(v)
+			ans += k + "=" + rm_new_lines(v)
 			delete(m, k)
 			first = false
 		}
@@ -63,62 +63,62 @@ func (this Name) String() string {
 		if !first {
 			ans += "/"
 		}
-		ans += k + "=" + RemoveNewLines(v)
+		ans += k + "=" + rm_new_lines(v)
 		first = false
 	}
 
 	return ans
 }
 
-type AnotherName struct {
+type another_name struct {
 	RawContent asn1.RawContent
 	TypeId     asn1.ObjectIdentifier
 	Value      interface{} `asn1:"tag:0,explicit"`
 }
 
-type EDIPartyName struct {
+type edi_party_name struct {
 	RawContent   asn1.RawContent
-	NameAssigner DirectoryString `asn1:"tag:0,optional"`
-	PartyName    DirectoryString `asn1:"tag:1"`
+	NameAssigner directory_str `asn1:"tag:0,optional"`
+	PartyName    directory_str `asn1:"tag:1"`
 }
 
-type DirectoryString struct {
+type directory_str struct {
 	PrintableString string `asn1:"printable,optional,omitempty"`
 	UTF8String      string `asn1:"utf8,optional,omitempty"`
 	OtherString     string `asn1:"utf8,optional,omitempty"`
 }
 
-type BuiltInDomainDefinedAttribute struct {
+type built_in_domain_defined_attribute struct {
 	Type  string `asn1:"printable"`
 	Value string `asn1:"printable"`
 }
 
-type ExtensionAttribute struct {
+type extension_attribute struct {
 	Type  int         `asn1:"tag:0"`
 	Value interface{} `asn1:"tag:1"`
 }
 
-type OrAddress struct {
+type or_address struct {
 	RawContent                     asn1.RawContent
-	BuiltInStandardAttributes      BuiltInStandardAttributes
-	BuiltInDomainDefinedAttributes []BuiltInDomainDefinedAttribute `asn1:"optional"`
-	ExtensionAttributes            []ExtensionAttribute            `asn1:"optional,set"`
+	BuiltInStandardAttributes      built_in_standard_attributes
+	BuiltInDomainDefinedAttributes []built_in_domain_defined_attribute `asn1:"optional"`
+	ExtensionAttributes            []extension_attribute               `asn1:"optional,set"`
 }
 
-type CountryName struct {
+type country_name struct {
 	RawContent        asn1.RawContent
 	X121DccCode       string `asn1:"optional,omitempty"`
 	Iso3166Alpha2Code string `asn1:"optional,omitempty,printable"`
 }
 
-type NumericOrPrintable struct {
+type numeric_or_printable struct {
 	RawContent asn1.RawContent
 	Numeric    string `asn1:"optional,omitempty"`
 	Printable  string `asn1:"optional,omitempty,printable"`
 }
 
 // Use with `asn1:"set"`
-type PersonalName struct {
+type personal_name struct {
 	RawContent          asn1.RawContent
 	Surname             string `asn1:"tag:0"`
 	GivenName           string `asn1:"optional,tag:1"`
@@ -126,35 +126,35 @@ type PersonalName struct {
 	GenerationQualifier string `asn1:"optional,tag:2"`
 }
 
-type BuiltInStandardAttributes struct {
+type built_in_standard_attributes struct {
 	RawContent               asn1.RawContent
-	CountryName              CountryName        `asn1:"optional,omitempty"`
-	AdministrationDomainName NumericOrPrintable `asn1:"optional,omitempty,application,tag:2"`
-	NetworkAddress           string             `asn1:"tag:0,optional,omitempty"`
-	TerminalIdentifier       string             `asn1:"tag:1,optional,omitempty,printable"`
-	PrivateDomainName        NumericOrPrintable `asn1:"tag:2,explicit,optional,omitempty"`
-	OrganizationName         string             `asn1:"tag:3,optional,omitempty,printable"`
-	NumericUserIdentifier    string             `asn1:"tag:4,optional,omitempty"`
-	PersonalName             PersonalName       `asn1:"tag:5,optional,omitempty,set"`
-	OrganizationalUnitNames  []string           `asn1:"tag:6,optional,omitempty,printable"`
+	CountryName              country_name         `asn1:"optional,omitempty"`
+	AdministrationDomainName numeric_or_printable `asn1:"optional,omitempty,application,tag:2"`
+	NetworkAddress           string               `asn1:"tag:0,optional,omitempty"`
+	TerminalIdentifier       string               `asn1:"tag:1,optional,omitempty,printable"`
+	PrivateDomainName        numeric_or_printable `asn1:"tag:2,explicit,optional,omitempty"`
+	OrganizationName         string               `asn1:"tag:3,optional,omitempty,printable"`
+	NumericUserIdentifier    string               `asn1:"tag:4,optional,omitempty"`
+	PersonalName             personal_name        `asn1:"tag:5,optional,omitempty,set"`
+	OrganizationalUnitNames  []string             `asn1:"tag:6,optional,omitempty,printable"`
 }
 
-type GeneralName struct {
+type general_name struct {
 	RawContent                asn1.RawContent
-	OtherName                 AnotherName           `asn1:"tag:0,optional,omitempty"`
+	OtherName                 another_name          `asn1:"tag:0,optional,omitempty"`
 	RFC822Name                string                `asn1:"tag:1,ia5,optional,omitempty"`
 	DNSName                   string                `asn1:"tag:2,ia5,optional,omitempty"`
-	X400Address               OrAddress             `asn1:"tag:3,optional,omitempty"`
-	DirectoryName             Name                  `asn1:"tag:4,optional,omitempty"`
-	EdiPartyName              EDIPartyName          `asn1:"tag:5,optional,omitempty"`
+	X400Address               or_address            `asn1:"tag:3,optional,omitempty"`
+	DirectoryName             nameT                 `asn1:"tag:4,optional,omitempty"`
+	EdiPartyName              edi_party_name        `asn1:"tag:5,optional,omitempty"`
 	UniformResourceIdentifier string                `asn1:"tag:6,ia5,optional,omitempty"`
 	IPAddress                 []byte                `asn1:"tag:7,optional,omitempty"`
 	RegisteredID              asn1.ObjectIdentifier `asn1:"tag:8,optional,omitempty"`
 }
 
-type Holder struct {
+type holder struct {
 	RawContent        asn1.RawContent
-	BaseCertificateID IssuerAndSerial  `asn1:"optional,omitempty,tag:0"`
-	EntityName        []GeneralName    `asn1:"optional,omitempty,tag:1"`
-	ObjectDigestInfo  ObjectDigestInfo `asn1:"optional,omitempty,tag:2"`
+	BaseCertificateID issuer_and_serial  `asn1:"optional,omitempty,tag:0"`
+	EntityName        []general_name     `asn1:"optional,omitempty,tag:1"`
+	ObjectDigestInfo  object_digest_info `asn1:"optional,omitempty,tag:2"`
 }

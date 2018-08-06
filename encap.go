@@ -7,7 +7,7 @@ import (
 	"github.com/gjvnq/asn1"
 )
 
-type EncapsulatedContentInfo struct {
+type encapsulated_content_info struct {
 	RawContent    asn1.RawContent
 	EContentType  asn1.ObjectIdentifier
 	EContent      []byte `asn1:"explicit,optional,omitempty"`
@@ -15,7 +15,7 @@ type EncapsulatedContentInfo struct {
 	hashes        map[string][]byte
 }
 
-func (ec *EncapsulatedContentInfo) SetFallbackFile(path string) CodedError {
+func (ec *encapsulated_content_info) SetFallbackFile(path string) CodedError {
 	abs_path, err := filepath.Abs(path)
 	if err != nil {
 		merr := NewMultiError("failed to get absolute path", ERR_FAILED_ABS_PATH, nil)
@@ -32,16 +32,16 @@ func (ec *EncapsulatedContentInfo) SetFallbackFile(path string) CodedError {
 	return nil
 }
 
-func (ec EncapsulatedContentInfo) IsDetached() bool {
+func (ec encapsulated_content_info) IsDetached() bool {
 	return ec.EContent == nil
 }
 
 // Return true if EContent is not nil or if fallback_file exists
-func (ec EncapsulatedContentInfo) IsHashable() bool {
+func (ec encapsulated_content_info) IsHashable() bool {
 	return ec.EContent != nil || ec.fallback_file != ""
 }
 
-func (ec *EncapsulatedContentInfo) HashAs(alg_id AlgorithmIdentifier) ([]byte, CodedError) {
+func (ec *encapsulated_content_info) HashAs(alg_id algorithm_identifier) ([]byte, CodedError) {
 	if ec.hashes == nil {
 		ec.hashes = make(map[string][]byte)
 	}
@@ -50,7 +50,7 @@ func (ec *EncapsulatedContentInfo) HashAs(alg_id AlgorithmIdentifier) ([]byte, C
 		return ans, nil
 	}
 	// Get hasher
-	hasher, _, cerr := GetHasher(alg_id)
+	hasher, _, cerr := get_hasher(alg_id)
 	if cerr != nil {
 		return nil, cerr
 	}
@@ -64,14 +64,14 @@ func (ec *EncapsulatedContentInfo) HashAs(alg_id AlgorithmIdentifier) ([]byte, C
 			merr.SetParam("path", ec.fallback_file)
 			return nil, merr
 		}
-		ans, cerr := RunHashWithReader(hasher, f)
+		ans, cerr := run_hash_reader(hasher, f)
 		if cerr != nil {
 			return nil, cerr
 		}
 		ec.hashes[alg_id.ToHex()] = ans
 		return ans, nil
 	}
-	ans := RunHash(hasher, ec.EContent)
+	ans := run_hash(hasher, ec.EContent)
 	ec.hashes[alg_id.ToHex()] = ans
 	return ans, nil
 }
@@ -84,7 +84,7 @@ func (ec *EncapsulatedContentInfo) HashAs(alg_id AlgorithmIdentifier) ([]byte, C
 	"signed" MUST be id-data (as defined in Section 4), and the content
 	field of the EncapsulatedContentInfo value MUST be omitted.
 */
-func (ec *EncapsulatedContentInfo) AdjustForNoSigners() {
+func (ec *encapsulated_content_info) AdjustForNoSigners() {
 	ec.EContentType = idData
 	ec.EContent = nil
 }

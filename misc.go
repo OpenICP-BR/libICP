@@ -30,7 +30,7 @@ func Version() string {
 }
 
 // Outputs a byte sequence as pairs of hexadecimal digits separated by colons. Ex: AA:FF:1E
-func NiceHex(buf []byte) string {
+func nice_hex(buf []byte) string {
 	ans := ""
 	for i := 0; i < len(buf); i++ {
 		if i != 0 {
@@ -42,7 +42,7 @@ func NiceHex(buf []byte) string {
 }
 
 // Outputs a byte sequence as pairs of hexadecimal digitss. Ex: AAFF1E
-func ToHex(buf []byte) string {
+func to_hex(buf []byte) string {
 	ans := ""
 	for i := 0; i < len(buf); i++ {
 		ans += fmt.Sprintf("%X", buf[i:i+1])
@@ -51,7 +51,7 @@ func ToHex(buf []byte) string {
 }
 
 // Returns nil in case of failure
-func FromHex(s string) []byte {
+func from_hex(s string) []byte {
 	re := regexp.MustCompile("[^A-Fa-f0-9]")
 	s = re.ReplaceAllString(s, "")
 	ans, err := hex.DecodeString(s)
@@ -61,7 +61,7 @@ func FromHex(s string) []byte {
 	return ans
 }
 
-type ContentInfo struct {
+type content_info struct {
 	RawContent  asn1.RawContent
 	ContentType asn1.ObjectIdentifier
 	Content     asn1.RawValue
@@ -69,17 +69,17 @@ type ContentInfo struct {
 
 type SignatureVerifiable interface {
 	GetRawContent() []byte
-	GetSignatureAlgorithm() AlgorithmIdentifier
+	GetSignatureAlgorithm() algorithm_identifier
 	GetSignature() []byte
 }
 
 type Signable interface {
 	GetBytesToSign() []byte
-	GetSignatureAlgorithm() AlgorithmIdentifier
+	GetSignatureAlgorithm() algorithm_identifier
 	SetSignature(sig []byte)
 }
 
-func GetHasher(alg_id AlgorithmIdentifier) (hash.Hash, crypto.Hash, CodedError) {
+func get_hasher(alg_id algorithm_identifier) (hash.Hash, crypto.Hash, CodedError) {
 	// Check algorithm
 	alg := alg_id.Algorithm
 	var hasher hash.Hash
@@ -105,13 +105,13 @@ func GetHasher(alg_id AlgorithmIdentifier) (hash.Hash, crypto.Hash, CodedError) 
 	return hasher, hash_alg, nil
 }
 
-func RunHash(hasher hash.Hash, data []byte) []byte {
+func run_hash(hasher hash.Hash, data []byte) []byte {
 	hasher.Write(data)
 	return hasher.Sum(nil)
 }
 
-func GetHasherAndRun(alg_id AlgorithmIdentifier, data []byte) ([]byte, CodedError) {
-	hasher, _, cerr := GetHasher(alg_id)
+func get_hasher_and_run(alg_id algorithm_identifier, data []byte) ([]byte, CodedError) {
+	hasher, _, cerr := get_hasher(alg_id)
 	if cerr != nil {
 		return nil, cerr
 	}
@@ -119,7 +119,7 @@ func GetHasherAndRun(alg_id AlgorithmIdentifier, data []byte) ([]byte, CodedErro
 	return hasher.Sum(nil), nil
 }
 
-func RunHashWithReader(hasher hash.Hash, input io.Reader) ([]byte, CodedError) {
+func run_hash_reader(hasher hash.Hash, input io.Reader) ([]byte, CodedError) {
 	_, err := io.Copy(hasher, input)
 	if err != nil {
 		return nil, NewMultiError("failed to hash file", ERR_FAILED_HASH, nil)
@@ -129,13 +129,13 @@ func RunHashWithReader(hasher hash.Hash, input io.Reader) ([]byte, CodedError) {
 
 func VerifySignaure(object SignatureVerifiable, pubkey rsa.PublicKey) CodedError {
 	// Check algorithm
-	hasher, hash_alg, merr := GetHasher(object.GetSignatureAlgorithm())
+	hasher, hash_alg, merr := get_hasher(object.GetSignatureAlgorithm())
 	if merr != nil {
 		return merr
 	}
 
 	// Write raw value
-	hash_ans := RunHash(hasher, object.GetRawContent())
+	hash_ans := run_hash(hasher, object.GetRawContent())
 
 	// Verify signature
 	sig := object.GetSignature()
@@ -148,13 +148,13 @@ func VerifySignaure(object SignatureVerifiable, pubkey rsa.PublicKey) CodedError
 
 func Sign(object Signable, privkey *rsa.PrivateKey) CodedError {
 	// Check algorithm
-	hasher, hash_alg, merr := GetHasher(object.GetSignatureAlgorithm())
+	hasher, hash_alg, merr := get_hasher(object.GetSignatureAlgorithm())
 	if merr != nil {
 		return merr
 	}
 
 	// Hash it
-	hash_ans := RunHash(hasher, object.GetBytesToSign())
+	hash_ans := run_hash(hasher, object.GetBytesToSign())
 
 	// Generate signature
 	sig, err := rsa.SignPKCS1v15(rand.Reader, privkey, hash_alg, hash_ans)
@@ -166,7 +166,7 @@ func Sign(object Signable, privkey *rsa.PrivateKey) CodedError {
 	return nil
 }
 
-func HTTPGet(url string) ([]byte, int64, CodedError) {
+func http_get(url string) ([]byte, int64, CodedError) {
 	// Get the data
 	client := &http.Client{
 		Timeout: 5 * time.Second,
@@ -192,21 +192,21 @@ const ObjectDigestInfo_PublicKey = 0
 const ObjectDigestInfo_PublicKeyCert = 1
 const ObjectDigestInfo_OtherObjectTypes = 2
 
-type ObjectDigestInfo struct {
+type object_digest_info struct {
 	RawContent         asn1.RawContent
 	DigestedObjectType int
 	OtherObjectTypeID  asn1.ObjectIdentifier `asn1:"optional,omitempty"`
-	DigestAlgorithm    AlgorithmIdentifier
+	DigestAlgorithm    algorithm_identifier
 	ObjectDigest       asn1.BitString
 }
 
 // Also unmarshals UTCTime
-type GeneralizedValidity struct {
+type generalized_validity struct {
 	RawContent    asn1.RawContent
 	NotBeforeTime time.Time `asn1:"generalized"`
 	NotAfterTime  time.Time `asn1:"generalized"`
 }
 
-func IsZeroOfUnderlyingType(x interface{}) bool {
+func is_zero_of_underlying_type(x interface{}) bool {
 	return reflect.DeepEqual(x, reflect.Zero(reflect.TypeOf(x)).Interface())
 }

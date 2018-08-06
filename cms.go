@@ -1,5 +1,5 @@
 package libICP
 
-type Message struct {
-	Base ContentInfo
+type message struct {
+	Base content_info
 }

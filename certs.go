@@ -8,64 +8,64 @@ import (
 
 type CertificateChoice struct {
 	RawContent          asn1.RawContent
-	Certificate         Certificate            `asn1:"optional,omitempty"`
-	ExtendedCertificate ExtendedCertificate    `asn1:"tag:0,optional,omitempty"`
-	V1AttrCert          AttributeCertificateV1 `asn1:"tag:1,optional,omitempty"`
-	V2AttrCert          AttributeCertificateV2 `asn1:"tag:2,optional,omitempty"`
-	Other               OtherCertificateFormat `asn1:"tag:3,optional,omitempty"`
+	Certificate         Certificate              `asn1:"optional,omitempty"`
+	ExtendedCertificate extended_certificate     `asn1:"tag:0,optional,omitempty"`
+	V1AttrCert          attribute_certificate_v1 `asn1:"tag:1,optional,omitempty"`
+	V2AttrCert          attribute_certificate_v2 `asn1:"tag:2,optional,omitempty"`
+	Other               other_certificate_format `asn1:"tag:3,optional,omitempty"`
 }
 
-type ExtendedCertificate struct {
-	ExtendedCertificateInfo ExtendedCertificateInfo
-	SignatureAlgorithm      AlgorithmIdentifier
+type extended_certificate struct {
+	ExtendedCertificateInfo extended_certificate_info
+	SignatureAlgorithm      algorithm_identifier
 	Signature               asn1.BitString
 }
 
-type ExtendedCertificateInfo struct {
+type extended_certificate_info struct {
 	Version          int
 	Certificate      Certificate
-	UnauthAttributes Attribute `asn1:"set"`
+	UnauthAttributes attribute `asn1:"set"`
 }
 
-type OtherCertificateFormat struct {
+type other_certificate_format struct {
 	RawContent      asn1.RawContent
 	OtherCertFormat asn1.ObjectIdentifier
 	OtherCert       interface{}
 }
 
-type RevocationInfoChoice struct {
+type revocation_info_choice struct {
 	RawContent asn1.RawContent
-	CRL        CertificateList           `asn1:"optional,omitempty"`
-	Other      OtherRevocationInfoFormat `asn1:"tag:1,optional,omitempty"`
+	CRL        CertificateList              `asn1:"optional,omitempty"`
+	Other      other_revocation_info_format `asn1:"tag:1,optional,omitempty"`
 }
 
-type OtherRevocationInfoFormat struct {
+type other_revocation_info_format struct {
 	RawContent         asn1.RawContent
 	OtherRevInfoFormat asn1.ObjectIdentifier
 	OtherRevInfo       interface{} `asn1:"optional,omitempty"`
 }
 
-type CertificatePack struct {
-	TBSCertificate     TBSCertificate
-	SignatureAlgorithm AlgorithmIdentifier
+type certificate_pack struct {
+	TBSCertificate     tbs_certificate
+	SignatureAlgorithm algorithm_identifier
 	Signature          asn1.BitString
 }
 
-type TBSCertificate struct {
+type tbs_certificate struct {
 	RawContent           asn1.RawContent
 	Version              int `asn1:"optional,explicit,default:0,tag:0"`
 	SerialNumber         *big.Int
-	Signature            AlgorithmIdentifier
-	Issuer               Name
-	Validity             GeneralizedValidity
-	Subject              Name
-	SubjectPublicKeyInfo PairAlgPubKey
+	Signature            algorithm_identifier
+	Issuer               nameT
+	Validity             generalized_validity
+	Subject              nameT
+	SubjectPublicKeyInfo pair_alg_pub_key
 	IssuerUniqueID       asn1.BitString `asn1:"tag:1,optional,omitempty"`
 	SubjectUniqueID      asn1.BitString `asn1:"tag:2,optional,omitempty"`
-	Extensions           []Extension    `asn1:"tag:3,optional,omitempty,explicit"`
+	Extensions           []extension    `asn1:"tag:3,optional,omitempty,explicit"`
 }
 
-func (cert *TBSCertificate) SetAppropriateVersion() {
+func (cert *tbs_certificate) SetAppropriateVersion() {
 	cert.Version = 0
 	if cert.IssuerUniqueID.BitLength != 0 || cert.SubjectUniqueID.BitLength != 0 {
 		cert.Version = 1
@@ -75,23 +75,23 @@ func (cert *TBSCertificate) SetAppropriateVersion() {
 	}
 }
 
-func (cert CertificatePack) GetRawContent() []byte {
+func (cert certificate_pack) GetRawContent() []byte {
 	return cert.TBSCertificate.RawContent
 }
 
-func (cert CertificatePack) GetSignatureAlgorithm() AlgorithmIdentifier {
+func (cert certificate_pack) GetSignatureAlgorithm() algorithm_identifier {
 	return cert.SignatureAlgorithm
 }
 
-func (cert CertificatePack) GetSignature() []byte {
+func (cert certificate_pack) GetSignature() []byte {
 	return cert.Signature.Bytes
 }
 
-func (cert *CertificatePack) SetSignature(dat []byte) {
+func (cert *certificate_pack) SetSignature(dat []byte) {
 	cert.Signature.Bytes = dat
 }
 
-func (cert *CertificatePack) Marshal() CodedError {
+func (cert *certificate_pack) Marshal() CodedError {
 	dat, err := asn1.Marshal(cert.TBSCertificate)
 	if err != nil {
 		return NewMultiError("failed to marshal TBSCertificate", ERR_FAILED_TO_ENCODE, nil, err)
@@ -101,13 +101,13 @@ func (cert *CertificatePack) Marshal() CodedError {
 	return nil
 }
 
-func (cert *CertificatePack) GetBytesToSign() []byte {
+func (cert *certificate_pack) GetBytesToSign() []byte {
 	return []byte(cert.TBSCertificate.RawContent)
 }
 
-type IssuerAndSerial struct {
+type issuer_and_serial struct {
 	RawContent asn1.RawContent
-	Issuer     []GeneralName
+	Issuer     []general_name
 	Serial     *big.Int
 	IssuerUID  asn1.BitString `asn1:"optional"`
 }

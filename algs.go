@@ -7,29 +7,29 @@ import (
 	"github.com/gjvnq/asn1"
 )
 
-type AlgorithmIdentifier struct {
+type algorithm_identifier struct {
 	RawContent asn1.RawContent
 	Algorithm  asn1.ObjectIdentifier
 	Parameters []interface{} `asn1:"optional,omitempty"`
 }
 
-func (ai AlgorithmIdentifier) ToHex() string {
-	return NiceHex(ai.RawContent)
+func (ai algorithm_identifier) ToHex() string {
+	return nice_hex(ai.RawContent)
 }
 
-type PairAlgPubKey struct {
+type pair_alg_pub_key struct {
 	RawContent asn1.RawContent
-	Algorithm  AlgorithmIdentifier
+	Algorithm  algorithm_identifier
 	PublicKey  asn1.BitString
 }
 
-func (p PairAlgPubKey) RSAPubKey() (rsa.PublicKey, error) {
+func (p pair_alg_pub_key) RSAPubKey() (rsa.PublicKey, error) {
 	pub := rsa.PublicKey{}
 	_, err := asn1.Unmarshal(p.PublicKey.Bytes, &pub)
 	return pub, err
 }
 
-func NewRSAKey(bits int) (priv *rsa.PrivateKey, pair PairAlgPubKey, cerr CodedError) {
+func new_rsa_key(bits int) (priv *rsa.PrivateKey, pair pair_alg_pub_key, cerr CodedError) {
 	var err error
 
 	priv, err = rsa.GenerateKey(rand.Reader, bits)

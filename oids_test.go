@@ -7,11 +7,11 @@ import (
 )
 
 func Test_OID_Key2String(t *testing.T) {
-	assert.Equal(t, "C", OID_Key2String(idCountryName))
-	assert.Equal(t, "S", OID_Key2String(idStateOrProvinceName))
-	assert.Equal(t, "L", OID_Key2String(idLocalityName))
-	assert.Equal(t, "O", OID_Key2String(idOrganizationName))
-	assert.Equal(t, "OU", OID_Key2String(idOrganizationalUnitName))
-	assert.Equal(t, "CN", OID_Key2String(idCommonName))
-	assert.Equal(t, "1.2.840.113549.1.7.1", OID_Key2String(idData))
+	assert.Equal(t, "C", oid_key2str(idCountryName))
+	assert.Equal(t, "S", oid_key2str(idStateOrProvinceName))
+	assert.Equal(t, "L", oid_key2str(idLocalityName))
+	assert.Equal(t, "O", oid_key2str(idOrganizationName))
+	assert.Equal(t, "OU", oid_key2str(idOrganizationalUnitName))
+	assert.Equal(t, "CN", oid_key2str(idCommonName))
+	assert.Equal(t, "1.2.840.113549.1.7.1", oid_key2str(idData))
 }

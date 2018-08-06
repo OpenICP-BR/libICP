@@ -6,76 +6,76 @@ import (
 	"github.com/gjvnq/asn1"
 )
 
-type Attribute struct {
+type attribute struct {
 	RawContent asn1.RawContent
 	Type       asn1.ObjectIdentifier
 	Values     []interface{} `asn1:"set"`
 }
 
-type Extension struct {
+type extension struct {
 	ExtnID    asn1.ObjectIdentifier
 	Critical  bool `asn1:"optional"`
 	ExtnValue []byte
 }
 
-type AttributeCertificateV1 struct {
-	AcInfo             AttributeCertificateInfoV1
-	SignatureAlgorithm AlgorithmIdentifier
+type attribute_certificate_v1 struct {
+	AcInfo             attribute_certificate_info_v1
+	SignatureAlgorithm algorithm_identifier
 	Signature          asn1.BitString
 }
 
-type SubjectOfAttributeCertificateInfoV1 struct {
-	BaseCertificateID IssuerAndSerial `asn1:"tag:0,optional,omitempty"`
-	SubjectName       []GeneralName   `asn1:"tag:1,optional,omitempty"`
+type subject_of_attribute_certificate_info_v1 struct {
+	BaseCertificateID issuer_and_serial `asn1:"tag:0,optional,omitempty"`
+	SubjectName       []general_name    `asn1:"tag:1,optional,omitempty"`
 }
 
-type AttributeCertificateInfoV1 struct {
+type attribute_certificate_info_v1 struct {
 	RawContent            asn1.RawContent
 	Version               int
-	Subject               SubjectOfAttributeCertificateInfoV1
-	Issuer                []GeneralName
-	Signature             AlgorithmIdentifier
+	Subject               subject_of_attribute_certificate_info_v1
+	Issuer                []general_name
+	Signature             algorithm_identifier
 	SerialNumber          int
-	AttCertValidityPeriod GeneralizedValidity
-	Attributes            []Attribute
+	AttCertValidityPeriod generalized_validity
+	Attributes            []attribute
 	IssuerUniqueID        asn1.BitString `asn1:"optional"`
-	Extensions            []Extension    `asn1:"optional"`
+	Extensions            []extension    `asn1:"optional"`
 }
 
 // Also known as AttributeCertificate
-type AttributeCertificateV2 struct {
+type attribute_certificate_v2 struct {
 	RawContent         asn1.RawContent
-	ACInfo             AttributeCertificateInfo
-	SignatureAlgorithm AlgorithmIdentifier
+	ACInfo             attribute_certificate_info
+	SignatureAlgorithm algorithm_identifier
 	SignatureValue     asn1.BitString
 }
 
-type AttributeCertificateInfo struct {
+type attribute_certificate_info struct {
 	RawContent             asn1.RawContent
 	Version                int
-	Holder                 Holder
-	IssuerV1               []GeneralName `asn1:"optional,omitempty"`
-	IssuerV2               V2Form        `asn1:"optional,omitempty,tag:0"`
-	Signature              AlgorithmIdentifier
+	Holder                 holder
+	IssuerV1               []general_name `asn1:"optional,omitempty"`
+	IssuerV2               v2_form        `asn1:"optional,omitempty,tag:0"`
+	Signature              algorithm_identifier
 	SerialNumber           int
-	AttrCertValidityPeriod GeneralizedValidity
-	Attributes             []Attribute
+	AttrCertValidityPeriod generalized_validity
+	Attributes             []attribute
 	IssuerUniqueID         asn1.BitString `asn1:"optional,omitempty"`
-	Extensions             []Extension    `asn1:"optional,omitempty"`
+	Extensions             []extension    `asn1:"optional,omitempty"`
 }
 
-func (acert *AttributeCertificateInfo) SetAppropriateVersion() {
+func (acert *attribute_certificate_info) SetAppropriateVersion() {
 	acert.Version = 1
 }
 
-type V2Form struct {
+type v2_form struct {
 	RawContent        asn1.RawContent
-	IssuerName        []GeneralName    `asn1:"optional,omitempty"`
-	BaseCertificateID IssuerAndSerial  `asn1:"optional,omitempty,tag:0"`
-	ObjectDigestInfo  ObjectDigestInfo `asn1:"optional,omitempty,tag:1"`
+	IssuerName        []general_name     `asn1:"optional,omitempty"`
+	BaseCertificateID issuer_and_serial  `asn1:"optional,omitempty,tag:0"`
+	ObjectDigestInfo  object_digest_info `asn1:"optional,omitempty,tag:1"`
 }
 
-type ExtKeyUsage struct {
+type ext_key_usage struct {
 	Exists           bool
 	DigitalSignature bool
 	NonRepudiation   bool
@@ -86,7 +86,7 @@ type ExtKeyUsage struct {
 	CRLSign          bool
 }
 
-func (ans *ExtKeyUsage) FromExtension(ext Extension) CodedError {
+func (ans *ext_key_usage) FromExtension(ext extension) CodedError {
 	seq := asn1.BitString{}
 	_, err := asn1.Unmarshal(ext.ExtnValue, &seq)
 	if err != nil {
@@ -105,7 +105,7 @@ func (ans *ExtKeyUsage) FromExtension(ext Extension) CodedError {
 	return nil
 }
 
-type ExtBasicConstraints struct {
+type ext_basic_constraints struct {
 	Exists  bool
 	CA      bool
 	PathLen int
@@ -117,7 +117,7 @@ type ExtBasicConstraintsRaw struct {
 	PathLen int `asn1:"optional"`
 }
 
-func (ans *ExtBasicConstraints) FromExtension(ext Extension) CodedError {
+func (ans *ext_basic_constraints) FromExtension(ext extension) CodedError {
 	raw := ExtBasicConstraintsRaw{}
 	_, err := asn1.Unmarshal(ext.ExtnValue, &raw)
 	if err != nil {
@@ -131,21 +131,21 @@ func (ans *ExtBasicConstraints) FromExtension(ext Extension) CodedError {
 	return nil
 }
 
-type ExtCRLDistributionPoints struct {
+type ext_crl_distribution_points struct {
 	Exists bool
 	URLs   []string
 }
 
-type ExtCRLDistributionPointsRaw struct {
-	DistributionPoint ExtDistributionPoint `asn1:"optional,tag:0"`
+type ext_crl_distribution_points_raw struct {
+	DistributionPoint ext_distribution_point `asn1:"optional,tag:0"`
 }
 
-type ExtDistributionPoint struct {
-	FullName GeneralName `asn1:"optional,tag:0"`
+type ext_distribution_point struct {
+	FullName general_name `asn1:"optional,tag:0"`
 }
 
-func (ans *ExtCRLDistributionPoints) FromExtension(ext Extension) CodedError {
-	raw := []ExtCRLDistributionPointsRaw{}
+func (ans *ext_crl_distribution_points) FromExtension(ext extension) CodedError {
+	raw := []ext_crl_distribution_points_raw{}
 	_, err := asn1.Unmarshal(ext.ExtnValue, &raw)
 	if err != nil {
 		merr := NewMultiError("failed to parse CRL distribution points extention", ERR_PARSE_EXTENSION, nil, err)
@@ -163,17 +163,17 @@ func (ans *ExtCRLDistributionPoints) FromExtension(ext Extension) CodedError {
 }
 
 type ExtAuthorityKeyIdRaw struct {
-	KeyId          []byte        `asn1:"tag:0,optional"`
-	AuthCertIssuer []GeneralName `asn1:"tag:1,optional"`
-	AuthCertSerial *big.Int      `asn1:"tag:2,optional"`
+	KeyId          []byte         `asn1:"tag:0,optional"`
+	AuthCertIssuer []general_name `asn1:"tag:1,optional"`
+	AuthCertSerial *big.Int       `asn1:"tag:2,optional"`
 }
 
-type ExtAuthorityKeyId struct {
+type ext_authority_key_id struct {
 	Exists bool
 	KeyId  []byte
 }
 
-func (ans *ExtAuthorityKeyId) FromExtension(ext Extension) CodedError {
+func (ans *ext_authority_key_id) FromExtension(ext extension) CodedError {
 	raw := ExtAuthorityKeyIdRaw{}
 	_, err := asn1.Unmarshal(ext.ExtnValue, &raw)
 	if err != nil {
@@ -186,12 +186,12 @@ func (ans *ExtAuthorityKeyId) FromExtension(ext Extension) CodedError {
 	return nil
 }
 
-type ExtSubjectKeyId struct {
+type ext_subject_key_id struct {
 	Exists bool
 	KeyId  []byte
 }
 
-func (ans *ExtSubjectKeyId) FromExtension(ext Extension) CodedError {
+func (ans *ext_subject_key_id) FromExtension(ext extension) CodedError {
 	_, err := asn1.Unmarshal(ext.ExtnValue, &ans.KeyId)
 	if err != nil {
 		merr := NewMultiError("failed to parse subject key id extention", ERR_PARSE_EXTENSION, nil, err)

@@ -9,8 +9,8 @@ import (
 
 type CertificateList struct {
 	RawContent         asn1.RawContent
-	TBSCertList        TBSCertList
-	SignatureAlgorithm AlgorithmIdentifier
+	TBSCertList        tbs_cert_list
+	SignatureAlgorithm algorithm_identifier
 	Signature          asn1.BitString
 }
 
@@ -28,7 +28,7 @@ func (list CertificateList) GetRawContent() []byte {
 	return list.TBSCertList.RawContent
 }
 
-func (list CertificateList) GetSignatureAlgorithm() AlgorithmIdentifier {
+func (list CertificateList) GetSignatureAlgorithm() algorithm_identifier {
 	return list.SignatureAlgorithm
 }
 
@@ -36,24 +36,24 @@ func (list CertificateList) GetSignature() []byte {
 	return list.Signature.Bytes
 }
 
-type TBSCertList struct {
+type tbs_cert_list struct {
 	RawContent          asn1.RawContent
 	Version             int `asn1:"optional,omitempty"`
-	Signature           AlgorithmIdentifier
-	Issuer              Name
+	Signature           algorithm_identifier
+	Issuer              nameT
 	ThisUpdate          time.Time
-	NextUpdate          time.Time            `asn1:"optional,omitempty"`
-	RevokedCertificates []RevokedCertificate `asn1:"optional,omitempty"`
-	CRLExtensions       []Extension          `asn1:"optional,omitempty,tag:0,explicit"`
+	NextUpdate          time.Time             `asn1:"optional,omitempty"`
+	RevokedCertificates []revoked_certificate `asn1:"optional,omitempty"`
+	CRLExtensions       []extension           `asn1:"optional,omitempty,tag:0,explicit"`
 }
 
-type RevokedCertificate struct {
+type revoked_certificate struct {
 	UserCertificate    *big.Int
 	RevocationDate     time.Time
-	CRLEntryExtensions []Extension `asn1:"optional,omitempty"`
+	CRLEntryExtensions []extension `asn1:"optional,omitempty"`
 }
 
-func (lcerts *TBSCertList) SetAppropriateVersion() {
+func (lcerts *tbs_cert_list) SetAppropriateVersion() {
 	lcerts.Version = 0
 	if lcerts.CRLExtensions != nil && len(lcerts.CRLExtensions) > 0 {
 		lcerts.Version = 1
@@ -66,7 +66,7 @@ func (lcerts *TBSCertList) SetAppropriateVersion() {
 	}
 }
 
-func (lcerts TBSCertList) HasCriticalExtension() asn1.ObjectIdentifier {
+func (lcerts tbs_cert_list) HasCriticalExtension() asn1.ObjectIdentifier {
 	for _, ext := range lcerts.CRLExtensions {
 		if ext.Critical {
 			return ext.ExtnID
@@ -75,7 +75,7 @@ func (lcerts TBSCertList) HasCriticalExtension() asn1.ObjectIdentifier {
 	return nil
 }
 
-func (lcerts TBSCertList) HasCert(serial *big.Int) bool {
+func (lcerts tbs_cert_list) HasCert(serial *big.Int) bool {
 	if serial == nil {
 		return false
 	}

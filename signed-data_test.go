@@ -60,7 +60,7 @@ func Test_SignedData_SetAppropriateVersion_6(t *testing.T) {
 
 func Test_SignedData_SetAppropriateVersion_7(t *testing.T) {
 	sd := SignedData{}
-	sd.CRLs = make([]RevocationInfoChoice, 1)
+	sd.CRLs = make([]revocation_info_choice, 1)
 	sd.CRLs[0].Other.OtherRevInfo = true
 	sd.SetAppropriateVersion()
 	assert.Equal(t, 5, sd.Version, "The version MUST be 5 in this case as: any crls with a type of other are present (see RFC5625 Section 5.1 Page 9)")
@@ -74,10 +74,10 @@ func Test_SignedData_GetFinalMessageDigest_1(t *testing.T) {
 
 func Test_SignedData_GetFinalMessageDigest_2(t *testing.T) {
 	si := SignerInfo{}
-	si.DigestAlgorithm = AlgorithmIdentifier{Algorithm: idSha1WithRSAEncryption}
-	e := EncapsulatedContentInfo{}
+	si.DigestAlgorithm = algorithm_identifier{Algorithm: idSha1WithRSAEncryption}
+	e := encapsulated_content_info{}
 	e.EContent = []byte{}
-	right_ans := FromHex("da39a3ee5e6b4b0d3255bfef95601890afd80709")
+	right_ans := from_hex("da39a3ee5e6b4b0d3255bfef95601890afd80709")
 	ans, cerr := si.GetFinalMessageDigest(&e)
 	require.Nil(t, cerr)
 	assert.Equal(t, right_ans, ans)
@@ -85,10 +85,10 @@ func Test_SignedData_GetFinalMessageDigest_2(t *testing.T) {
 
 func Test_SignedData_GetFinalMessageDigest_3(t *testing.T) {
 	si := SignerInfo{}
-	si.DigestAlgorithm = AlgorithmIdentifier{Algorithm: idSha1}
-	e := EncapsulatedContentInfo{}
+	si.DigestAlgorithm = algorithm_identifier{Algorithm: idSha1}
+	e := encapsulated_content_info{}
 	e.EContent = []byte("hi")
-	right_ans := FromHex("da39a3ee5e6b4b0d3255bfef95601890afd80709")
+	right_ans := from_hex("da39a3ee5e6b4b0d3255bfef95601890afd80709")
 	ans, cerr := si.GetFinalMessageDigest(&e)
 	require.Nil(t, cerr)
 	assert.NotEqual(t, right_ans, ans)
@@ -96,12 +96,12 @@ func Test_SignedData_GetFinalMessageDigest_3(t *testing.T) {
 
 func Test_SignedData_GetFinalMessageDigest_4(t *testing.T) {
 	si := SignerInfo{}
-	si.DigestAlgorithm = AlgorithmIdentifier{Algorithm: idSha1}
-	si.SignedAttrs = make([]Attribute, 0)
-	e := EncapsulatedContentInfo{}
+	si.DigestAlgorithm = algorithm_identifier{Algorithm: idSha1}
+	si.SignedAttrs = make([]attribute, 0)
+	e := encapsulated_content_info{}
 	e.EContent = []byte{}
-	right_ans := FromHex("da39a3ee5e6b4b0d3255bfef95601890afd80709")
-	right_ans2 := FromHex("27062FF2EB5D9D81B8B050D3CF4D1323A717611B")
+	right_ans := from_hex("da39a3ee5e6b4b0d3255bfef95601890afd80709")
+	right_ans2 := from_hex("27062FF2EB5D9D81B8B050D3CF4D1323A717611B")
 	si.SetContentTypeAttr(idData)
 	ans, cerr := si.GetFinalMessageDigest(&e)
 	require.Nil(t, cerr)
@@ -111,10 +111,10 @@ func Test_SignedData_GetFinalMessageDigest_4(t *testing.T) {
 
 func Test_SignedData_GetFinalMessageDigest_5(t *testing.T) {
 	si := SignerInfo{}
-	si.DigestAlgorithm = AlgorithmIdentifier{Algorithm: idSha256}
-	e := EncapsulatedContentInfo{}
+	si.DigestAlgorithm = algorithm_identifier{Algorithm: idSha256}
+	e := encapsulated_content_info{}
 	e.EContent = []byte("Lorem Ipsum Dolor Est\n")
-	right_ans := FromHex("22C74533DA0788488A861D37330AE642F41BB1E1070B31EF4A3EF62D454129A3")
+	right_ans := from_hex("22C74533DA0788488A861D37330AE642F41BB1E1070B31EF4A3EF62D454129A3")
 	ans, cerr := si.GetFinalMessageDigest(&e)
 	require.Nil(t, cerr)
 	assert.Equal(t, right_ans, ans)
@@ -124,8 +124,8 @@ func Test_SignerInfo_SetSigningTime(t *testing.T) {
 	si := SignerInfo{}
 	le_time := time.Unix(1533132660, 0).UTC()
 	si.SetSigningTime(le_time)
-	right_ans := []Attribute{
-		Attribute{
+	right_ans := []attribute{
+		attribute{
 			Type:   idSigningTime,
 			Values: []interface{}{le_time},
 		},
@@ -160,11 +160,11 @@ func Test_SignerInfo_Sign(t *testing.T) {
 
 	// Create simple message
 	si := SignerInfo{}
-	si.SignatureAlgorithm = AlgorithmIdentifier{Algorithm: idRSAEncryption}
-	si.DigestAlgorithm = AlgorithmIdentifier{Algorithm: idSha256}
+	si.SignatureAlgorithm = algorithm_identifier{Algorithm: idRSAEncryption}
+	si.DigestAlgorithm = algorithm_identifier{Algorithm: idSha256}
 	si.SetContentTypeAttr(idData)
 	si.SetSigningTime(time.Date(2018, 8, 1, 20, 23, 11, 0, time.UTC))
-	e := EncapsulatedContentInfo{}
+	e := encapsulated_content_info{}
 	e.EContentType = idData
 	e.EContent = []byte("Lorem Ipsum Dolor Est\n")
 
@@ -173,6 +173,6 @@ func Test_SignerInfo_Sign(t *testing.T) {
 	require.Nil(t, cerr)
 	require.Nil(t, si.Sign(&privkey))
 
-	right_ans := FromHex("36A1E19C 87C38ECF A2E6B376 F3BE9927 F236123C 097A322F F5DC4CCD 1B4459A3 F15C7DF3 65135043 4714B998 47BD8E6D 0C7EEF59 F567F6B3 BE54AB32 DCB36EBA AD312B86 A51DC9CA 9E2F31C0 EC389233 79B94B1C A20D2013 1ED38EA8 C64A79A9 8A4BA28E D01F4125 3979E3AE E731AB40 43AF14ED 6F6865E5 A6A71D31 A9358B8F 0E981BAE 41939A87 E3A78AF7 37A63386 BC562F0C A37B29B8 9FC413A6 2458291A 1D91CE91 199F608D 3D65FF56 C75138D1 9052E5EF CC9FE77F 5FD063E8 C138134F 19F88677 8C5CE006 BEF45BD9 00FD8FE6 8848A4D9 2F544327 69E30A13 4E9A2A3B 767B5B23 4FB06663 B6B51BA4 0CDDE211 EC724145 8022C763 45F4B4D6 73085146")
+	right_ans := from_hex("36A1E19C 87C38ECF A2E6B376 F3BE9927 F236123C 097A322F F5DC4CCD 1B4459A3 F15C7DF3 65135043 4714B998 47BD8E6D 0C7EEF59 F567F6B3 BE54AB32 DCB36EBA AD312B86 A51DC9CA 9E2F31C0 EC389233 79B94B1C A20D2013 1ED38EA8 C64A79A9 8A4BA28E D01F4125 3979E3AE E731AB40 43AF14ED 6F6865E5 A6A71D31 A9358B8F 0E981BAE 41939A87 E3A78AF7 37A63386 BC562F0C A37B29B8 9FC413A6 2458291A 1D91CE91 199F608D 3D65FF56 C75138D1 9052E5EF CC9FE77F 5FD063E8 C138134F 19F88677 8C5CE006 BEF45BD9 00FD8FE6 8848A4D9 2F544327 69E30A13 4E9A2A3B 767B5B23 4FB06663 B6B51BA4 0CDDE211 EC724145 8022C763 45F4B4D6 73085146")
 	assert.Equal(t, right_ans, si.Signature)
 }

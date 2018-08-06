@@ -16,12 +16,11 @@ const ALL_CAs_ZIP_URL = "http://acraiz.icpbrasil.gov.br/credenciadas/Certificado
 type CAStore struct {
 	// If true, it will attempt to download missing CAs and CRLs
 	AutoDownload bool
-	CAs          map[string]*Certificate
+	cas          map[string]*Certificate
 	inited       bool
-	Wg           sync.WaitGroup
+	wg           *sync.WaitGroup
 }
 
-// Calls CAStore.Init() for you.
 func NewCAStore(AutoDownload bool) *CAStore {
 	store := &CAStore{
 		AutoDownload: AutoDownload,
@@ -36,6 +35,7 @@ func (store *CAStore) Init() {
 	if store.inited {
 		return
 	}
+	store.wg = new(sync.WaitGroup)
 	// Get our root certificates
 	certs, errs := NewCertificateFromBytes([]byte(ROOT_CA_BR_ICP_V1 + ROOT_CA_BR_ICP_V2 + ROOT_CA_BR_ICP_V5))
 	if errs != nil {
@@ -47,9 +47,9 @@ func (store *CAStore) Init() {
 		panic(errs)
 	}
 	// Save them
-	store.CAs = make(map[string]*Certificate)
+	store.cas = make(map[string]*Certificate)
 	for i, _ := range certs {
-		store.DirectAddCA(&certs[i])
+		store.direct_add_ca(&certs[i])
 	}
 	store.inited = true
 }
@@ -57,11 +57,15 @@ func (store *CAStore) Init() {
 // For now, this functions verifies: validity, integrity, propper chain of certification.
 //
 // Some of the error codes this may return are: ERR_NOT_BEFORE_DATE, ERR_NOT_AFTER_DATE, ERR_BAD_SIGNATURE, ERR_ISSUER_NOT_FOUND, ERR_MAX_DEPTH_REACHED
-func (store CAStore) VerifyCertAt(cert_to_verify *Certificate, now time.Time) ([]*Certificate, []CodedError, []CodedWarning) {
+func (store CAStore) VerifyCert(cert_to_verify *Certificate) ([]*Certificate, []CodedError, []CodedWarning) {
+	return store.verify_cert_at(cert_to_verify, time.Now())
+}
+
+func (store CAStore) verify_cert_at(cert_to_verify *Certificate, now time.Time) ([]*Certificate, []CodedError, []CodedWarning) {
 	ans_errs := make([]CodedError, 0)
 	ans_warns := make([]CodedWarning, 0)
 	// Get certification path
-	path, err := store.BuildPath(cert_to_verify, PATH_BUILDING_MAX_DEPTH)
+	path, err := store.build_path(cert_to_verify, PATH_BUILDING_MAX_DEPTH)
 	if err != nil {
 		ans_errs = append(ans_errs, err)
 		return nil, ans_errs, nil
@@ -112,7 +116,7 @@ func (store CAStore) VerifyCertAt(cert_to_verify *Certificate, now time.Time) ([
 		}
 
 		if issuer.IsCRLOutdated(now) && store.AutoDownload {
-			go issuer.DownloadCRL(&store.Wg)
+			go issuer.DownloadCRL(store.wg)
 		}
 		cert.CheckAgainstIssuerCRL(issuer)
 
@@ -154,24 +158,24 @@ func (store *CAStore) AddTestingRootCA(cert *Certificate) []CodedError {
 		return []CodedError{merr}
 	}
 
-	store.DirectAddCA(cert)
+	store.direct_add_ca(cert)
 
 	return nil
 }
 
 // Adds a new CA (certificate authority) if, and only if, it is valid when check against the existing CAs.
-func (store *CAStore) AddCAatTime(cert *Certificate, now time.Time) []CodedError {
+func (store *CAStore) add_ca_at_time(cert *Certificate, now time.Time) []CodedError {
 	if !cert.IsCA() {
 		return []CodedError{NewMultiError("certificate is not a certificate authority", ERR_NOT_CA, nil)}
 	}
-	if _, errs, _ := store.VerifyCertAt(cert, now); errs != nil {
+	if _, errs, _ := store.verify_cert_at(cert, now); errs != nil {
 		return errs
 	}
-	store.DirectAddCA(cert)
+	store.direct_add_ca(cert)
 	return nil
 }
 
-func (store *CAStore) DirectAddCA(cert *Certificate) {
+func (store *CAStore) direct_add_ca(cert *Certificate) {
 	if cert == nil {
 		return
 	}
@@ -179,23 +183,23 @@ func (store *CAStore) DirectAddCA(cert *Certificate) {
 	// Attempt to download CRL
 	if store.AutoDownload {
 		println("Downloading CRL for", cert.SubjectMap()["CN"])
-		store.Wg.Add(1)
-		go cert.DownloadCRL(&store.Wg)
-		store.Wg.Add(1)
-		go cert.DownloadCRL(&store.Wg)
+		store.wg.Add(1)
+		go cert.DownloadCRL(store.wg)
+		store.wg.Add(1)
+		go cert.DownloadCRL(store.wg)
 	}
 
-	store.CAs[cert.SubjectKeyId()] = cert
-	store.CAs[cert.Subject()] = cert
+	store.cas[cert.SubjectKeyId()] = cert
+	store.cas[cert.Subject()] = cert
 }
 
 func (store CAStore) WaitDownloads() {
-	store.Wg.Wait()
+	store.wg.Wait()
 }
 
 const PATH_BUILDING_MAX_DEPTH = 16
 
-func (store CAStore) BuildPath(end_cert *Certificate, max_depth int) ([]*Certificate, CodedError) {
+func (store CAStore) build_path(end_cert *Certificate, max_depth int) ([]*Certificate, CodedError) {
 	if max_depth < 0 {
 		merr := NewMultiError("reached maximum depth", ERR_MAX_DEPTH_REACHED, nil)
 		merr.SetParam("SubjectKeyID", end_cert.SubjectKeyId())
@@ -203,10 +207,10 @@ func (store CAStore) BuildPath(end_cert *Certificate, max_depth int) ([]*Certifi
 		return nil, merr
 	}
 
-	issuer, ok := store.CAs[end_cert.AuthorityKeyId()]
+	issuer, ok := store.cas[end_cert.AuthorityKeyId()]
 	if !ok {
 		// Try again
-		issuer, ok = store.CAs[end_cert.Issuer()]
+		issuer, ok = store.cas[end_cert.Issuer()]
 	}
 	if !ok {
 		merr := NewMultiError("issuer not found", ERR_ISSUER_NOT_FOUND, nil)
@@ -220,7 +224,7 @@ func (store CAStore) BuildPath(end_cert *Certificate, max_depth int) ([]*Certifi
 		return ans, nil
 	}
 	// RECURSION!
-	extra_path, err := store.BuildPath(issuer, max_depth-1)
+	extra_path, err := store.build_path(issuer, max_depth-1)
 	if extra_path == nil {
 		// We failed to build the path
 		if err.Code() == ERR_MAX_DEPTH_REACHED {
@@ -233,7 +237,7 @@ func (store CAStore) BuildPath(end_cert *Certificate, max_depth int) ([]*Certifi
 	return ans, nil
 }
 
-func (store *CAStore) AddCAsInZipFile(file *zip.File) bool {
+func (store *CAStore) add_CAs_in_zip_file(file *zip.File) bool {
 	if file == nil {
 		return false
 	}
@@ -256,13 +260,13 @@ func (store *CAStore) AddCAsInZipFile(file *zip.File) bool {
 
 	// Add them all!
 	for _, cert := range certs {
-		store.AddCAatTime(&cert, time.Now())
+		store.add_ca_at_time(&cert, time.Now())
 	}
 
 	return true
 }
 
-func (store *CAStore) ParseCAsZip(raw []byte, raw_len int64) error {
+func (store *CAStore) parse_CAs_zip(raw []byte, raw_len int64) error {
 	// Load zip
 	zreader, err := zip.NewReader(bytes.NewReader(raw), raw_len)
 	if err != nil {
@@ -271,12 +275,12 @@ func (store *CAStore) ParseCAsZip(raw []byte, raw_len int64) error {
 
 	// Try to add CAs until it is clear that no more are possible
 	last_total := -1
-	for i := 0; len(store.CAs) != last_total && i < 10; i++ {
-		last_total = len(store.CAs)
+	for i := 0; len(store.cas) != last_total && i < 10; i++ {
+		last_total = len(store.cas)
 		// For each file in the zip archive
 		for _, file := range zreader.File {
 			// Try to add its CA
-			store.AddCAsInZipFile(file)
+			store.add_CAs_in_zip_file(file)
 		}
 	}
 
@@ -285,17 +289,18 @@ func (store *CAStore) ParseCAsZip(raw []byte, raw_len int64) error {
 
 // This function will attempt download all CAs from ALL_CAs_ZIP_URL. This runs regardless of CAStore.AutoDownload
 func (store *CAStore) DownloadAllCAs() error {
-	buf, l, err := HTTPGet(ALL_CAs_ZIP_URL)
+	buf, l, err := http_get(ALL_CAs_ZIP_URL)
 	if err != nil {
 		return err
 	}
-	return store.ParseCAsZip(buf, l)
+	return store.parse_CAs_zip(buf, l)
 }
 
+// Returns a copy
 func (store CAStore) ListCRLs() map[string]bool {
 	urls_set := make(map[string]bool)
 
-	for _, ca := range store.CAs {
+	for _, ca := range store.cas {
 		for _, url := range ca.CRLDistributionPoints().URLs {
 			urls_set[url] = true
 		}

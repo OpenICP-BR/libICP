@@ -7,7 +7,7 @@ import (
 )
 
 func Test_PairAlgPubKey_RSAPubKey(t *testing.T) {
-	p := PairAlgPubKey{}
+	p := pair_alg_pub_key{}
 	key, err := p.RSAPubKey()
 	assert.NotNil(t, err)
 	assert.Nil(t, key.N)

@@ -14,18 +14,18 @@ import (
 )
 
 type Certificate struct {
-	Base                     CertificatePack
-	ExtSubjectKeyId          ExtSubjectKeyId
-	ExtAuthorityKeyId        ExtAuthorityKeyId
-	ExtKeyUsage              ExtKeyUsage
-	ExtBasicConstraints      ExtBasicConstraints
-	ExtCRLDistributionPoints ExtCRLDistributionPoints
+	Base                     certificate_pack
+	ExtSubjectKeyId          ext_subject_key_id
+	ExtAuthorityKeyId        ext_authority_key_id
+	ExtKeyUsage              ext_key_usage
+	ExtBasicConstraints      ext_basic_constraints
+	ExtCRLDistributionPoints ext_crl_distribution_points
 	// The CRL this cert published, not the crl about this cert
 	CRL CertificateList
 	// These are calculated based on the CRL made by this cert issuer
 	CRL_Status    CRLStatus
 	CRL_LastCheck time.Time
-	CRL_Lock      trylock.Mutex
+	CRL_Lock      *trylock.Mutex
 	CRL_LastError CodedError
 }
 
@@ -55,6 +55,7 @@ func NewCertificateFromBytes(raw []byte) ([]Certificate, []CodedError) {
 		}
 		if block.Type == "CERTIFICATE" {
 			new_cert := Certificate{}
+			new_cert.init()
 			_, merr := new_cert.LoadFromDER(block.Bytes)
 			certs = append(certs, new_cert)
 			merrs = append(merrs, merr)
@@ -69,6 +70,7 @@ func NewCertificateFromBytes(raw []byte) ([]Certificate, []CodedError) {
 			break
 		}
 		new_cert := Certificate{}
+		new_cert.init()
 		rest, merr = new_cert.LoadFromDER(rest)
 		certs = append(certs, new_cert)
 		merrs = append(merrs, merr)
@@ -152,6 +154,12 @@ func (cert *Certificate) LoadFromDER(data []byte) ([]byte, CodedError) {
 	return rest, nil
 }
 
+func (cert *Certificate) init() {
+	if cert.CRL_Lock == nil {
+		cert.CRL_Lock = new(trylock.Mutex)
+	}
+}
+
 func (cert Certificate) CRLThisUpdate() time.Time {
 	return cert.CRL.TBSCertList.ThisUpdate
 }
@@ -196,25 +204,25 @@ func (cert Certificate) AuthorityKeyId() string {
 	if !cert.ExtAuthorityKeyId.Exists {
 		return cert.Issuer()
 	}
-	return NiceHex(cert.ExtAuthorityKeyId.KeyId)
+	return nice_hex(cert.ExtAuthorityKeyId.KeyId)
 }
 
 func (cert Certificate) SubjectKeyId() string {
 	if !cert.ExtSubjectKeyId.Exists {
 		return cert.Subject()
 	}
-	return NiceHex(cert.ExtSubjectKeyId.KeyId)
+	return nice_hex(cert.ExtSubjectKeyId.KeyId)
 }
 
-func (cert Certificate) BasicConstraints() ExtBasicConstraints {
+func (cert Certificate) BasicConstraints() ext_basic_constraints {
 	return cert.ExtBasicConstraints
 }
 
-func (cert Certificate) KeyUsage() ExtKeyUsage {
+func (cert Certificate) KeyUsage() ext_key_usage {
 	return cert.ExtKeyUsage
 }
 
-func (cert Certificate) CRLDistributionPoints() ExtCRLDistributionPoints {
+func (cert Certificate) CRLDistributionPoints() ext_crl_distribution_points {
 	return cert.ExtCRLDistributionPoints
 }
 
@@ -373,7 +381,7 @@ func (cert *Certificate) DownloadCRL(wg *sync.WaitGroup) {
 	var last_error CodedError
 	for _, url := range cert.CRLDistributionPoints().URLs {
 		var buf []byte
-		buf, _, last_error = HTTPGet(url)
+		buf, _, last_error = http_get(url)
 		if last_error != nil {
 			continue
 		}
