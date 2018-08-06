@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-const TESTING_ROOT_CA_SUBJECT = "C=BR/O=Fake-ICP-Brasil/OU=Apenas para testes - SEM VALOR LEGAL/CN=Autoridade Certificadora Raiz de Testes - SEM VALOR LEGAL"
+const TESTING_ROOT_CA_SUBJECT = "C=BR/O=Fake ICP-Brasil/OU=Apenas para testes - SEM VALOR LEGAL/CN=Autoridade Certificadora Raiz de Testes - SEM VALOR LEGAL"
 
 // The lack of HTTPS is not a security problem because the root CAs are embedded in libICP and all CAs are checked against them. (see file `data.go`)
 const ALL_CAs_ZIP_URL = "http://acraiz.icpbrasil.gov.br/credenciadas/CertificadosAC-ICP-Brasil/ACcompactado.zip"
@@ -149,8 +149,8 @@ func (store *CAStore) AddTestingRootCA(cert *Certificate) []CodedError {
 	if cert.Subject() != cert.Issuer() || cert.Subject() != TESTING_ROOT_CA_SUBJECT {
 		merr := NewMultiError("AddTestingRootCA REQUIRES the testing CA to have a specific subject and issuer", ERR_TEST_CA_IMPROPPER_NAME, nil)
 		merr.SetParam("expected-value", TESTING_ROOT_CA_SUBJECT)
-		merr.SetParam("actual-subject", cert.Subject)
-		merr.SetParam("actual-issuer", cert.Issuer)
+		merr.SetParam("actual-subject", cert.Subject())
+		merr.SetParam("actual-issuer", cert.Issuer())
 		return []CodedError{merr}
 	}
 

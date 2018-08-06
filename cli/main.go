@@ -12,7 +12,7 @@ var help = cli.HelpCommand("display help information")
 
 type rootT struct {
 	cli.Helper
-	CACache    string `cli:"C,ca-cahce" usage:"sets the directory that holds the CAs" dft:"$HOME/.cache/OpenICP-BR/CAs"`
+	CACache    string `cli:"C,ca-cache" usage:"sets the directory that holds the CAs" dft:"$HOME/.cache/OpenICP-BR/CAs"`
 	FakeRootCA string `cli:"fake-root-ca" usage:"path to a testing CA (only for testing) (do not touch this)"`
 }
 
@@ -77,7 +77,7 @@ var verify = &cli.Command{
 type genT struct {
 	cli.Helper
 	Subject   string    `cli:"s,subject" usage:"name of the certificate holder"`
-	RootCA    string    `cli:"r,root-ca" usage:"path to the root CA. If teh file does nto exist, a new testing CA will be generated"`
+	Issuer    string    `cli:"i,issuer" usage:"path to the issuer CA certificate. If null, a new self-signed root CA will be created"`
 	NotBefore time.Time `cli:"not-before" usage:"not-before certificate attribute, use YYYY-mm-dd format"`
 	NotAfter  time.Time `cli:"not-after" usage:"not-after certificate attribute, use YYYY-mm-dd format"`
 }

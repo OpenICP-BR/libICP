@@ -87,6 +87,24 @@ func (cert CertificatePack) GetSignature() []byte {
 	return cert.Signature.Bytes
 }
 
+func (cert *CertificatePack) SetSignature(dat []byte) {
+	cert.Signature.Bytes = dat
+}
+
+func (cert *CertificatePack) Marshal() CodedError {
+	dat, err := asn1.Marshal(cert.TBSCertificate)
+	if err != nil {
+		return NewMultiError("failed to marshal TBSCertificate", ERR_FAILED_TO_ENCODE, nil, err)
+	}
+
+	cert.TBSCertificate.RawContent = asn1.RawContent(dat)
+	return nil
+}
+
+func (cert *CertificatePack) GetBytesToSign() []byte {
+	return []byte(cert.TBSCertificate.RawContent)
+}
+
 type IssuerAndSerial struct {
 	RawContent asn1.RawContent
 	Issuer     []GeneralName

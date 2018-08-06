@@ -171,14 +171,27 @@ func Test_CAStore_list_crls(t *testing.T) {
 }
 
 func Test_CAStore_AddTestingRootCA_1(t *testing.T) {
-	certs, errs := NewCertificateFromBytes([]byte(pem_fake_root_test_1))
-	require.Nil(t, errs)
-	require.Equal(t, len(certs), 1)
+	name := Name{
+		[]ATV{ATV{Type: IdCountryName(), Value: "BR"}},
+		[]ATV{ATV{Type: IdOrganizationName(), Value: "Fake ICP-Brasil"}},
+		[]ATV{ATV{Type: IdOrganizationalUnitName(), Value: "Apenas para testes - SEM VALOR LEGAL"}},
+		[]ATV{ATV{Type: IdCommonName(), Value: "Autoridade Certificadora Raiz de Testes - SEM VALOR LEGAL"}},
+	}
+
+	cert := Certificate{}
+	cert.ExtAuthorityKeyId.Exists = true
+	cert.ExtAuthorityKeyId.KeyId = []byte("hi")
+	cert.Base.TBSCertificate.Subject = name
+	cert.Base.TBSCertificate.Issuer = name
 
 	store := NewCAStore(false)
-	errs = store.AddTestingRootCA(&certs[0])
-	assert.Nil(t, errs)
-	assert.Equal(t, 8, len(store.CAs))
+	l1 := len(store.CAs)
+	err := store.AddTestingRootCA(&cert)
+	require.Nil(t, err)
+	l2 := len(store.CAs)
+	if !(l2 > l1) {
+		t.Error("no certificate was added")
+	}
 }
 
 func Test_CAStore_AddTestingRootCA_2(t *testing.T) {
