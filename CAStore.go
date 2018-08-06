@@ -65,7 +65,7 @@ func (store CAStore) verify_cert_at(cert_to_verify *Certificate, now time.Time) 
 	ans_errs := make([]CodedError, 0)
 	ans_warns := make([]CodedWarning, 0)
 	// Get certification path
-	path, err := store.build_path(cert_to_verify, PATH_BUILDING_MAX_DEPTH)
+	path, err := store.build_path(cert_to_verify, _PATH_BUILDING_MAX_DEPTH)
 	if err != nil {
 		ans_errs = append(ans_errs, err)
 		return nil, ans_errs, nil
@@ -125,14 +125,14 @@ func (store CAStore) verify_cert_at(cert_to_verify *Certificate, now time.Time) 
 			merr := NewMultiError("certificate revoked (source: CRL)", ERR_REVOKED, nil)
 			merr.SetParam("cert.Subject", cert.Subject)
 			merr.SetParam("cert.Issuer", cert.Issuer)
-			merr.SetParam("crl.ThisUpdate", issuer.CRL.TBSCertList.ThisUpdate)
+			merr.SetParam("crl.ThisUpdate", issuer.crl.TBSCertList.ThisUpdate)
 			ans_errs = append(ans_errs, merr)
 		}
 		if status == CRL_UNSURE_OR_NOT_FOUND {
 			merr := NewMultiError("certificate possibly revoked", ERR_UNKOWN_REVOCATION_STATUS, nil)
 			merr.SetParam("cert.Subject", cert.Subject)
 			merr.SetParam("cert.Issuer", cert.Issuer)
-			merr.SetParam("crl.ThisUpdate", issuer.CRL.TBSCertList.ThisUpdate)
+			merr.SetParam("crl.ThisUpdate", issuer.crl.TBSCertList.ThisUpdate)
 			ans_warns = append(ans_warns, merr)
 		}
 	}
@@ -196,7 +196,7 @@ func (store CAStore) WaitDownloads() {
 	store.wg.Wait()
 }
 
-const PATH_BUILDING_MAX_DEPTH = 16
+const _PATH_BUILDING_MAX_DEPTH = 16
 
 func (store CAStore) build_path(end_cert *Certificate, max_depth int) ([]*Certificate, CodedError) {
 	if max_depth < 0 {

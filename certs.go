@@ -46,6 +46,7 @@ type other_revocation_info_format struct {
 }
 
 type certificate_pack struct {
+	RawContent         asn1.RawContent
 	TBSCertificate     tbs_certificate
 	SignatureAlgorithm algorithm_identifier
 	Signature          asn1.BitString
@@ -91,7 +92,7 @@ func (cert *certificate_pack) SetSignature(dat []byte) {
 	cert.Signature.Bytes = dat
 }
 
-func (cert *certificate_pack) Marshal() CodedError {
+func (cert *certificate_pack) MarshalCert() CodedError {
 	dat, err := asn1.Marshal(cert.TBSCertificate)
 	if err != nil {
 		return NewMultiError("failed to marshal TBSCertificate", ERR_FAILED_TO_ENCODE, nil, err)
@@ -101,7 +102,17 @@ func (cert *certificate_pack) Marshal() CodedError {
 	return nil
 }
 
-func (cert *certificate_pack) GetBytesToSign() []byte {
+func (cert *certificate_pack) MarshalPack() CodedError {
+	dat, err := asn1.Marshal(cert)
+	if err != nil {
+		return NewMultiError("failed to marshal certificate pack", ERR_FAILED_TO_ENCODE, nil, err)
+	}
+
+	cert.RawContent = asn1.RawContent(dat)
+	return nil
+}
+
+func (cert certificate_pack) GetBytesToSign() []byte {
 	return []byte(cert.TBSCertificate.RawContent)
 }
 

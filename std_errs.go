@@ -37,6 +37,7 @@ const (
 	ERR_FAILED_TO_ENCODE
 	ERR_FAILED_TO_SIGN
 	ERR_GEN_KEYS
+	ERR_FAILED_TO_WRITE_FILE
 )
 
 var errors_map_string = map[ErrorCode]string{
@@ -72,6 +73,7 @@ var errors_map_string = map[ErrorCode]string{
 	ERR_FAILED_TO_ENCODE:                   "ERR_FAILED_TO_ENCODE",
 	ERR_FAILED_TO_SIGN:                     "ERR_FAILED_TO_SIGN",
 	ERR_GEN_KEYS:                           "ERR_GEN_KEYS",
+	ERR_FAILED_TO_WRITE_FILE:               "ERR_FAILED_TO_WRITE_FILE",
 }
 
 func (err ErrorCode) String() string {

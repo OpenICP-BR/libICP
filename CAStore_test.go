@@ -15,7 +15,7 @@ func Test_CAStore_BuildPath_1(t *testing.T) {
 	certs, errs := NewCertificateFromBytes([]byte(ROOT_CA_BR_ICP_V1))
 	require.Nil(t, errs)
 	end_cert := certs[0]
-	ans, err := store.build_path(&end_cert, PATH_BUILDING_MAX_DEPTH)
+	ans, err := store.build_path(&end_cert, _PATH_BUILDING_MAX_DEPTH)
 	require.Nil(t, err)
 	right_ans := make([]*Certificate, 1)
 	right_ans[0] = &end_cert
@@ -29,7 +29,7 @@ func Test_CAStore_BuildPath_2(t *testing.T) {
 	require.Nil(t, err)
 	end_cert := certs[0]
 	root := certs[1]
-	ans, errs := store.build_path(&end_cert, PATH_BUILDING_MAX_DEPTH)
+	ans, errs := store.build_path(&end_cert, _PATH_BUILDING_MAX_DEPTH)
 	require.Nil(t, errs)
 	right_ans := make([]*Certificate, 2)
 	right_ans[0] = &end_cert
@@ -51,7 +51,7 @@ func Test_CAStore_BuildPath_3(t *testing.T) {
 	middle_ca := certs[1]
 	root := certs[2]
 	store.direct_add_ca(&middle_ca)
-	ans, errs := store.build_path(&end_cert, PATH_BUILDING_MAX_DEPTH)
+	ans, errs := store.build_path(&end_cert, _PATH_BUILDING_MAX_DEPTH)
 	assert.Nil(t, errs)
 	right_ans := make([]*Certificate, 3)
 	right_ans[0] = &end_cert

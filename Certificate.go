@@ -26,8 +26,8 @@ type Certificate struct {
 	ext_key_usage               ext_key_usage
 	ext_basic_constraints       ext_basic_constraints
 	ext_crl_distribution_points ext_crl_distribution_points
-	// This is the CRL published by this certificate, not the CRL about this certificate
-	CRL certificate_list
+	// This is the crl published by this certificate, not the crl about this certificate
+	crl certificate_list
 	// These are calculated based on the CRL made by this cert issuer
 	CRL_LastUpdate time.Time
 	CRL_NextUpdate time.Time
@@ -94,18 +94,18 @@ func NewCertificateFromBytes(raw []byte) ([]Certificate, []CodedError) {
 }
 
 // Accepts PEM, DER and a mix of both.
-func NewCRLFromFile(path string) ([]certificate_list, []CodedError) {
+func new_CRL_from_file(path string) ([]certificate_list, []CodedError) {
 	dat, err := ioutil.ReadFile(path)
 	if err != nil {
 		merr := NewMultiError("failed to read CRL file", ERR_READ_CERT_FILE, nil, err)
 		merr.SetParam("path", path)
 		return nil, []CodedError{merr}
 	}
-	return NewCRLFromBytes(dat)
+	return new_CRL_from_bytes(dat)
 }
 
 // Accepts PEM, DER and a mix of both.
-func NewCRLFromBytes(raw []byte) ([]certificate_list, []CodedError) {
+func new_CRL_from_bytes(raw []byte) ([]certificate_list, []CodedError) {
 	var block *pem.Block
 	crls := make([]certificate_list, 0)
 	merrs := make([]CodedError, 0)
@@ -228,9 +228,9 @@ func (cert Certificate) verify_signed_by(issuer Certificate) []CodedError {
 }
 
 func (cert *Certificate) setCRL(crl certificate_list) {
-	cert.CRL = crl
-	cert.CRL_LastCheck = cert.CRL.TBSCertList.ThisUpdate
-	cert.CRL_NextUpdate = cert.CRL.TBSCertList.NextUpdate
+	cert.crl = crl
+	cert.CRL_LastCheck = cert.crl.TBSCertList.ThisUpdate
+	cert.CRL_NextUpdate = cert.crl.TBSCertList.NextUpdate
 }
 
 func (cert *Certificate) finish_parsing() CodedError {
@@ -285,7 +285,7 @@ func (cert *Certificate) parse_extensions() CodedError {
 }
 
 func (cert *Certificate) CheckAgainstIssuerCRL(issuer *Certificate) {
-	cert.CRL_LastCheck = issuer.CRL.TBSCertList.ThisUpdate
+	cert.CRL_LastCheck = issuer.crl.TBSCertList.ThisUpdate
 	if issuer.CRL_LastError != nil || cert.CRL_LastCheck.IsZero() {
 		cert.CRL_Status = CRL_UNSURE_OR_NOT_FOUND
 		return
@@ -302,7 +302,7 @@ func (cert Certificate) CRLLastError() CodedError {
 }
 
 func (cert Certificate) CRLHasCert(end_cert Certificate) bool {
-	return cert.CRL.TBSCertList.HasCert(end_cert.base.TBSCertificate.SerialNumber)
+	return cert.crl.TBSCertList.HasCert(end_cert.base.TBSCertificate.SerialNumber)
 }
 
 func (cert *Certificate) process_CRL(new_crl certificate_list) CodedError {
@@ -317,7 +317,7 @@ func (cert *Certificate) process_CRL(new_crl certificate_list) CodedError {
 	}
 
 	// Check for critical extensions
-	if ext := cert.CRL.TBSCertList.HasCriticalExtension(); ext != nil {
+	if ext := cert.crl.TBSCertList.HasCriticalExtension(); ext != nil {
 		merr := NewMultiError("unsupported critical extension on CRL", ERR_UNSUPORTED_CRITICAL_EXTENSION, nil)
 		merr.SetParam("ExtnId", ext)
 		return merr
@@ -341,7 +341,7 @@ func (cert *Certificate) DownloadCRL(wg *sync.WaitGroup) {
 		if last_error != nil {
 			continue
 		}
-		crls, _ := NewCRLFromBytes(buf)
+		crls, _ := new_CRL_from_bytes(buf)
 		for _, crl := range crls {
 			last_error = cert.process_CRL(crl)
 			if last_error == nil {

@@ -2,11 +2,14 @@ package libICP
 
 import (
 	"crypto/rsa"
+	"io/ioutil"
 	"math/big"
 	"time"
 )
 
 type P12 struct {
+	// base p12_raw
+
 	Cert Certificate
 	Key  *rsa.PrivateKey
 }
@@ -31,14 +34,42 @@ func NewCertAndKey(subject, issuer nameT, serial *big.Int, not_before, not_after
 		return
 	}
 
+	// Set data
+	p12.Cert.base.TBSCertificate.Issuer = issuer
 	p12.Cert.base.TBSCertificate.Subject = subject
 	p12.Cert.base.TBSCertificate.Issuer = issuer
 	p12.Cert.base.TBSCertificate.SerialNumber = serial
+	p12.Cert.base.TBSCertificate.Validity.NotBeforeTime = not_before
+	p12.Cert.base.TBSCertificate.Validity.NotAfterTime = not_after
+	p12.Cert.base.TBSCertificate.Signature.Algorithm = idSha512WithRSAEncryption
 	p12.Cert.base.SignatureAlgorithm.Algorithm = idSha512WithRSAEncryption
 	p12.Cert.base.TBSCertificate.SubjectPublicKeyInfo.Algorithm.Algorithm = idSha512WithRSAEncryption
 	p12.Cert.base.TBSCertificate.SubjectPublicKeyInfo.PublicKey = pair.PublicKey
 	p12.Cert.base.TBSCertificate.SetAppropriateVersion()
+	p12.Cert.finish_parsing()
 
-	cerr = nil
+	// Marshal certificate
+	cerr = p12.Cert.base.MarshalCert()
+	if cerr != nil {
+		return
+	}
+
+	// Sign certificate
+	cerr = Sign(&p12.Cert.base, p12.Key)
 	return
+}
+
+func (p12 P12) SaveCertToFile(path string) CodedError {
+	// Marshal pack
+	cerr := p12.Cert.base.MarshalPack()
+	if cerr != nil {
+		return cerr
+	}
+
+	err := ioutil.WriteFile(path, p12.Cert.base.RawContent, 0644)
+	if err != nil {
+		return NewMultiError("failed to write to file", ERR_FAILED_TO_WRITE_FILE, nil, err)
+	}
+
+	return nil
 }
