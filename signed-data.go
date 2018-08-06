@@ -7,25 +7,25 @@ import (
 	"github.com/gjvnq/asn1"
 )
 
-type SignedData struct {
+type signed_data_raw struct {
 	RawContent       asn1.RawContent
 	Version          int
 	DigestAlgorithms []algorithm_identifier `asn1:"set"`
 	EncapContentInfo encapsulated_content_info
-	Certificates     []CertificateChoice      `asn1:"tag:0,optional,set,omitempty"`
+	Certificates     []certificate_choice     `asn1:"tag:0,optional,set,omitempty"`
 	CRLs             []revocation_info_choice `asn1:"tag:1,optional,omitempty"`
-	SignerInfos      []SignerInfo             `asn1:"set"`
+	SignerInfos      []signer_info_raw        `asn1:"set"`
 }
 
 // Apply algorithm described on RFC5625 Section 5.1 Page 9. This function MUST be called before marshaling.
-func (sd *SignedData) SetAppropriateVersion() {
-	if sd.HasOtherTypeCert() || sd.HasOtherTypeCRL() {
+func (sd *signed_data_raw) set_appropriate_version() {
+	if sd.has_other_type_cert() || sd.has_other_type_crl() {
 		sd.Version = 5
 	} else {
-		if sd.HasV2Cert() {
+		if sd.has_v2_cert() {
 			sd.Version = 4
 		} else {
-			if sd.HasV1Cert() || sd.HasV3SignerInfo() || !sd.EncapContentInfo.EContentType.Equal(idData) {
+			if sd.has_v1_cert() || sd.has_v3_SignerInfo() || !sd.EncapContentInfo.EContentType.Equal(idData) {
 				sd.Version = 3
 			} else {
 				sd.Version = 1
@@ -34,7 +34,7 @@ func (sd *SignedData) SetAppropriateVersion() {
 	}
 }
 
-func (sd *SignedData) HasOtherTypeCRL() bool {
+func (sd *signed_data_raw) has_other_type_crl() bool {
 	for _, crl := range sd.CRLs {
 		if !is_zero_of_underlying_type(crl.Other) {
 			return true
@@ -43,7 +43,7 @@ func (sd *SignedData) HasOtherTypeCRL() bool {
 	return false
 }
 
-func (sd *SignedData) HasOtherTypeCert() bool {
+func (sd *signed_data_raw) has_other_type_cert() bool {
 	for _, cert := range sd.Certificates {
 		if !is_zero_of_underlying_type(cert.Other) {
 			return true
@@ -52,7 +52,7 @@ func (sd *SignedData) HasOtherTypeCert() bool {
 	return false
 }
 
-func (sd *SignedData) HasV1Cert() bool {
+func (sd *signed_data_raw) has_v1_cert() bool {
 	for _, cert := range sd.Certificates {
 		if !is_zero_of_underlying_type(cert.V1AttrCert) {
 			return true
@@ -61,7 +61,7 @@ func (sd *SignedData) HasV1Cert() bool {
 	return false
 }
 
-func (sd *SignedData) HasV2Cert() bool {
+func (sd *signed_data_raw) has_v2_cert() bool {
 	for _, cert := range sd.Certificates {
 		if !is_zero_of_underlying_type(cert.V2AttrCert) {
 			return true
@@ -70,7 +70,7 @@ func (sd *SignedData) HasV2Cert() bool {
 	return false
 }
 
-func (sd *SignedData) HasV3SignerInfo() bool {
+func (sd *signed_data_raw) has_v3_SignerInfo() bool {
 	for _, info := range sd.SignerInfos {
 		if info.Version == 3 {
 			return true
@@ -79,7 +79,7 @@ func (sd *SignedData) HasV3SignerInfo() bool {
 	return false
 }
 
-func (sd *SignedData) UpdateAlgs() {
+func (sd *signed_data_raw) update_algs() {
 	used := make(map[string]bool)
 	algs := make(map[string]algorithm_identifier)
 
@@ -94,7 +94,7 @@ func (sd *SignedData) UpdateAlgs() {
 	}
 }
 
-type SignerInfo struct {
+type signer_info_raw struct {
 	RawContent         asn1.RawContent
 	Version            int
 	Sid_V1             issuer_and_serial `asn1:"optional,omitempty"`
@@ -108,7 +108,7 @@ type SignerInfo struct {
 }
 
 // Apply rule described on RFC5625 Section 5.3 Page 13. This function MUST be called before marshaling.
-func (si *SignerInfo) SetAppropriateVersion() {
+func (si *signer_info_raw) SetAppropriateVersion() {
 	si.Version = 0
 	if !is_zero_of_underlying_type(si.Sid_V1) {
 		si.Version = 1
@@ -118,26 +118,26 @@ func (si *SignerInfo) SetAppropriateVersion() {
 	}
 }
 
-func (si SignerInfo) GetBytesToSign() []byte {
+func (si signer_info_raw) GetBytesToSign() []byte {
 	// fmt.Println(ToHex(si.SignedRaw))
 	return si.SignedRaw[2:]
 }
 
-func (si SignerInfo) GetSignatureAlgorithm() algorithm_identifier {
+func (si signer_info_raw) GetSignatureAlgorithm() algorithm_identifier {
 	// This may seem counter intuitive, but the Sign function gets the hasher through this function
 	return si.DigestAlgorithm
 }
 
-func (si *SignerInfo) SetSignature(sig []byte) {
+func (si *signer_info_raw) SetSignature(sig []byte) {
 	si.Signature = sig
 }
 
-func (si *SignerInfo) BeforeMarshaling() error {
+func (si *signer_info_raw) BeforeMarshaling() error {
 	si.SetAppropriateVersion()
 	return nil
 }
 
-func (si *SignerInfo) RemoveSignedAttrByType(attr_type asn1.ObjectIdentifier) {
+func (si *signer_info_raw) RemoveSignedAttrByType(attr_type asn1.ObjectIdentifier) {
 	for i, attr := range si.SignedAttrs {
 		if attr.Type.Equal(attr_type) {
 			si.SignedAttrs[i].Values = nil
@@ -146,7 +146,7 @@ func (si *SignerInfo) RemoveSignedAttrByType(attr_type asn1.ObjectIdentifier) {
 	}
 }
 
-func (si *SignerInfo) SetContentTypeAttr(content_type asn1.ObjectIdentifier) {
+func (si *signer_info_raw) SetContentTypeAttr(content_type asn1.ObjectIdentifier) {
 	// Ensure we will have exactly one content type signed attribute
 	si.RemoveSignedAttrByType(idContentType)
 	// Add content type
@@ -157,11 +157,11 @@ func (si *SignerInfo) SetContentTypeAttr(content_type asn1.ObjectIdentifier) {
 	si.SignedAttrs = append(si.SignedAttrs, attr)
 }
 
-func (si SignerInfo) DigestEncapContent(encap *encapsulated_content_info) ([]byte, CodedError) {
+func (si signer_info_raw) DigestEncapContent(encap *encapsulated_content_info) ([]byte, CodedError) {
 	return encap.HashAs(si.DigestAlgorithm)
 }
 
-func (si *SignerInfo) SetSigningTime(sig_time time.Time) {
+func (si *signer_info_raw) SetSigningTime(sig_time time.Time) {
 	// Ensure we will have exactly one singing time signed attribute
 	si.RemoveSignedAttrByType(idSigningTime)
 	// Add singing time
@@ -172,7 +172,7 @@ func (si *SignerInfo) SetSigningTime(sig_time time.Time) {
 	si.SignedAttrs = append(si.SignedAttrs, attr)
 }
 
-func (si *SignerInfo) SetMessageDigestAttr(encap *encapsulated_content_info) CodedError {
+func (si *signer_info_raw) SetMessageDigestAttr(encap *encapsulated_content_info) CodedError {
 	var err CodedError
 
 	// Ensure we will have exactly one message digest signed attribute
@@ -189,7 +189,7 @@ func (si *SignerInfo) SetMessageDigestAttr(encap *encapsulated_content_info) Cod
 	return nil
 }
 
-func (si *SignerInfo) GetFinalMessageDigest(encap *encapsulated_content_info) ([]byte, CodedError) {
+func (si *signer_info_raw) GetFinalMessageDigest(encap *encapsulated_content_info) ([]byte, CodedError) {
 	var err error
 
 	if si.SignedAttrs == nil && encap == nil {
@@ -215,6 +215,6 @@ func (si *SignerInfo) GetFinalMessageDigest(encap *encapsulated_content_info) ([
 	return get_hasher_and_run(si.DigestAlgorithm, si.SignedRaw)
 }
 
-func (si *SignerInfo) Sign(privkey *rsa.PrivateKey) CodedError {
+func (si *signer_info_raw) Sign(privkey *rsa.PrivateKey) CodedError {
 	return Sign(si, privkey)
 }

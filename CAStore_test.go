@@ -179,10 +179,9 @@ func Test_CAStore_AddTestingRootCA_1(t *testing.T) {
 	}
 
 	cert := Certificate{}
-	cert.ExtAuthorityKeyId.Exists = true
-	cert.ExtAuthorityKeyId.KeyId = []byte("hi")
-	cert.Base.TBSCertificate.Subject = name
-	cert.Base.TBSCertificate.Issuer = name
+	cert.base.TBSCertificate.Subject = name
+	cert.base.TBSCertificate.Issuer = name
+	cert.finish_parsing()
 
 	store := NewCAStore(false)
 	l1 := len(store.cas)

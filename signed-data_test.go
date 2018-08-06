@@ -13,67 +13,67 @@ import (
 )
 
 func Test_SignedData_SetAppropriateVersion_1(t *testing.T) {
-	sd := SignedData{}
+	sd := signed_data_raw{}
 	sd.EncapContentInfo.EContentType = idData
-	sd.SetAppropriateVersion()
+	sd.set_appropriate_version()
 	assert.Equal(t, 1, sd.Version, "The version MUST be 1 in this case (see RFC5625 Section 5.1 Page 9)")
 }
 
 func Test_SignedData_SetAppropriateVersion_2(t *testing.T) {
-	sd := SignedData{}
-	sd.Certificates = make([]CertificateChoice, 1)
+	sd := signed_data_raw{}
+	sd.Certificates = make([]certificate_choice, 1)
 	sd.Certificates[0].V1AttrCert.AcInfo.SerialNumber = 9
-	sd.SetAppropriateVersion()
+	sd.set_appropriate_version()
 	assert.Equal(t, 3, sd.Version, "The version MUST be 3 in this case as: any version 1 attribute certificates are present (see RFC5625 Section 5.1 Page 9)")
 }
 
 func Test_SignedData_SetAppropriateVersion_3(t *testing.T) {
-	sd := SignedData{}
-	sd.SignerInfos = make([]SignerInfo, 1)
+	sd := signed_data_raw{}
+	sd.SignerInfos = make([]signer_info_raw, 1)
 	sd.SignerInfos[0].Version = 3
-	sd.SetAppropriateVersion()
+	sd.set_appropriate_version()
 	assert.Equal(t, 3, sd.Version, "The version MUST be 3 in this case as: any SignerInfo structures are version 3 (see RFC5625 Section 5.1 Page 9)")
 }
 
 func Test_SignedData_SetAppropriateVersion_4(t *testing.T) {
-	sd := SignedData{}
+	sd := signed_data_raw{}
 	sd.EncapContentInfo.EContentType = asn1.ObjectIdentifier{}
-	sd.SetAppropriateVersion()
+	sd.set_appropriate_version()
 	assert.Equal(t, 3, sd.Version, "The version MUST be 3 in this case as: encapContentInfo eContentType is other than id-data (see RFC5625 Section 5.1 Page 9)")
 }
 
 func Test_SignedData_SetAppropriateVersion_5(t *testing.T) {
-	sd := SignedData{}
-	sd.Certificates = make([]CertificateChoice, 1)
+	sd := signed_data_raw{}
+	sd.Certificates = make([]certificate_choice, 1)
 	sd.Certificates[0].V2AttrCert.SignatureValue.BitLength = 1
-	sd.SetAppropriateVersion()
+	sd.set_appropriate_version()
 	assert.Equal(t, 4, sd.Version, "The version MUST be 4 in this case as: any version 2 attribute certificates are present (see RFC5625 Section 5.1 Page 9)")
 }
 
 func Test_SignedData_SetAppropriateVersion_6(t *testing.T) {
-	sd := SignedData{}
-	sd.Certificates = make([]CertificateChoice, 1)
+	sd := signed_data_raw{}
+	sd.Certificates = make([]certificate_choice, 1)
 	sd.Certificates[0].Other.OtherCert = true
-	sd.SetAppropriateVersion()
+	sd.set_appropriate_version()
 	assert.Equal(t, 5, sd.Version, "The version MUST be 5 in this case as: any certificates with a type of other are present (see RFC5625 Section 5.1 Page 9)")
 }
 
 func Test_SignedData_SetAppropriateVersion_7(t *testing.T) {
-	sd := SignedData{}
+	sd := signed_data_raw{}
 	sd.CRLs = make([]revocation_info_choice, 1)
 	sd.CRLs[0].Other.OtherRevInfo = true
-	sd.SetAppropriateVersion()
+	sd.set_appropriate_version()
 	assert.Equal(t, 5, sd.Version, "The version MUST be 5 in this case as: any crls with a type of other are present (see RFC5625 Section 5.1 Page 9)")
 }
 
 func Test_SignedData_GetFinalMessageDigest_1(t *testing.T) {
-	si := SignerInfo{}
+	si := signer_info_raw{}
 	_, cerr := si.GetFinalMessageDigest(nil)
 	assert.EqualValues(t, ERR_NO_CONTENT, cerr.Code())
 }
 
 func Test_SignedData_GetFinalMessageDigest_2(t *testing.T) {
-	si := SignerInfo{}
+	si := signer_info_raw{}
 	si.DigestAlgorithm = algorithm_identifier{Algorithm: idSha1WithRSAEncryption}
 	e := encapsulated_content_info{}
 	e.EContent = []byte{}
@@ -84,7 +84,7 @@ func Test_SignedData_GetFinalMessageDigest_2(t *testing.T) {
 }
 
 func Test_SignedData_GetFinalMessageDigest_3(t *testing.T) {
-	si := SignerInfo{}
+	si := signer_info_raw{}
 	si.DigestAlgorithm = algorithm_identifier{Algorithm: idSha1}
 	e := encapsulated_content_info{}
 	e.EContent = []byte("hi")
@@ -95,7 +95,7 @@ func Test_SignedData_GetFinalMessageDigest_3(t *testing.T) {
 }
 
 func Test_SignedData_GetFinalMessageDigest_4(t *testing.T) {
-	si := SignerInfo{}
+	si := signer_info_raw{}
 	si.DigestAlgorithm = algorithm_identifier{Algorithm: idSha1}
 	si.SignedAttrs = make([]attribute, 0)
 	e := encapsulated_content_info{}
@@ -110,7 +110,7 @@ func Test_SignedData_GetFinalMessageDigest_4(t *testing.T) {
 }
 
 func Test_SignedData_GetFinalMessageDigest_5(t *testing.T) {
-	si := SignerInfo{}
+	si := signer_info_raw{}
 	si.DigestAlgorithm = algorithm_identifier{Algorithm: idSha256}
 	e := encapsulated_content_info{}
 	e.EContent = []byte("Lorem Ipsum Dolor Est\n")
@@ -121,7 +121,7 @@ func Test_SignedData_GetFinalMessageDigest_5(t *testing.T) {
 }
 
 func Test_SignerInfo_SetSigningTime(t *testing.T) {
-	si := SignerInfo{}
+	si := signer_info_raw{}
 	le_time := time.Unix(1533132660, 0).UTC()
 	si.SetSigningTime(le_time)
 	right_ans := []attribute{
@@ -159,7 +159,7 @@ func Test_SignerInfo_Sign(t *testing.T) {
 	require.Nil(t, privkey.Validate())
 
 	// Create simple message
-	si := SignerInfo{}
+	si := signer_info_raw{}
 	si.SignatureAlgorithm = algorithm_identifier{Algorithm: idRSAEncryption}
 	si.DigestAlgorithm = algorithm_identifier{Algorithm: idSha256}
 	si.SetContentTypeAttr(idData)

@@ -7,14 +7,14 @@ import (
 	"github.com/gjvnq/asn1"
 )
 
-type CertificateList struct {
+type certificate_list struct {
 	RawContent         asn1.RawContent
 	TBSCertList        tbs_cert_list
 	SignatureAlgorithm algorithm_identifier
 	Signature          asn1.BitString
 }
 
-func (list *CertificateList) LoadFromDER(data []byte) ([]byte, CodedError) {
+func (list *certificate_list) LoadFromDER(data []byte) ([]byte, CodedError) {
 	rest, err := asn1.Unmarshal(data, list)
 	if err != nil {
 		merr := NewMultiError("failed to parse DER CRL", ERR_PARSE_CRL, nil, err)
@@ -24,15 +24,15 @@ func (list *CertificateList) LoadFromDER(data []byte) ([]byte, CodedError) {
 	return rest, nil
 }
 
-func (list CertificateList) GetRawContent() []byte {
+func (list certificate_list) GetRawContent() []byte {
 	return list.TBSCertList.RawContent
 }
 
-func (list CertificateList) GetSignatureAlgorithm() algorithm_identifier {
+func (list certificate_list) GetSignatureAlgorithm() algorithm_identifier {
 	return list.SignatureAlgorithm
 }
 
-func (list CertificateList) GetSignature() []byte {
+func (list certificate_list) GetSignature() []byte {
 	return list.Signature.Bytes
 }
 

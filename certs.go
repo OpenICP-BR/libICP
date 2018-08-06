@@ -6,7 +6,7 @@ import (
 	"github.com/gjvnq/asn1"
 )
 
-type CertificateChoice struct {
+type certificate_choice struct {
 	RawContent          asn1.RawContent
 	Certificate         Certificate              `asn1:"optional,omitempty"`
 	ExtendedCertificate extended_certificate     `asn1:"tag:0,optional,omitempty"`
@@ -35,7 +35,7 @@ type other_certificate_format struct {
 
 type revocation_info_choice struct {
 	RawContent asn1.RawContent
-	CRL        CertificateList              `asn1:"optional,omitempty"`
+	CRL        certificate_list             `asn1:"optional,omitempty"`
 	Other      other_revocation_info_format `asn1:"tag:1,optional,omitempty"`
 }
 

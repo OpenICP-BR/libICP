@@ -3,7 +3,6 @@ package libICP
 import (
 	"encoding/pem"
 	"io/ioutil"
-	"math/big"
 	"reflect"
 	"sync"
 	"time"
@@ -14,19 +13,28 @@ import (
 )
 
 type Certificate struct {
-	Base                     certificate_pack
-	ExtSubjectKeyId          ext_subject_key_id
-	ExtAuthorityKeyId        ext_authority_key_id
-	ExtKeyUsage              ext_key_usage
-	ExtBasicConstraints      ext_basic_constraints
-	ExtCRLDistributionPoints ext_crl_distribution_points
-	// The CRL this cert published, not the crl about this cert
-	CRL CertificateList
+	base                        certificate_pack
+	Serial                      string
+	Subject                     string
+	SubjectMap                  map[string]string
+	Issuer                      string
+	IssuerMap                   map[string]string
+	NotBefore                   time.Time
+	NotAfter                    time.Time
+	SubjectKeyId                string
+	AuthorityKeyId              string
+	ext_key_usage               ext_key_usage
+	ext_basic_constraints       ext_basic_constraints
+	ext_crl_distribution_points ext_crl_distribution_points
+	// This is the CRL published by this certificate, not the CRL about this certificate
+	CRL certificate_list
 	// These are calculated based on the CRL made by this cert issuer
-	CRL_Status    CRLStatus
-	CRL_LastCheck time.Time
-	CRL_Lock      *trylock.Mutex
-	CRL_LastError CodedError
+	CRL_LastUpdate time.Time
+	CRL_NextUpdate time.Time
+	CRL_Status     CRLStatus
+	CRL_LastCheck  time.Time
+	CRL_LastError  CodedError
+	crl_lock       *trylock.Mutex
 }
 
 // Accepts PEM, DER and a mix of both.
@@ -86,7 +94,7 @@ func NewCertificateFromBytes(raw []byte) ([]Certificate, []CodedError) {
 }
 
 // Accepts PEM, DER and a mix of both.
-func NewCRLFromFile(path string) ([]CertificateList, []CodedError) {
+func NewCRLFromFile(path string) ([]certificate_list, []CodedError) {
 	dat, err := ioutil.ReadFile(path)
 	if err != nil {
 		merr := NewMultiError("failed to read CRL file", ERR_READ_CERT_FILE, nil, err)
@@ -97,9 +105,9 @@ func NewCRLFromFile(path string) ([]CertificateList, []CodedError) {
 }
 
 // Accepts PEM, DER and a mix of both.
-func NewCRLFromBytes(raw []byte) ([]CertificateList, []CodedError) {
+func NewCRLFromBytes(raw []byte) ([]certificate_list, []CodedError) {
 	var block *pem.Block
-	crls := make([]CertificateList, 0)
+	crls := make([]certificate_list, 0)
 	merrs := make([]CodedError, 0)
 
 	// Try decoding all CRLs PEM blocks
@@ -110,7 +118,7 @@ func NewCRLFromBytes(raw []byte) ([]CertificateList, []CodedError) {
 			break
 		}
 		if block.Type == "X509 CRL" {
-			new_crl := CertificateList{}
+			new_crl := certificate_list{}
 			_, merr := new_crl.LoadFromDER(block.Bytes)
 			crls = append(crls, new_crl)
 			merrs = append(merrs, merr)
@@ -124,7 +132,7 @@ func NewCRLFromBytes(raw []byte) ([]CertificateList, []CodedError) {
 		if rest == nil || len(rest) < 42 {
 			break
 		}
-		new_crl := CertificateList{}
+		new_crl := certificate_list{}
 		rest, merr = new_crl.LoadFromDER(rest)
 		crls = append(crls, new_crl)
 		merrs = append(merrs, merr)
@@ -140,14 +148,14 @@ func NewCRLFromBytes(raw []byte) ([]CertificateList, []CodedError) {
 }
 
 func (cert *Certificate) LoadFromDER(data []byte) ([]byte, CodedError) {
-	rest, err := asn1.Unmarshal(data, &cert.Base)
+	rest, err := asn1.Unmarshal(data, &cert.base)
 	if err != nil {
 		merr := NewMultiError("failed to parse DER certificate", ERR_PARSE_CERT, nil, err)
 		merr.SetParam("raw-data", data)
 		return rest, merr
 	}
 
-	if cerr := cert.FinishParsing(); cerr != nil {
+	if cerr := cert.finish_parsing(); cerr != nil {
 		return rest, cerr
 	}
 
@@ -155,94 +163,24 @@ func (cert *Certificate) LoadFromDER(data []byte) ([]byte, CodedError) {
 }
 
 func (cert *Certificate) init() {
-	if cert.CRL_Lock == nil {
-		cert.CRL_Lock = new(trylock.Mutex)
+	if cert.crl_lock == nil {
+		cert.crl_lock = new(trylock.Mutex)
 	}
 }
 
-func (cert Certificate) CRLThisUpdate() time.Time {
-	return cert.CRL.TBSCertList.ThisUpdate
-}
+// func (cert Certificate) ValidFor(usage CERT_USAGE) CodedError {
+// }
 
-func (cert Certificate) CRLNextUpdate() time.Time {
-	return cert.CRL.TBSCertList.NextUpdate
-}
-
-func (cert Certificate) NotBefore() time.Time {
-	return cert.Base.TBSCertificate.Validity.NotBeforeTime
-}
-
-func (cert Certificate) NotAfter() time.Time {
-	return cert.Base.TBSCertificate.Validity.NotAfterTime
-}
-
-func (cert Certificate) Subject() string {
-	return cert.Base.TBSCertificate.Subject.String()
-}
-
-func (cert Certificate) SubjectMap() map[string]string {
-	return cert.Base.TBSCertificate.Subject.Map()
-}
-
-func (cert Certificate) Issuer() string {
-	return cert.Base.TBSCertificate.Issuer.String()
-}
-
-func (cert Certificate) IssuerMap() map[string]string {
-	return cert.Base.TBSCertificate.Issuer.Map()
-}
-
-func (cert Certificate) serial_as_big_int() *big.Int {
-	return cert.Base.TBSCertificate.SerialNumber
-}
-
-func (cert Certificate) Serial() string {
-	return "0x" + cert.Base.TBSCertificate.SerialNumber.Text(16)
-}
-
-func (cert Certificate) AuthorityKeyId() string {
-	if !cert.ExtAuthorityKeyId.Exists {
-		return cert.Issuer()
-	}
-	return nice_hex(cert.ExtAuthorityKeyId.KeyId)
-}
-
-func (cert Certificate) SubjectKeyId() string {
-	if !cert.ExtSubjectKeyId.Exists {
-		return cert.Subject()
-	}
-	return nice_hex(cert.ExtSubjectKeyId.KeyId)
-}
-
-func (cert Certificate) BasicConstraints() ext_basic_constraints {
-	return cert.ExtBasicConstraints
-}
-
-func (cert Certificate) KeyUsage() ext_key_usage {
-	return cert.ExtKeyUsage
-}
-
-func (cert Certificate) CRLDistributionPoints() ext_crl_distribution_points {
-	return cert.ExtCRLDistributionPoints
-}
-
-func (cert Certificate) CRLStatus() CRLStatus {
-	return cert.CRL_Status
-}
-
-func (cert Certificate) CRLLastCheck() time.Time {
-	return cert.CRL_LastCheck
-}
-
-func (cert Certificate) IsCRLOutdated(now time.Time) bool {
-	return now.After(cert.CRLNextUpdate()) && !cert.CRLNextUpdate().IsZero()
+func (cert Certificate) IsCRLOutdated() bool {
+	now := time.Now()
+	return now.After(cert.CRL_NextUpdate) && !cert.CRL_NextUpdate.IsZero()
 }
 
 // Returns true if the subject is equal to the issuer.
 func (cert Certificate) IsSelfSigned() bool {
-	eq := reflect.DeepEqual(cert.SubjectMap(), cert.IssuerMap())
+	eq := reflect.DeepEqual(cert.SubjectMap, cert.IssuerMap)
 
-	if eq || cert.SubjectKeyId() == cert.AuthorityKeyId() {
+	if eq || cert.SubjectKeyId == cert.AuthorityKeyId {
 		return true
 	}
 	return false
@@ -250,29 +188,29 @@ func (cert Certificate) IsSelfSigned() bool {
 
 // Returns true if this certificate is a certificate authority. This is checked via the following extensions: key usage and basic constraints extension. (see RFC 5280 Section 4.2.1.3 and Section 4.2.1.9, respectively)
 func (cert Certificate) IsCA() bool {
-	return cert.KeyUsage().Exists && cert.KeyUsage().KeyCertSign && cert.BasicConstraints().Exists && cert.BasicConstraints().CA
+	return cert.ext_key_usage.Exists && cert.ext_key_usage.KeyCertSign && cert.ext_basic_constraints.Exists && cert.ext_basic_constraints.CA
 }
 
 // This checks ONLY the digital signature and if the issuer is a CA (via the BasicConstraints and KeyUsage extensions). It will fail if any of those two extensions are not present.
 //
 // Possible errors are: ERR_UNKOWN_ALGORITHM, ERR_NOT_CA, ERR_PARSE_RSA_PUBKEY, ERR_BAD_SIGNATURE
-func (cert Certificate) VerifySignedBy(issuer Certificate) []CodedError {
+func (cert Certificate) verify_signed_by(issuer Certificate) []CodedError {
 	ans_errs := make([]CodedError, 0)
 
 	// Check CA permission from issuer
-	if !issuer.KeyUsage().Exists || !issuer.KeyUsage().KeyCertSign {
+	if !issuer.ext_key_usage.Exists || !issuer.ext_key_usage.KeyCertSign {
 		merr := NewMultiError("issuer is not a certificate authority (Key Usage extension)", ERR_NOT_CA, nil)
 		merr.SetParam("issuer.Subject", issuer.Subject)
 		ans_errs = append(ans_errs, merr)
 	}
-	if !issuer.BasicConstraints().Exists || !issuer.BasicConstraints().CA {
+	if !issuer.ext_basic_constraints.Exists || !issuer.ext_basic_constraints.CA {
 		merr := NewMultiError("issuer is not a certificate authority (Basic Constraints extension)", ERR_NOT_CA, nil)
 		merr.SetParam("issuer.Subject", issuer.Subject)
 		ans_errs = append(ans_errs, merr)
 	}
 
 	// Get key
-	pubkey, err := issuer.Base.TBSCertificate.SubjectPublicKeyInfo.RSAPubKey()
+	pubkey, err := issuer.base.TBSCertificate.SubjectPublicKeyInfo.RSAPubKey()
 	if err != nil {
 		ans_errs = append(ans_errs, NewMultiError("failed to RSA parse public key", ERR_PARSE_RSA_PUBKEY, nil, err))
 	}
@@ -282,39 +220,57 @@ func (cert Certificate) VerifySignedBy(issuer Certificate) []CodedError {
 	}
 
 	// Verify signature
-	cerr := VerifySignaure(cert.Base, pubkey)
+	cerr := VerifySignaure(cert.base, pubkey)
 	if err == nil {
 		return nil
 	}
 	return []CodedError{cerr}
 }
 
-func (cert *Certificate) FinishParsing() CodedError {
-	return cert.ParseExtensions()
+func (cert *Certificate) setCRL(crl certificate_list) {
+	cert.CRL = crl
+	cert.CRL_LastCheck = cert.CRL.TBSCertList.ThisUpdate
+	cert.CRL_NextUpdate = cert.CRL.TBSCertList.NextUpdate
 }
 
-func (cert *Certificate) ParseExtensions() CodedError {
-	for _, ext := range cert.Base.TBSCertificate.Extensions {
+func (cert *Certificate) finish_parsing() CodedError {
+	cert.Serial = "0x" + cert.base.TBSCertificate.SerialNumber.Text(16)
+	cert.Subject = cert.base.TBSCertificate.Subject.String()
+	cert.SubjectMap = cert.base.TBSCertificate.Subject.Map()
+	cert.Issuer = cert.base.TBSCertificate.Issuer.String()
+	cert.IssuerMap = cert.base.TBSCertificate.Issuer.Map()
+	cert.NotBefore = cert.base.TBSCertificate.Validity.NotBeforeTime
+	cert.NotAfter = cert.base.TBSCertificate.Validity.NotAfterTime
+
+	return cert.parse_extensions()
+}
+
+func (cert *Certificate) parse_extensions() CodedError {
+	for _, ext := range cert.base.TBSCertificate.Extensions {
 		id := ext.ExtnID
 		switch {
 		case id.Equal(idSubjectKeyIdentifier):
-			if err := cert.ExtSubjectKeyId.FromExtension(ext); err != nil {
+			ext_key_id := ext_subject_key_id{}
+			if err := ext_key_id.FromExtension(ext); err != nil {
 				return err
 			}
+			cert.SubjectKeyId = nice_hex(ext_key_id.KeyId)
 		case id.Equal(idAuthorityKeyIdentifier):
-			if err := cert.ExtAuthorityKeyId.FromExtension(ext); err != nil {
+			ext_key_id := ext_authority_key_id{}
+			if err := ext_key_id.FromExtension(ext); err != nil {
 				return err
 			}
+			cert.AuthorityKeyId = nice_hex(ext_key_id.KeyId)
 		case id.Equal(idCeBasicConstraints):
-			if err := cert.ExtBasicConstraints.FromExtension(ext); err != nil {
+			if err := cert.ext_basic_constraints.FromExtension(ext); err != nil {
 				return err
 			}
 		case id.Equal(idCeKeyUsage):
-			if err := cert.ExtKeyUsage.FromExtension(ext); err != nil {
+			if err := cert.ext_key_usage.FromExtension(ext); err != nil {
 				return err
 			}
 		case id.Equal(idCeCRLDistributionPoint):
-			if err := cert.ExtCRLDistributionPoints.FromExtension(ext); err != nil {
+			if err := cert.ext_crl_distribution_points.FromExtension(ext); err != nil {
 				return err
 			}
 		default:
@@ -329,7 +285,7 @@ func (cert *Certificate) ParseExtensions() CodedError {
 }
 
 func (cert *Certificate) CheckAgainstIssuerCRL(issuer *Certificate) {
-	cert.CRL_LastCheck = issuer.CRLThisUpdate()
+	cert.CRL_LastCheck = issuer.CRL.TBSCertList.ThisUpdate
 	if issuer.CRL_LastError != nil || cert.CRL_LastCheck.IsZero() {
 		cert.CRL_Status = CRL_UNSURE_OR_NOT_FOUND
 		return
@@ -346,12 +302,12 @@ func (cert Certificate) CRLLastError() CodedError {
 }
 
 func (cert Certificate) CRLHasCert(end_cert Certificate) bool {
-	return cert.CRL.TBSCertList.HasCert(end_cert.serial_as_big_int())
+	return cert.CRL.TBSCertList.HasCert(end_cert.base.TBSCertificate.SerialNumber)
 }
 
-func (cert *Certificate) ProcessCRL(new_crl CertificateList) CodedError {
+func (cert *Certificate) process_CRL(new_crl certificate_list) CodedError {
 	// Verify signature
-	pubkey, err := cert.Base.TBSCertificate.SubjectPublicKeyInfo.RSAPubKey()
+	pubkey, err := cert.base.TBSCertificate.SubjectPublicKeyInfo.RSAPubKey()
 	if err != nil {
 		return NewMultiError("failed to RSA parse public key", ERR_PARSE_RSA_PUBKEY, nil, err)
 	}
@@ -367,19 +323,19 @@ func (cert *Certificate) ProcessCRL(new_crl CertificateList) CodedError {
 		return merr
 	}
 
-	cert.CRL = new_crl
+	cert.setCRL(new_crl)
 	return nil
 }
 
 func (cert *Certificate) DownloadCRL(wg *sync.WaitGroup) {
-	if !cert.CRL_Lock.TryLock() {
+	if !cert.crl_lock.TryLock() {
 		wg.Done()
 		return
 	}
-	defer cert.CRL_Lock.Unlock()
+	defer cert.crl_lock.Unlock()
 
 	var last_error CodedError
-	for _, url := range cert.CRLDistributionPoints().URLs {
+	for _, url := range cert.ext_crl_distribution_points.URLs {
 		var buf []byte
 		buf, _, last_error = http_get(url)
 		if last_error != nil {
@@ -387,7 +343,7 @@ func (cert *Certificate) DownloadCRL(wg *sync.WaitGroup) {
 		}
 		crls, _ := NewCRLFromBytes(buf)
 		for _, crl := range crls {
-			last_error = cert.ProcessCRL(crl)
+			last_error = cert.process_CRL(crl)
 			if last_error == nil {
 				break
 			}

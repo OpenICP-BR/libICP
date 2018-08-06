@@ -112,13 +112,13 @@ type ext_basic_constraints struct {
 }
 
 // I had to created this struct because github.com/gjvnq/asn1 does can't ignore fields with `asn1:"-"`
-type ExtBasicConstraintsRaw struct {
+type ext_basic_constraints_raw struct {
 	CA      bool
 	PathLen int `asn1:"optional"`
 }
 
 func (ans *ext_basic_constraints) FromExtension(ext extension) CodedError {
-	raw := ExtBasicConstraintsRaw{}
+	raw := ext_basic_constraints_raw{}
 	_, err := asn1.Unmarshal(ext.ExtnValue, &raw)
 	if err != nil {
 		merr := NewMultiError("failed to parse basic constraints extention", ERR_PARSE_EXTENSION, nil, err)
@@ -162,7 +162,7 @@ func (ans *ext_crl_distribution_points) FromExtension(ext extension) CodedError 
 	return nil
 }
 
-type ExtAuthorityKeyIdRaw struct {
+type ext_authority_keyid_raw struct {
 	KeyId          []byte         `asn1:"tag:0,optional"`
 	AuthCertIssuer []general_name `asn1:"tag:1,optional"`
 	AuthCertSerial *big.Int       `asn1:"tag:2,optional"`
@@ -174,7 +174,7 @@ type ext_authority_key_id struct {
 }
 
 func (ans *ext_authority_key_id) FromExtension(ext extension) CodedError {
-	raw := ExtAuthorityKeyIdRaw{}
+	raw := ext_authority_keyid_raw{}
 	_, err := asn1.Unmarshal(ext.ExtnValue, &raw)
 	if err != nil {
 		merr := NewMultiError("failed to parse authority key id extention", ERR_PARSE_EXTENSION, nil, err)

@@ -31,13 +31,13 @@ func NewCertAndKey(subject, issuer nameT, serial *big.Int, not_before, not_after
 		return
 	}
 
-	p12.Cert.Base.TBSCertificate.Subject = subject
-	p12.Cert.Base.TBSCertificate.Issuer = issuer
-	p12.Cert.Base.TBSCertificate.SerialNumber = serial
-	p12.Cert.Base.SignatureAlgorithm.Algorithm = idSha512WithRSAEncryption
-	p12.Cert.Base.TBSCertificate.SubjectPublicKeyInfo.Algorithm.Algorithm = idSha512WithRSAEncryption
-	p12.Cert.Base.TBSCertificate.SubjectPublicKeyInfo.PublicKey = pair.PublicKey
-	p12.Cert.Base.TBSCertificate.SetAppropriateVersion()
+	p12.Cert.base.TBSCertificate.Subject = subject
+	p12.Cert.base.TBSCertificate.Issuer = issuer
+	p12.Cert.base.TBSCertificate.SerialNumber = serial
+	p12.Cert.base.SignatureAlgorithm.Algorithm = idSha512WithRSAEncryption
+	p12.Cert.base.TBSCertificate.SubjectPublicKeyInfo.Algorithm.Algorithm = idSha512WithRSAEncryption
+	p12.Cert.base.TBSCertificate.SubjectPublicKeyInfo.PublicKey = pair.PublicKey
+	p12.Cert.base.TBSCertificate.SetAppropriateVersion()
 
 	cerr = nil
 	return
