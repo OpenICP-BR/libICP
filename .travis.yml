@@ -5,7 +5,7 @@ go:
 
 before_install:
   - go get -t -v golang.org/x/tools/cmd/goimports
-  - go get -t -v . ./icp/.
+  - go get -t -v . ./cli/.
 
 script:
   - make test

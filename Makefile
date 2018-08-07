@@ -11,7 +11,7 @@ endif
 
 .PHONY: all test test-html docs
 
-all: libICP.a
+all: libICP.a cli/openicpbr-cli
 docs:
 	xdg-open "http://localhost:6060/pkg/github.com/gjvnq/libICP/"
 docs-server:
@@ -20,23 +20,22 @@ test: coverage.out
 test-html: coverage.out
 	@$(ECHO) -e $(ANSI_GREEN)"Generating coverage report..."$(ANSI_RESET)
 	go tool cover -html=coverage.out
-	@$(ECHO) -e $(ANSI_BLUE)"Finished target $@"$(ANSI_RESET)
+	@$(ECHO) -e $(ANSI_BLUE)"Finished target"$(ANSI_RESET)
 
 
 libICP.a: *.go
-	@$(ECHO) -e $(ANSI_GREEN)"Fixing imports..."$(ANSI_RESET)
+	@$(ECHO) -e $(ANSI_GREEN)"["$@"] Fixing imports..."$(ANSI_RESET)
 	goimports -w .
-	@$(ECHO) -e $(ANSI_GREEN)"Formatting code..."$(ANSI_RESET)
+	@$(ECHO) -e $(ANSI_GREEN)"["$@"] Formatting code..."$(ANSI_RESET)
 	go fmt
-	@$(ECHO) -e $(ANSI_GREEN)"Compiling code..."$(ANSI_RESET)
-	go build -o libICP.a
-	@$(ECHO) -e $(ANSI_BLUE)"Finished target $@"$(ANSI_RESET)
+	@$(ECHO) -e $(ANSI_GREEN)"["$@"] Compiling code..."$(ANSI_RESET)
+	go build -o $@
+	@$(ECHO) -e $(ANSI_BLUE)"["$@"] Finished target $@"$(ANSI_RESET)
 
-coverage.out: *.go
-	@$(ECHO) -e $(ANSI_GREEN)"Fixing imports..."$(ANSI_RESET)
-	goimports -w .
-	@$(ECHO) -e $(ANSI_GREEN)"Formatting code..."$(ANSI_RESET)
-	go fmt
-	@$(ECHO) -e $(ANSI_GREEN)"Testing code..."$(ANSI_RESET)
+coverage.out: *.go libICP.a
+	@$(ECHO) -e $(ANSI_GREEN)"["$@"] Testing code..."$(ANSI_RESET)
 	go test -cover -coverprofile=coverage.out
-	@$(ECHO) -e $(ANSI_BLUE)"Finished target $@"$(ANSI_RESET)
+	@$(ECHO) -e $(ANSI_BLUE)"["$@"] Finished target"$(ANSI_RESET)
+
+cli/openicpbr-cli: cli/*
+	cd cli && make openicpbr-cli

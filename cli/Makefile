@@ -21,22 +21,17 @@ test-html: coverage.out
 	@$(ECHO) -e $(ANSI_GREEN)"Generating coverage report..."$(ANSI_RESET)
 	go tool cover -html=coverage.out
 	@$(ECHO) -e $(ANSI_BLUE)"Finished target $@"$(ANSI_RESET)
-
-
+	
 openicpbr-cli: *.go
-	@$(ECHO) -e $(ANSI_GREEN)"Fixing imports..."$(ANSI_RESET)
+	@$(ECHO) -e $(ANSI_GREEN)"["$@"] Fixing imports..."$(ANSI_RESET)
 	goimports -w .
-	@$(ECHO) -e $(ANSI_GREEN)"Formatting code..."$(ANSI_RESET)
+	@$(ECHO) -e $(ANSI_GREEN)"["$@"] Formatting code..."$(ANSI_RESET)
 	go fmt
-	@$(ECHO) -e $(ANSI_GREEN)"Compiling code..."$(ANSI_RESET)
-	go build -o openicpbr-cli
-	@$(ECHO) -e $(ANSI_BLUE)"Finished target $@"$(ANSI_RESET)
+	@$(ECHO) -e $(ANSI_GREEN)"["$@"] Compiling code..."$(ANSI_RESET)
+	go build -o $@
+	@$(ECHO) -e $(ANSI_BLUE)"["$@"] Finished target $@"$(ANSI_RESET)
 
-coverage.out: *.go
-	@$(ECHO) -e $(ANSI_GREEN)"Fixing imports..."$(ANSI_RESET)
-	goimports -w .
-	@$(ECHO) -e $(ANSI_GREEN)"Formatting code..."$(ANSI_RESET)
-	go fmt
-	@$(ECHO) -e $(ANSI_GREEN)"Testing code..."$(ANSI_RESET)
+coverage.out: *.go libICP.a
+	@$(ECHO) -e $(ANSI_GREEN)"["$@"] Testing code..."$(ANSI_RESET)
 	go test -cover -coverprofile=coverage.out
-	@$(ECHO) -e $(ANSI_BLUE)"Finished target $@"$(ANSI_RESET)
+	@$(ECHO) -e $(ANSI_BLUE)"["$@"] Finished target"$(ANSI_RESET)
