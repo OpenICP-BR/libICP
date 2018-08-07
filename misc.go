@@ -188,9 +188,9 @@ func http_get(url string) ([]byte, int64, CodedError) {
 	return raw, resp.ContentLength, nil
 }
 
-const ObjectDigestInfo_PublicKey = 0
-const ObjectDigestInfo_PublicKeyCert = 1
-const ObjectDigestInfo_OtherObjectTypes = 2
+const obj_digest_info_public_key = 0
+const obj_digest_info_public_key_cert = 1
+const obj_digest_info_other_object_types = 2
 
 type object_digest_info struct {
 	RawContent         asn1.RawContent
