@@ -115,10 +115,10 @@ func (store CAStore) verify_cert_at(cert_to_verify *Certificate, now time.Time) 
 			ans_errs = append(ans_errs, errs...)
 		}
 
-		if issuer.IsCRLOutdated() && store.AutoDownload {
-			go issuer.DownloadCRL(store.wg)
+		if issuer.is_crl_outdated() && store.AutoDownload {
+			go issuer.download_crl(store.wg)
 		}
-		cert.CheckAgainstIssuerCRL(issuer)
+		cert.check_against_issuer_crl(issuer)
 
 		status := cert.CRL_Status
 		if status == CRL_REVOKED {
@@ -183,9 +183,9 @@ func (store *CAStore) direct_add_ca(cert *Certificate) {
 	// Attempt to download CRL
 	if store.AutoDownload {
 		store.wg.Add(1)
-		go cert.DownloadCRL(store.wg)
+		go cert.download_crl(store.wg)
 		store.wg.Add(1)
-		go cert.DownloadCRL(store.wg)
+		go cert.download_crl(store.wg)
 	}
 
 	store.cas[cert.SubjectKeyId] = cert

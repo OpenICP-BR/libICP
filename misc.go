@@ -67,13 +67,13 @@ type content_info struct {
 	Content     asn1.RawValue
 }
 
-type SignatureVerifiable interface {
+type signature_verifiable interface {
 	GetRawContent() []byte
 	GetSignatureAlgorithm() algorithm_identifier
 	GetSignature() []byte
 }
 
-type Signable interface {
+type signable interface {
 	GetBytesToSign() []byte
 	GetSignatureAlgorithm() algorithm_identifier
 	SetSignature(sig []byte)
@@ -127,7 +127,7 @@ func run_hash_reader(hasher hash.Hash, input io.Reader) ([]byte, CodedError) {
 	return hasher.Sum(nil), nil
 }
 
-func VerifySignaure(object SignatureVerifiable, pubkey rsa.PublicKey) CodedError {
+func VerifySignaure(object signature_verifiable, pubkey rsa.PublicKey) CodedError {
 	// Check algorithm
 	hasher, hash_alg, merr := get_hasher(object.GetSignatureAlgorithm())
 	if merr != nil {
@@ -146,7 +146,7 @@ func VerifySignaure(object SignatureVerifiable, pubkey rsa.PublicKey) CodedError
 	return nil
 }
 
-func Sign(object Signable, privkey *rsa.PrivateKey) CodedError {
+func Sign(object signable, privkey *rsa.PrivateKey) CodedError {
 	// Check algorithm
 	hasher, hash_alg, merr := get_hasher(object.GetSignatureAlgorithm())
 	if merr != nil {

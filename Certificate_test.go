@@ -60,10 +60,10 @@ func Test_CheckAgainstIssuerCRL_1(t *testing.T) {
 	// Try to parse
 	err := ca.process_CRL(crls[0])
 	require.Nil(t, err)
-	assert.Nil(t, ca.CRLLastError())
+	assert.Nil(t, ca.CRL_LastError)
 
 	// Check
-	fulano.CheckAgainstIssuerCRL(&ca)
+	fulano.check_against_issuer_crl(&ca)
 	assert.EqualValues(t, CRL_NOT_REVOKED, fulano.CRL_Status)
 	assert.Equal(t, ca.crl.TBSCertList.ThisUpdate, fulano.CRL_LastCheck)
 }
@@ -88,10 +88,10 @@ func Test_CheckAgainstIssuerCRL_2(t *testing.T) {
 	// Try to parse
 	err := ca.process_CRL(crls[0])
 	require.Nil(t, err)
-	assert.Nil(t, ca.CRLLastError())
+	assert.Nil(t, ca.CRL_LastError)
 
 	// Check
-	fulano.CheckAgainstIssuerCRL(&ca)
+	fulano.check_against_issuer_crl(&ca)
 	assert.EqualValues(t, CRL_REVOKED, fulano.CRL_Status)
 	assert.Equal(t, ca.crl.TBSCertList.ThisUpdate, fulano.CRL_LastCheck)
 }

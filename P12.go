@@ -7,6 +7,7 @@ import (
 	"time"
 )
 
+// Represents a .p12/.pfx file containing a public certificate and a private key which is usually encrypted.
 type P12 struct {
 	// base p12_raw
 
@@ -14,7 +15,7 @@ type P12 struct {
 	Key  *rsa.PrivateKey
 }
 
-// Generates a new root ca with subject and issuer TESTING_ROOT_CA_SUBJECT
+// Generates a new root CA with subject and issuer TESTING_ROOT_CA_SUBJECT
 func NewRootCA(not_before, not_after time.Time) (P12, CodedError) {
 	name := nameT{
 		[]atv{atv{Type: idCountryName, Value: "BR"}},

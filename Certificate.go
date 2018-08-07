@@ -64,7 +64,7 @@ func NewCertificateFromBytes(raw []byte) ([]Certificate, []CodedError) {
 		if block.Type == "CERTIFICATE" {
 			new_cert := Certificate{}
 			new_cert.init()
-			_, merr := new_cert.LoadFromDER(block.Bytes)
+			_, merr := new_cert.load_from_der(block.Bytes)
 			certs = append(certs, new_cert)
 			merrs = append(merrs, merr)
 		}
@@ -79,7 +79,7 @@ func NewCertificateFromBytes(raw []byte) ([]Certificate, []CodedError) {
 		}
 		new_cert := Certificate{}
 		new_cert.init()
-		rest, merr = new_cert.LoadFromDER(rest)
+		rest, merr = new_cert.load_from_der(rest)
 		certs = append(certs, new_cert)
 		merrs = append(merrs, merr)
 	}
@@ -147,7 +147,7 @@ func new_CRL_from_bytes(raw []byte) ([]certificate_list, []CodedError) {
 	return crls, nil
 }
 
-func (cert *Certificate) LoadFromDER(data []byte) ([]byte, CodedError) {
+func (cert *Certificate) load_from_der(data []byte) ([]byte, CodedError) {
 	rest, err := asn1.Unmarshal(data, &cert.base)
 	if err != nil {
 		merr := NewMultiError("failed to parse DER certificate", ERR_PARSE_CERT, nil, err)
@@ -171,7 +171,7 @@ func (cert *Certificate) init() {
 // func (cert Certificate) ValidFor(usage CERT_USAGE) CodedError {
 // }
 
-func (cert Certificate) IsCRLOutdated() bool {
+func (cert Certificate) is_crl_outdated() bool {
 	now := time.Now()
 	return now.After(cert.CRL_NextUpdate) && !cert.CRL_NextUpdate.IsZero()
 }
@@ -284,24 +284,20 @@ func (cert *Certificate) parse_extensions() CodedError {
 	return nil
 }
 
-func (cert *Certificate) CheckAgainstIssuerCRL(issuer *Certificate) {
+func (cert *Certificate) check_against_issuer_crl(issuer *Certificate) {
 	cert.CRL_LastCheck = issuer.crl.TBSCertList.ThisUpdate
 	if issuer.CRL_LastError != nil || cert.CRL_LastCheck.IsZero() {
 		cert.CRL_Status = CRL_UNSURE_OR_NOT_FOUND
 		return
 	}
-	if issuer.CRLHasCert(*cert) {
+	if issuer.crl_has_cert(*cert) {
 		cert.CRL_Status = CRL_REVOKED
 	} else {
 		cert.CRL_Status = CRL_NOT_REVOKED
 	}
 }
 
-func (cert Certificate) CRLLastError() CodedError {
-	return cert.CRL_LastError
-}
-
-func (cert Certificate) CRLHasCert(end_cert Certificate) bool {
+func (cert Certificate) crl_has_cert(end_cert Certificate) bool {
 	return cert.crl.TBSCertList.HasCert(end_cert.base.TBSCertificate.SerialNumber)
 }
 
@@ -327,7 +323,7 @@ func (cert *Certificate) process_CRL(new_crl certificate_list) CodedError {
 	return nil
 }
 
-func (cert *Certificate) DownloadCRL(wg *sync.WaitGroup) {
+func (cert *Certificate) download_crl(wg *sync.WaitGroup) {
 	if !cert.crl_lock.TryLock() {
 		wg.Done()
 		return

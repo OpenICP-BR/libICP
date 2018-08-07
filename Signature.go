@@ -2,6 +2,7 @@ package libICP
 
 import "time"
 
+// Represents a .p7s file containing one or more signatures and, sometimes, the content being signed.
 type MultSignature struct {
 	base signed_data_raw
 
