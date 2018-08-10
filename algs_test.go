@@ -13,3 +13,7 @@ func Test_PairAlgPubKey_RSAPubKey(t *testing.T) {
 	assert.Nil(t, key.N)
 	assert.Equal(t, 0, key.E)
 }
+
+func Test_parse_rsa_private_key(t *testing.T) {
+	t.Error("not written")
+}

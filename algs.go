@@ -3,6 +3,7 @@ package libICP
 import (
 	"crypto/rand"
 	"crypto/rsa"
+	"math/big"
 
 	"github.com/gjvnq/asn1"
 )
@@ -27,6 +28,56 @@ func (p pair_alg_pub_key) RSAPubKey() (rsa.PublicKey, error) {
 	pub := rsa.PublicKey{}
 	_, err := asn1.Unmarshal(p.PublicKey.Bytes, &pub)
 	return pub, err
+}
+
+// See RFC 3447 Section A.1.2 - RSA private key syntax
+type rsa_private_key_raw struct {
+	Version         int      // 0 - two primes | 1 - multi prime
+	Modulus         *big.Int // n
+	PublicExponent  int      // e
+	PrivateExponent *big.Int // d
+	Prime1          *big.Int // p
+	Prime2          *big.Int // q
+	Exponent1       *big.Int // d mod (p-1)
+	Exponent2       *big.Int // d mod (q-1)
+	Coefficient     *big.Int // (inverse of q) mod p
+
+	OtherPrimeInfos []other_prime_info `asn1:"optional,omitempty"`
+}
+
+type other_prime_info struct {
+	Prime       *big.Int // ri
+	Exponent    *big.Int // di
+	Coefficient *big.Int // ti
+}
+
+func parse_rsa_private_key(dat []byte) (priv rsa.PrivateKey, cerr CodedError) {
+	raw := rsa_private_key_raw{}
+	_, err := asn1.Unmarshal(dat, &raw)
+	if err != nil {
+		cerr = NewMultiError("failed to unmarshal RSA private key", ERR_PARSE_RSA_PRIVKEY, nil, err)
+		return
+	}
+
+	priv.N = raw.Modulus
+	priv.E = raw.PublicExponent
+	priv.D = raw.PrivateExponent
+	priv.Primes = make([]*big.Int, 2+len(raw.OtherPrimeInfos))
+	priv.Primes[0] = raw.Prime1
+	priv.Primes[1] = raw.Prime2
+	for i, item := range raw.OtherPrimeInfos {
+		priv.Primes[2+i] = item.Prime
+	}
+	if len(priv.Primes) == 2 && raw.Version == 0 {
+		priv.Precomputed.Dp = raw.Exponent1
+		priv.Precomputed.Dq = raw.Exponent2
+		priv.Precomputed.Qinv = raw.Coefficient
+	} else {
+		// It is easier this way ¯\_(ツ)_/¯
+		priv.Precompute()
+	}
+	cerr = nil
+	return
 }
 
 func new_rsa_key(bits int) (priv *rsa.PrivateKey, pair pair_alg_pub_key, cerr CodedError) {
