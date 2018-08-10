@@ -1,6 +1,7 @@
 package libICP
 
 import (
+	"os"
 	"testing"
 	"time"
 
@@ -13,5 +14,7 @@ func Test_NewRootCA(t *testing.T) {
 	require.Nil(t, cerr)
 	assert.Equal(t, TESTING_ROOT_CA_SUBJECT, p12.Cert.Subject)
 	assert.Equal(t, TESTING_ROOT_CA_SUBJECT, p12.Cert.Issuer)
-	p12.SaveCertToFile("my_cert.der")
+	cerr = p12.SaveCertToFile("my_cert.der")
+	assert.Nil(t, cerr)
+	os.Remove("my_cert.der")
 }
