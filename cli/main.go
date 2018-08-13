@@ -3,9 +3,9 @@ package main
 import (
 	"fmt"
 	"os"
-	"time"
 
 	"github.com/mkideal/cli"
+	clix "github.com/mkideal/cli/ext"
 )
 
 var help = cli.HelpCommand("display help information")
@@ -78,19 +78,17 @@ type genT struct {
 	cli.Helper
 	Subject   string    `cli:"s,subject" usage:"name of the certificate holder"`
 	Issuer    string    `cli:"i,issuer" usage:"path to the issuer CA certificate. If null, a new self-signed root CA will be created"`
-	NotBefore time.Time `cli:"not-before" usage:"not-before certificate attribute, use YYYY-mm-dd format"`
-	NotAfter  time.Time `cli:"not-after" usage:"not-after certificate attribute, use YYYY-mm-dd format"`
+	NotBefore clix.Time `cli:"b,not-before" usage:"not-before certificate attribute, use YYYY-mm-dd format"`
+	NotAfter  clix.Time `cli:"a,not-after" usage:"not-after certificate attribute, use YYYY-mm-dd format"`
+	Output    string    `cli:"o,output" usage:"path to write the result certificate" dft:"output.pfx"`
+	Password  string    `cli:"p,password" usage:"password to encrypt the output file with"`
 }
 
 var gen = &cli.Command{
 	Name: "gen",
 	Desc: "generates a new testing certificate",
 	Argv: func() interface{} { return new(genT) },
-	Fn: func(ctx *cli.Context) error {
-		argv := ctx.Argv().(*genT)
-		ctx.String("Hello, gen command, I am %+v\n", argv)
-		return nil
-	},
+	Fn:   GenFunc,
 }
 
 func main() {

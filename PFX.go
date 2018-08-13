@@ -62,7 +62,7 @@ func NewCertAndKey(subject, issuer nameT, serial *big.Int, not_before, not_after
 	return
 }
 
-// Saves the certificate to an unencrypted file. The private key is NOT included in the output.
+// Saves the certificate to an unencrypted DER file. The private key is NOT included in the output.
 func (pfx PFX) SaveCertToFile(path string) CodedError {
 	// Marshal pack
 	cerr := pfx.Cert.base.MarshalPack()
@@ -71,6 +71,22 @@ func (pfx PFX) SaveCertToFile(path string) CodedError {
 	}
 
 	err := ioutil.WriteFile(path, pfx.Cert.base.RawContent, 0644)
+	if err != nil {
+		return NewMultiError("failed to write to file", ERR_FAILED_TO_WRITE_FILE, nil, err)
+	}
+
+	return nil
+}
+
+// Saves the certificate and the private key to a DER file.
+func (pfx PFX) SaveToFile(path, password string) CodedError {
+	// Marshal
+	cerr := pfx.base.Marshal(password, pfx.Cert.base, pfx.Key)
+	if cerr != nil {
+		return cerr
+	}
+
+	err := ioutil.WriteFile(path, pfx.base.RawContent, 0644)
 	if err != nil {
 		return NewMultiError("failed to write to file", ERR_FAILED_TO_WRITE_FILE, nil, err)
 	}

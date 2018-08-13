@@ -3,6 +3,7 @@ package libICP
 import (
 	"crypto/rand"
 	"crypto/rsa"
+	"crypto/sha1"
 	"math/big"
 
 	"github.com/gjvnq/asn1"
@@ -30,6 +31,11 @@ func (p pair_alg_pub_key) RSAPubKey() (rsa.PublicKey, error) {
 	return pub, err
 }
 
+type pbes1_parameters struct {
+	Salt       []byte
+	Iterations int
+}
+
 // See RFC 3447 Section A.1.2 - RSA private key syntax
 type rsa_private_key_raw struct {
 	Version         int      // 0 - two primes | 1 - multi prime
@@ -51,7 +57,7 @@ type other_prime_info struct {
 	Coefficient *big.Int // ti
 }
 
-func parse_rsa_private_key(dat []byte) (priv rsa.PrivateKey, cerr CodedError) {
+func unmarshal_rsa_private_key(dat []byte) (priv rsa.PrivateKey, cerr CodedError) {
 	raw := rsa_private_key_raw{}
 	_, err := asn1.Unmarshal(dat, &raw)
 	if err != nil {
@@ -80,6 +86,35 @@ func parse_rsa_private_key(dat []byte) (priv rsa.PrivateKey, cerr CodedError) {
 	return
 }
 
+func marshal_rsa_private_key(priv *rsa.PrivateKey) ([]byte, CodedError) {
+	raw := rsa_private_key_raw{}
+
+	// Ensure we have all we need
+	priv.Precompute()
+
+	raw.Modulus = priv.N
+	raw.PublicExponent = priv.E
+	raw.PrivateExponent = priv.D
+	raw.OtherPrimeInfos = make([]other_prime_info, len(priv.Primes)-2)
+	raw.Prime1 = priv.Primes[0]
+	raw.Prime2 = priv.Primes[1]
+	raw.Exponent1 = priv.Precomputed.Dp
+	raw.Exponent2 = priv.Precomputed.Dq
+	raw.Coefficient = priv.Precomputed.Qinv
+	for i, prime := range priv.Primes[2:] {
+		raw.OtherPrimeInfos[i].Prime = prime
+		raw.OtherPrimeInfos[i].Coefficient = priv.Precomputed.CRTValues[i].Coeff
+		raw.OtherPrimeInfos[i].Exponent = priv.Precomputed.CRTValues[i].Exp
+	}
+
+	out, err := asn1.Marshal(raw)
+	if err != nil {
+		return nil, NewMultiError("failed to marshal RSA private key", ERR_FAILED_TO_ENCODE, nil, err)
+	}
+
+	return out, nil
+}
+
 func new_rsa_key(bits int) (priv *rsa.PrivateKey, pair pair_alg_pub_key, cerr CodedError) {
 	var err error
 
@@ -98,4 +133,23 @@ func new_rsa_key(bits int) (priv *rsa.PrivateKey, pair pair_alg_pub_key, cerr Co
 
 	cerr = nil
 	return
+}
+
+// Implements RFC 2898 Section 5.1 algorithm.
+func pbkdf1_sha1(password []byte, salt []byte, c int, dk_len int) (dk []byte) {
+	if dk_len > 20 {
+		// 1. If dkLen > 16 for MD2 and MD5, or dkLen > 20 for SHA-1, output "derived key too long" and stop.
+		return nil
+	}
+	hasher := sha1.New()
+
+	hasher.Write(password)
+	hasher.Write(salt)
+	t := hasher.Sum(nil)
+	for i := 1; i < c; i++ {
+		hasher.Reset()
+		hasher.Write(salt)
+		t = hasher.Sum(nil)
+	}
+	return t[:dk_len]
 }

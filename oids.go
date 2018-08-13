@@ -32,14 +32,20 @@ var idMessageDigest = asn1.ObjectIdentifier{1, 2, 840, 113549, 1, 9, 4}
 var idSigningTime = asn1.ObjectIdentifier{1, 2, 840, 113549, 1, 9, 5}
 var idCounterSignature = asn1.ObjectIdentifier{1, 2, 840, 113549, 1, 9, 5}
 var idData = asn1.ObjectIdentifier{1, 2, 840, 113549, 1, 7, 1}
+var idSignedData = asn1.ObjectIdentifier{1, 2, 840, 113549, 1, 7, 2}
+var idEnvelopedData = asn1.ObjectIdentifier{1, 2, 840, 113549, 1, 7, 3}
+var idSignedAndEnvelopedData = asn1.ObjectIdentifier{1, 2, 840, 113549, 1, 7, 4}
+var idDigestData = asn1.ObjectIdentifier{1, 2, 840, 113549, 1, 7, 5}
+var idEncryptedData = asn1.ObjectIdentifier{1, 2, 840, 113549, 1, 7, 6}
 var idCountryName = asn1.ObjectIdentifier{2, 5, 4, 6}
 var idStateOrProvinceName = asn1.ObjectIdentifier{2, 5, 4, 8}
 var idLocalityName = asn1.ObjectIdentifier{2, 5, 4, 7}
 var idOrganizationName = asn1.ObjectIdentifier{2, 5, 4, 10}
 var idOrganizationalUnitName = asn1.ObjectIdentifier{2, 5, 4, 11}
 var idCommonName = asn1.ObjectIdentifier{2, 5, 4, 3}
-var idSignedData = asn1.ObjectIdentifier{1, 2, 840, 113549, 1, 7, 2}
 var idEmailName = asn1.ObjectIdentifier{1, 2, 840, 113549, 1, 9, 1}
+var idPKCS12_8ShroudedKeyBag = asn1.ObjectIdentifier{1, 2, 840, 113549, 1, 12, 10, 1, 2}
+var idPbeWithSHAAnd3KeyTripleDES_CBC = asn1.ObjectIdentifier{1, 2, 840, 113549, 1, 12, 1, 3}
 
 func oid_key2str(oid asn1.ObjectIdentifier) string {
 	switch {

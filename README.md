@@ -51,6 +51,10 @@ A golang library for CAdES (CMS Advanced Electronic Signatures) for the Brazilia
 
 ¹: This is intended to handle situations in which multiple people signed a document "in parallel". Ex: a company contract is sent to five people via email. Each of the recipients generature their own signature file and send them back to the company. The company can simply "merge" these signatures into a single signature file as long as they are all valid and about the same document.
 
+# Limitations
+
+  * Only idPbeWithSHAAnd3KeyTripleDES_CBC (1.2.840.113549.1.12.1.3) using SHA1 is supported for key encryption. (this will change in the future)
+
 # License
 
 [AGPL - Affero GNU Public License](https://www.gnu.org/licenses/agpl-3.0.en.html)

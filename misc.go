@@ -64,7 +64,7 @@ func from_hex(s string) []byte {
 type content_info struct {
 	RawContent  asn1.RawContent
 	ContentType asn1.ObjectIdentifier
-	Content     asn1.RawValue
+	Content     interface{} `asn1:"tag:0,explicit,octet"`
 }
 
 type signature_verifiable interface {
