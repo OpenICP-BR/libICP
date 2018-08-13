@@ -5,6 +5,8 @@ import (
 	"crypto/des"
 	"crypto/rand"
 	"crypto/rsa"
+	"encoding/binary"
+	"unicode/utf16"
 
 	"github.com/gjvnq/asn1"
 )
@@ -20,7 +22,7 @@ func (pfx *pfx_raw) Marshal(password string, cert certificate_pack, key *rsa.Pri
 	// Basics
 	pfx.Version = 3
 	pfx.AuthSafe.ContentType = idData
-	safe := make([]safe_bag, 1)
+	safe := make([]safe_bag_octet, 1)
 	pfx.AuthSafe.Content = safe
 
 	// Encode private key
@@ -32,7 +34,7 @@ func (pfx *pfx_raw) Marshal(password string, cert certificate_pack, key *rsa.Pri
 	safe[0].BagId = idData
 	key_safe := make(safe_contents, 1)
 	key_safe[0].BagId = idPKCS12_8ShroudedKeyBag
-	key_safe[0].BagValue = []byte(enc_key_bag.RawContent)
+	key_safe[0].BagValue = enc_key_bag
 	safe[0].BagValue = key_safe
 
 	// key_safe[0].BagValue =
@@ -65,6 +67,13 @@ type mac_data struct {
 type authenticated_safe []content_info
 
 type safe_contents []safe_bag
+
+type safe_bag_octet struct {
+	RawContent asn1.RawContent
+	BagId      asn1.ObjectIdentifier
+	BagValue   interface{} `asn1:"explicit,tag:0,octet"`
+	BagAttr    []attribute `asn1:"set,optional,omitempty"`
+}
 
 type safe_bag struct {
 	RawContent asn1.RawContent
@@ -124,20 +133,28 @@ func (s *encrypted_private_key_info) SetData(m []byte, password string) CodedErr
 	param := pbes1_parameters{}
 
 	// Generate salt
-	param.Salt = make([]byte, 4)
+	param.Salt = make([]byte, 8)
 	_, err := rand.Read(param.Salt)
 	if err != nil {
 		return NewMultiError("faield to generate random salt", ERR_SECURE_RANDOM, nil, err)
 	}
-	param.Iterations = 1000
+	param.Iterations = 50000
 
 	// Set basics
 	s.Alg.Algorithm = idPbeWithSHAAnd3KeyTripleDES_CBC
-	s.Alg.Parameters = make([]interface{}, 1)
-	s.Alg.Parameters[0] = param
+	s.Alg.Parameters = make([]interface{}, 2)
+	s.Alg.Parameters[0] = param.Salt
+	s.Alg.Parameters[1] = param.Iterations
+
+	// Convert password
+	seq := utf16.Encode([]rune(password))
+	passwd := make([]byte, 2*len(seq))
+	for i, _ := range seq {
+		binary.BigEndian.PutUint16(passwd[2*i:], seq[i])
+	}
 
 	// Derive key
-	dk := pbkdf1_sha1([]byte(password), param.Salt, param.Iterations, 16)
+	dk := pbkdf1_sha1(passwd, param.Salt, param.Iterations, 16)
 
 	// See RFC 2898 Section 6.1.1
 	k := dk[:8]

@@ -32,8 +32,8 @@ func (p pair_alg_pub_key) RSAPubKey() (rsa.PublicKey, error) {
 }
 
 type pbes1_parameters struct {
-	Salt       []byte
 	Iterations int
+	Salt       []byte
 }
 
 // See RFC 3447 Section A.1.2 - RSA private key syntax
