@@ -37,5 +37,5 @@ coverage.out: *.go libICP.a
 	go test -cover -coverprofile=coverage.out
 	@$(ECHO) -e $(ANSI_BLUE)"["$@"] Finished target"$(ANSI_RESET)
 
-cli/openicpbr-cli: cli/* *.go
+cli/openicpbr-cli: cli/*.go cli/Makefile libICP.a
 	cd cli && make openicpbr-cli

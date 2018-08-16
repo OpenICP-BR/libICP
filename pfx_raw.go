@@ -1,14 +1,13 @@
 package libICP
 
 import (
+	"bytes"
 	"crypto/cipher"
 	"crypto/des"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/sha1"
 	"encoding/binary"
-	"fmt"
-	"math"
 	"math/big"
 	"unicode/utf16"
 
@@ -151,14 +150,10 @@ func (s *encrypted_private_key_info) SetData(msg []byte, password string) CodedE
 	byte_password := conv_password(password)
 
 	// Generate key
-	k := make([]byte, 0)
-	for i := 0; i < 3; i++ {
-		sub_k := rfc7292_b2_gen_sha1(byte_password, param.Salt, 1, 8*8)
-		k = append(k, sub_k...)
-	}
+	k := pbkdf(sha1Sum, 20, 64, param.Salt, byte_password, param.Iterations, 1, 24)
 
 	// Generate IV
-	iv := rfc7292_b2_gen_sha1(byte_password, param.Salt, 2, 8*8)
+	iv := pbkdf(sha1Sum, 20, 64, param.Salt, byte_password, param.Iterations, 2, 8)
 
 	// Encrypt
 	block, err := des.NewTripleDESCipher(k)
@@ -180,86 +175,160 @@ func (s *encrypted_private_key_info) SetData(msg []byte, password string) CodedE
 	return nil
 }
 
-//BUG(r): From math.big: Modular exponentation of inputs of a particular size is not a cryptographically constant-time operation.
-func rfc7292_b2_gen_sha1(byte_password, salt []byte, id byte, n int) []byte {
-	u := 160
-	v := 512
-	r := 0 // iteration counter
-	p := 8 * len(byte_password)
-	s := 8 * len(salt)
+// Code taken from github.com/golang/crypto
+func sha1Sum(in []byte) []byte {
+	sum := sha1.Sum(in)
+	return sum[:]
+}
 
-	// 1. Construct a string, D (the "diversifier"), by concatenating v/8 copies of ID.
-	D := make([]byte, v/8)
-	for i := 0; i < len(D); i++ {
-		D[i] = id
+// Code taken from github.com/golang/crypto
+func fillWithRepeats(pattern []byte, v int) []byte {
+	if len(pattern) == 0 {
+		return nil
+	}
+	outputLen := v * ((len(pattern) + v - 1) / v)
+	return bytes.Repeat(pattern, (outputLen+len(pattern)-1)/len(pattern))[:outputLen]
+}
+
+// Code taken from github.com/golang/crypto
+func pbkdf(hash func([]byte) []byte, u, v int, salt, password []byte, r int, ID byte, size int) (key []byte) {
+	one := big.NewInt(1)
+	// implementation of https://tools.ietf.org/html/rfc7292#appendix-B.2 , RFC text verbatim in comments
+
+	//    Let H be a hash function built around a compression function f:
+
+	//       Z_2^u x Z_2^v -> Z_2^u
+
+	//    (that is, H has a chaining variable and output of length u bits, and
+	//    the message input to the compression function of H is v bits).  The
+	//    values for u and v are as follows:
+
+	//            HASH FUNCTION     VALUE u        VALUE v
+	//              MD2, MD5          128            512
+	//                SHA-1           160            512
+	//               SHA-224          224            512
+	//               SHA-256          256            512
+	//               SHA-384          384            1024
+	//               SHA-512          512            1024
+	//             SHA-512/224        224            1024
+	//             SHA-512/256        256            1024
+
+	//    Furthermore, let r be the iteration count.
+
+	//    We assume here that u and v are both multiples of 8, as are the
+	//    lengths of the password and salt strings (which we denote by p and s,
+	//    respectively) and the number n of pseudorandom bits required.  In
+	//    addition, u and v are of course non-zero.
+
+	//    For information on security considerations for MD5 [19], see [25] and
+	//    [1], and on those for MD2, see [18].
+
+	//    The following procedure can be used to produce pseudorandom bits for
+	//    a particular "purpose" that is identified by a byte called "ID".
+	//    This standard specifies 3 different values for the ID byte:
+
+	//    1.  If ID=1, then the pseudorandom bits being produced are to be used
+	//        as key material for performing encryption or decryption.
+
+	//    2.  If ID=2, then the pseudorandom bits being produced are to be used
+	//        as an IV (Initial Value) for encryption or decryption.
+
+	//    3.  If ID=3, then the pseudorandom bits being produced are to be used
+	//        as an integrity key for MACing.
+
+	//    1.  Construct a string, D (the "diversifier"), by concatenating v/8
+	//        copies of ID.
+	var D []byte
+	for i := 0; i < v; i++ {
+		D = append(D, ID)
 	}
 
-	// 2. Concatenate copies of the salt together to create a string S of length v(ceiling(s/v)) bits (the final copy of the salt may be truncated to create S). Note that if the salt is the empty string, then so is S.
-	S_len := v * int(math.Ceil(float64(s)/float64(v))) / 8
-	S := make([]byte, S_len)
-	for i := 0; i < S_len; i++ {
-		for j := 0; j < len(salt) && i*len(salt)+j < S_len; j++ {
-			S[i*len(salt)+j] = salt[j]
-		}
-	}
+	//    2.  Concatenate copies of the salt together to create a string S of
+	//        length v(ceiling(s/v)) bits (the final copy of the salt may be
+	//        truncated to create S).  Note that if the salt is the empty
+	//        string, then so is S.
 
-	// 3. Concatenate copies of the password together to create a string P of length v(ceiling(p/v)) bits (the final copy of the password may be truncated to create P).  Note that if the password is the empty string, then so is P.
-	P_len := v * int(math.Ceil(float64(p)/float64(v))) / 8
-	P := make([]byte, P_len)
-	for i := 0; i < P_len; i++ {
-		for j := 0; j < len(byte_password) && i*len(byte_password)+j < P_len; j++ {
-			P[i*len(byte_password)+j] = byte_password[j]
-		}
-	}
+	S := fillWithRepeats(salt, v)
 
-	// 4. Set I=S||P to be the concatenation of S and P.
+	//    3.  Concatenate copies of the password together to create a string P
+	//        of length v(ceiling(p/v)) bits (the final copy of the password
+	//        may be truncated to create P).  Note that if the password is the
+	//        empty string, then so is P.
+
+	P := fillWithRepeats(password, v)
+
+	//    4.  Set I=S||P to be the concatenation of S and P.
 	I := append(S, P...)
 
-	// 5. Set c=ceiling(n/u).
-	c := int(math.Ceil(float64(n) / float64(u)))
+	//    5.  Set c=ceiling(n/u).
+	c := (size + u - 1) / u
 
-	// 6. For i=1, 2, ..., c, do the following:
-	A := make([]byte, c)
-	for i := 1; i <= c; i++ {
-		// A. Set A_i=H^r(D||I). (i.e., the r-th hash of D||1, H(H(H(... H(D||I))))
-		Ai := power_sha1(append(D, I...), r)
+	//    6.  For i=1, 2, ..., c, do the following:
+	A := make([]byte, c*20)
+	var IjBuf []byte
+	for i := 0; i < c; i++ {
+		//        A.  Set A2=H^r(D||I). (i.e., the r-th hash of D||1,
+		//            H(H(H(... H(D||I))))
+		Ai := hash(append(D, I...))
+		for j := 1; j < r; j++ {
+			Ai = hash(Ai)
+		}
+		copy(A[i*20:], Ai[:])
 
-		// B. Concatenate copies of Ai to create a string B of length v bits (the final copy of Ai may be truncated to create B).
-		B := make([]byte, v)
-		for i := 0; i < v; i++ {
-			for j := 0; j < len(Ai) && i*len(Ai)+j < v; j++ {
-				B[i*len(Ai)+j] = Ai[j]
+		if i < c-1 { // skip on last iteration
+			// B.  Concatenate copies of Ai to create a string B of length v
+			//     bits (the final copy of Ai may be truncated to create B).
+			var B []byte
+			for len(B) < v {
+				B = append(B, Ai[:]...)
+			}
+			B = B[:v]
+
+			// C.  Treating I as a concatenation I_0, I_1, ..., I_(k-1) of v-bit
+			//     blocks, where k=ceiling(s/v)+ceiling(p/v), modify I by
+			//     setting I_j=(I_j+B+1) mod 2^v for each j.
+			{
+				Bbi := new(big.Int).SetBytes(B)
+				Ij := new(big.Int)
+
+				for j := 0; j < len(I)/v; j++ {
+					Ij.SetBytes(I[j*v : (j+1)*v])
+					Ij.Add(Ij, Bbi)
+					Ij.Add(Ij, one)
+					Ijb := Ij.Bytes()
+					// We expect Ijb to be exactly v bytes,
+					// if it is longer or shorter we must
+					// adjust it accordingly.
+					if len(Ijb) > v {
+						Ijb = Ijb[len(Ijb)-v:]
+					}
+					if len(Ijb) < v {
+						if IjBuf == nil {
+							IjBuf = make([]byte, v)
+						}
+						bytesShort := v - len(Ijb)
+						for i := 0; i < bytesShort; i++ {
+							IjBuf[i] = 0
+						}
+						copy(IjBuf[bytesShort:], Ijb)
+						Ijb = IjBuf
+					}
+					copy(I[j*v:(j+1)*v], Ijb)
+				}
 			}
 		}
-		B_int := big.NewInt(0)
-		B_int.SetBytes(B)
-
-		// C. Treating I as a concatenation I_0, I_1, ..., I_(k-1) of v-bit blocks, where k=ceiling(s/v)+ceiling(p/v), modify I by setting I_j=(I_j+B+1) mod 2^v for each j.
-		k := int(math.Ceil(float64(s)/float64(v))) + int(math.Ceil(float64(p)/float64(v)))
-		block_size := v / 8
-		one := big.NewInt(1)
-		two := big.NewInt(2)
-		v_big := big.NewInt(int64(v))
-		for j := 0; j < k; j++ {
-			Ij := big.NewInt(0)
-			Ij.SetBytes(I[j*block_size : (j+1)*block_size-1])
-			Ij.Add(Ij, B_int)
-			Ij.Add(Ij, one)
-			two2v := big.NewInt(2)
-			two2v.Exp(two, v_big, nil)
-			Ij.Mod(Ij, two2v)
-			ans := Ij.Bytes()
-			for cnt := 0; cnt < len(ans); cnt++ {
-				I[j*block_size+cnt] = ans[cnt]
-			}
-		}
-
-		// 7.  Concatenate A_1, A_2, ..., A_c together to form a pseudorandom bit string, A.
-		A = append(A, Ai...)
 	}
+	//    7.  Concatenate A_1, A_2, ..., A_c together to form a pseudorandom
+	//        bit string, A.
 
-	// 8.  Use the first n bits of A as the output of this entire process.
-	return A[:n/8]
+	//    8.  Use the first n bits of A as the output of this entire process.
+	return A[:size]
+
+	//    If the above process is being used to generate a DES key, the process
+	//    should be used to create 64 random bits, and the key's parity bits
+	//    should be set after the 64 bits have been produced.  Similar concerns
+	//    hold for 2-key and 3-key triple-DES keys, for CDMF keys, and for any
+	//    similar keys with parity bits "built into them".
 }
 
 func power_sha1(base []byte, r int) []byte {
@@ -281,7 +350,7 @@ func pad_msg(msg []byte) []byte {
 
 func conv_password(password string) []byte {
 	runes := []rune(password)
-	if len(runes) == 0 || runes[len(runes)-1] != 0 {
+	if len(runes) > 0 && runes[len(runes)-1] != 0 {
 		runes = append(runes, 0)
 	}
 
@@ -289,9 +358,26 @@ func conv_password(password string) []byte {
 	passwd := make([]byte, 2*len(seq))
 	for i, _ := range seq {
 		binary.BigEndian.PutUint16(passwd[2*i:], seq[i])
-		fmt.Printf("%0x %0x ", passwd[2*i], passwd[2*i+1])
 	}
-	fmt.Println()
 
 	return passwd
+}
+
+func unencrypt_idPbeWithSHAAnd3KeyTripleDES_CBC(password []byte, iterations int, salt []byte, enc_msg []byte) ([]byte, error) {
+
+	// Derive our key
+	k := pbkdf(sha1Sum, 20, 64, salt, password, iterations, 1, 24)
+
+	// Derive the IV
+	iv := pbkdf(sha1Sum, 20, 64, salt, password, iterations, 2, 8)
+
+	// Decrypt
+	block, err := des.NewTripleDESCipher(k)
+	if err != nil {
+		return nil, NewMultiError("faield to open block cipher for triple DES", ERR_FAILED_TO_DECODE, nil, err)
+	}
+	block_mode := cipher.NewCBCDecrypter(block, iv)
+	ans := make([]byte, len(enc_msg))
+	block_mode.CryptBlocks(ans, enc_msg)
+	return ans, nil
 }

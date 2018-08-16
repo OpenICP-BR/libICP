@@ -40,6 +40,7 @@ const (
 	ERR_FAILED_TO_WRITE_FILE
 	ERR_PARSE_RSA_PRIVKEY
 	ERR_SECURE_RANDOM
+	ERR_FAILED_TO_DECODE
 )
 
 var errors_map_string = map[ErrorCode]string{
@@ -78,6 +79,7 @@ var errors_map_string = map[ErrorCode]string{
 	ERR_FAILED_TO_WRITE_FILE:               "ERR_FAILED_TO_WRITE_FILE",
 	ERR_PARSE_RSA_PRIVKEY:                  "ERR_PARSE_RSA_PRIVKEY",
 	ERR_SECURE_RANDOM:                      "ERR_SECURE_RANDOM",
+	ERR_FAILED_TO_DECODE:                   "ERR_FAILED_TO_DECODE",
 }
 
 func (err ErrorCode) String() string {
