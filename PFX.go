@@ -32,7 +32,7 @@ func NewCertAndKey(subject, issuer nameT, serial *big.Int, not_before, not_after
 	var pair pair_alg_pub_key
 
 	// Generate key pair
-	pfx.Key, pair, cerr = new_rsa_key(1024)
+	pfx.Key, pair, cerr = new_rsa_key(2048)
 	if cerr != nil {
 		return
 	}
