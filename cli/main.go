@@ -4,11 +4,12 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/mkideal/cli"
 	clix "github.com/mkideal/cli/ext"
+
+	"github.com/mkideal/cli"
 )
 
-var help = cli.HelpCommand("display help information")
+var help = cli.HelpCommand("display help information (see man page for examples)")
 
 type rootT struct {
 	cli.Helper
@@ -74,16 +75,6 @@ var verify = &cli.Command{
 	},
 }
 
-type genT struct {
-	cli.Helper
-	Subject   string    `cli:"s,subject" usage:"name of the certificate holder"`
-	Issuer    string    `cli:"i,issuer" usage:"path to the issuer CA certificate. If null, a new self-signed root CA will be created"`
-	NotBefore clix.Time `cli:"b,not-before" usage:"not-before certificate attribute, use YYYY-mm-dd format"`
-	NotAfter  clix.Time `cli:"a,not-after" usage:"not-after certificate attribute, use YYYY-mm-dd format"`
-	Output    string    `cli:"o,output" usage:"path to write the result certificate" dft:"output.pfx"`
-	Password  string    `cli:"p,password" usage:"password to encrypt the output file with"`
-}
-
 var gen = &cli.Command{
 	Name: "gen",
 	Desc: "generates a new testing certificate",
@@ -92,14 +83,18 @@ var gen = &cli.Command{
 }
 
 func main() {
-	if err := cli.Root(root,
+	root := cli.Root(root,
 		cli.Tree(help),
 		cli.Tree(gen),
 		cli.Tree(sign),
 		cli.Tree(verify),
 		cli.Tree(joinSigs),
-	).Run(os.Args[1:]); err != nil {
-		fmt.Fprintln(os.Stderr, err)
+	)
+	clix.InstallBashCompletion(root)
+	if err := root.Run(os.Args[1:]); err != nil {
+		red := "\033[1;91m"
+		reset := "\033[0m"
+		fmt.Fprintf(os.Stderr, "%sERR: %s%s\n", red, reset, err)
 		os.Exit(1)
 	}
 }

@@ -17,6 +17,10 @@ type PFX struct {
 	Key  *rsa.PrivateKey
 }
 
+func NewPFXFromFile(path string) (PFX, CodedError) {
+	return PFX{}, NewMultiError("not implemented", ERR_NOT_IMPLEMENTED, nil)
+}
+
 // Generates a new root CA with subject and issuer TESTING_ROOT_CA_SUBJECT
 func NewRootCA(not_before, not_after time.Time) (PFX, CodedError) {
 	name := nameT{
@@ -25,10 +29,25 @@ func NewRootCA(not_before, not_after time.Time) (PFX, CodedError) {
 		[]atv{atv{Type: idOrganizationalUnitName, Value: "Apenas para testes - SEM VALOR LEGAL"}},
 		[]atv{atv{Type: idCommonName, Value: "Autoridade Certificadora Raiz de Testes - SEM VALOR LEGAL"}},
 	}
-	return NewCertAndKey(name, name, big.NewInt(1), not_before, not_after)
+	return new_cert_and_key(name, name, big.NewInt(1), not_before, not_after)
 }
 
-func NewCertAndKey(subject, issuer nameT, serial *big.Int, not_before, not_after time.Time) (pfx PFX, cerr CodedError) {
+func NewCertAndKey(subject map[string]string, issuer Certificate, serial *big.Int, not_before, not_after time.Time) (pfx PFX, cerr CodedError) {
+	// Parse subject
+	subject_name := nameT{}
+	for k, v := range subject {
+		typ := str2oid_key(k)
+		if typ == nil {
+			continue
+		}
+		item := []atv{atv{Type: idCountryName, Value: v}}
+		subject_name = append(subject_name, item)
+	}
+
+	return new_cert_and_key(subject_name, issuer.base.TBSCertificate.Issuer, serial, not_before, not_after)
+}
+
+func new_cert_and_key(subject_name, issuer_name nameT, serial *big.Int, not_before, not_after time.Time) (pfx PFX, cerr CodedError) {
 	var pair pair_alg_pub_key
 
 	// Generate key pair
@@ -38,9 +57,8 @@ func NewCertAndKey(subject, issuer nameT, serial *big.Int, not_before, not_after
 	}
 
 	// Set data
-	pfx.Cert.base.TBSCertificate.Issuer = issuer
-	pfx.Cert.base.TBSCertificate.Subject = subject
-	pfx.Cert.base.TBSCertificate.Issuer = issuer
+	pfx.Cert.base.TBSCertificate.Issuer = issuer_name
+	pfx.Cert.base.TBSCertificate.Subject = subject_name
 	pfx.Cert.base.TBSCertificate.SerialNumber = serial
 	pfx.Cert.base.TBSCertificate.Validity.NotBeforeTime = not_before
 	pfx.Cert.base.TBSCertificate.Validity.NotAfterTime = not_after

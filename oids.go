@@ -1,6 +1,11 @@
 package libICP
 
-import "github.com/gjvnq/asn1"
+import (
+	"strconv"
+	"strings"
+
+	"github.com/gjvnq/asn1"
+)
 
 var idRSAEncryption = asn1.ObjectIdentifier{1, 2, 840, 113549, 1, 1, 1}
 var idSha1 = asn1.ObjectIdentifier{1, 3, 14, 3, 2, 26}
@@ -65,5 +70,35 @@ func oid_key2str(oid asn1.ObjectIdentifier) string {
 		return "EMAIL"
 	default:
 		return oid.String()
+	}
+}
+
+func str2oid_key(s string) asn1.ObjectIdentifier {
+	switch s {
+	case "C":
+		return idCountryName
+	case "S":
+		return idStateOrProvinceName
+	case "L":
+		return idLocalityName
+	case "O":
+		return idOrganizationName
+	case "OU":
+		return idOrganizationalUnitName
+	case "CN":
+		return idCommonName
+	case "EMAIL":
+		return idEmailName
+	default:
+		var err error
+		l := strings.Split(s, ".")
+		v := make([]int, len(l))
+		for i := range l {
+			v[i], err = strconv.Atoi(l[i])
+			if err != nil {
+				return nil
+			}
+		}
+		return asn1.ObjectIdentifier(v)
 	}
 }
