@@ -116,7 +116,8 @@ func (s *private_key_info) SetKey(key *rsa.PrivateKey) CodedError {
 type encrypted_private_key_info struct {
 	RawContent asn1.RawContent
 	Alg        algorithm_identifier
-	Data       []byte
+	EncData    []byte
+	DecData    []byte `asn1:"-"`
 }
 
 func (s *encrypted_private_key_info) SetKey(priv *rsa.PrivateKey, password string) CodedError {
@@ -125,11 +126,12 @@ func (s *encrypted_private_key_info) SetKey(priv *rsa.PrivateKey, password strin
 	if cerr != nil {
 		return cerr
 	}
-	return s.SetData(info.RawContent, password)
+	s.DecData = info.RawContent
+	return s.SetData(password)
 }
 
-// BUG(x): It supports only idPbeWithSHAAnd3KeyTripleDES_CBC with SHA1
-func (s *encrypted_private_key_info) SetData(msg []byte, password string) CodedError {
+func (s *encrypted_private_key_info) SetData(password string) CodedError {
+	var cerr CodedError
 	param := pbes1_parameters{}
 
 	// Generate salt
@@ -138,6 +140,8 @@ func (s *encrypted_private_key_info) SetData(msg []byte, password string) CodedE
 	if err != nil {
 		return NewMultiError("faield to generate random salt", ERR_SECURE_RANDOM, nil, err)
 	}
+
+	// This is the same value OpenSSL seems to use
 	param.Iterations = 2048
 
 	// Set basics
@@ -149,21 +153,11 @@ func (s *encrypted_private_key_info) SetData(msg []byte, password string) CodedE
 	// Convert password
 	byte_password := conv_password(password)
 
-	// Generate key
-	k := pbkdf(sha1Sum, 20, 64, param.Salt, byte_password, param.Iterations, 1, 24)
-
-	// Generate IV
-	iv := pbkdf(sha1Sum, 20, 64, param.Salt, byte_password, param.Iterations, 2, 8)
-
 	// Encrypt
-	block, err := des.NewTripleDESCipher(k)
-	if err != nil {
-		return NewMultiError("faield to open block cipher for triple DES", ERR_FAILED_TO_ENCODE, nil, err)
+	s.EncData, cerr = encrypt_PbeWithSHAAnd3KeyTripleDES_CBC(byte_password, param.Iterations, param.Salt, s.DecData)
+	if cerr != nil {
+		return cerr
 	}
-	block_mode := cipher.NewCBCEncrypter(block, iv)
-	paded_msg := pad_msg(msg)
-	s.Data = make([]byte, len(paded_msg))
-	block_mode.CryptBlocks(s.Data, paded_msg)
 
 	// Encode
 	final, err := asn1.Marshal(s)
@@ -173,6 +167,27 @@ func (s *encrypted_private_key_info) SetData(msg []byte, password string) CodedE
 
 	s.RawContent = asn1.RawContent(final)
 	return nil
+}
+
+func (s *encrypted_private_key_info) GetData(password string) CodedError {
+	alg := s.Alg.Algorithm
+	byte_password := conv_password(password)
+	iterations := 0
+	var cerr CodedError
+	var salt []byte
+	var real_decrypt func(password []byte, iterations int, salt []byte, enc_msg []byte) ([]byte, CodedError)
+
+	if alg.Equal(idPbeWithSHAAnd3KeyTripleDES_CBC) {
+		salt = s.Alg.Parameters[0].([]byte)
+		iterations = s.Alg.Parameters[1].(int)
+		real_decrypt = decrypt_PbeWithSHAAnd3KeyTripleDES_CBC
+	} else {
+		merr := NewMultiError("unsupported encryption algorithm", ERR_UNKOWN_ALGORITHM, nil)
+		merr.SetParam("alg", s.Alg.Algorithm.String())
+	}
+
+	s.DecData, cerr = real_decrypt(byte_password, iterations, salt, s.EncData)
+	return cerr
 }
 
 // Code taken from github.com/golang/crypto
@@ -331,21 +346,18 @@ func pbkdf(hash func([]byte) []byte, u, v int, salt, password []byte, r int, ID 
 	//    similar keys with parity bits "built into them".
 }
 
-func power_sha1(base []byte, r int) []byte {
-	hasher := sha1.New()
-	ans := hasher.Sum(base)
-	for i := 1; i < r; i++ {
-		ans = hasher.Sum(ans)
-	}
-	return ans
-}
-
 func pad_msg(msg []byte) []byte {
 	ps := make([]byte, 8-(len(msg)%8))
 	for i := 0; i < len(ps); i++ {
 		ps[i] = byte(len(ps))
 	}
 	return append(msg, ps...)
+}
+
+func unpad_msg(msg []byte) []byte {
+	l := msg[len(msg)-1]
+	top := len(msg) - int(l)
+	return msg[:top]
 }
 
 func conv_password(password string) []byte {
@@ -363,7 +375,27 @@ func conv_password(password string) []byte {
 	return passwd
 }
 
-func unencrypt_idPbeWithSHAAnd3KeyTripleDES_CBC(password []byte, iterations int, salt []byte, enc_msg []byte) ([]byte, error) {
+func encrypt_PbeWithSHAAnd3KeyTripleDES_CBC(password []byte, iterations int, salt []byte, msg []byte) ([]byte, CodedError) {
+	// Generate key
+	k := pbkdf(sha1Sum, 20, 64, salt, password, iterations, 1, 24)
+
+	// Generate IV
+	iv := pbkdf(sha1Sum, 20, 64, salt, password, iterations, 2, 8)
+
+	// Encrypt
+	block, err := des.NewTripleDESCipher(k)
+	if err != nil {
+		return nil, NewMultiError("faield to open block cipher for triple DES", ERR_FAILED_TO_ENCODE, nil, err)
+	}
+	block_mode := cipher.NewCBCEncrypter(block, iv)
+	paded_msg := pad_msg(msg)
+	ans := make([]byte, len(paded_msg))
+	block_mode.CryptBlocks(ans, paded_msg)
+
+	return ans, nil
+}
+
+func decrypt_PbeWithSHAAnd3KeyTripleDES_CBC(password []byte, iterations int, salt []byte, enc_msg []byte) ([]byte, CodedError) {
 
 	// Derive our key
 	k := pbkdf(sha1Sum, 20, 64, salt, password, iterations, 1, 24)
@@ -379,5 +411,5 @@ func unencrypt_idPbeWithSHAAnd3KeyTripleDES_CBC(password []byte, iterations int,
 	block_mode := cipher.NewCBCDecrypter(block, iv)
 	ans := make([]byte, len(enc_msg))
 	block_mode.CryptBlocks(ans, enc_msg)
-	return ans, nil
+	return unpad_msg(ans), nil
 }

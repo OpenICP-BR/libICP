@@ -3,7 +3,6 @@ package libICP
 import (
 	"crypto/rand"
 	"crypto/rsa"
-	"crypto/sha1"
 	"math/big"
 
 	"github.com/gjvnq/asn1"
@@ -133,23 +132,4 @@ func new_rsa_key(bits int) (priv *rsa.PrivateKey, pair pair_alg_pub_key, cerr Co
 
 	cerr = nil
 	return
-}
-
-// Implements RFC 2898 Section 5.1 algorithm.
-func pbkdf1_sha1(password []byte, salt []byte, c int, dk_len int) (dk []byte) {
-	if dk_len > 20 {
-		// 1. If dkLen > 16 for MD2 and MD5, or dkLen > 20 for SHA-1, output "derived key too long" and stop.
-		return nil
-	}
-	hasher := sha1.New()
-
-	hasher.Write(password)
-	hasher.Write(salt)
-	t := hasher.Sum(nil)
-	for i := 1; i < c; i++ {
-		hasher.Reset()
-		hasher.Write(salt)
-		t = hasher.Sum(nil)
-	}
-	return t[:dk_len]
 }
