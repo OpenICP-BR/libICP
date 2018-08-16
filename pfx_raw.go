@@ -6,6 +6,7 @@ import (
 	"crypto/rand"
 	"crypto/rsa"
 	"encoding/binary"
+	"fmt"
 	"unicode/utf16"
 
 	"github.com/gjvnq/asn1"
@@ -129,11 +130,11 @@ func (s *encrypted_private_key_info) SetKey(priv *rsa.PrivateKey, password strin
 }
 
 // BUG(x): It supports only idPbeWithSHAAnd3KeyTripleDES_CBC with SHA1
-func (s *encrypted_private_key_info) SetData(m []byte, password string) CodedError {
+func (s *encrypted_private_key_info) SetData(msg []byte, password string) CodedError {
 	param := pbes1_parameters{}
 
 	// Generate salt
-	param.Salt = make([]byte, 8)
+	param.Salt = make([]byte, 8*3)
 	_, err := rand.Read(param.Salt)
 	if err != nil {
 		return NewMultiError("faield to generate random salt", ERR_SECURE_RANDOM, nil, err)
@@ -147,33 +148,28 @@ func (s *encrypted_private_key_info) SetData(m []byte, password string) CodedErr
 	s.Alg.Parameters[1] = param.Iterations
 
 	// Convert password
-	seq := utf16.Encode([]rune(password))
-	passwd := make([]byte, 2*len(seq))
-	for i, _ := range seq {
-		binary.BigEndian.PutUint16(passwd[2*i:], seq[i])
-	}
+	byte_password := conv_password(password)
 
-	// Derive key
-	dk := pbkdf1_sha1(passwd, param.Salt, param.Iterations, 16)
-
-	// See RFC 2898 Section 6.1.1
-	k := dk[:8]
-	iv := dk[8:]
-	ps := make([]byte, 8-(len(m)%8))
-	for i := 0; i < len(ps); i++ {
-		ps[i] = byte(len(ps))
+	// Generate key
+	k := make([]byte, 0)
+	iv := make([]byte, 0)
+	for i := 0; i < 3; i++ {
+		sub_salt := param.Salt[i*8 : (i+1)*8-1]
+		sub_k, sub_iv := gen_subkey(byte_password, sub_salt, param.Iterations)
+		k = append(k, sub_k...)
+		iv = append(iv, sub_iv...)
+		fmt.Println("LEN = ", len(iv))
 	}
-	em := append(m, ps...)
 
 	// Encrypt
-	triple_key := append(append(k, k...), k...) // I have NO idea if this is correct
-	block, err := des.NewTripleDESCipher(triple_key)
+	block, err := des.NewTripleDESCipher(k)
 	if err != nil {
 		return NewMultiError("faield to open block cipher for triple DES", ERR_FAILED_TO_ENCODE, nil, err)
 	}
-	block_mode := cipher.NewCBCEncrypter(block, iv)
-	s.Data = make([]byte, len(em))
-	block_mode.CryptBlocks(s.Data, em)
+	block_mode := cipher.NewCBCEncrypter(block, iv[:8])
+	paded_msg := pad_msg(msg)
+	s.Data = make([]byte, len(paded_msg))
+	block_mode.CryptBlocks(s.Data, paded_msg)
 
 	// Encode
 	final, err := asn1.Marshal(s)
@@ -183,4 +179,39 @@ func (s *encrypted_private_key_info) SetData(m []byte, password string) CodedErr
 
 	s.RawContent = asn1.RawContent(final)
 	return nil
+}
+
+func gen_subkey(byte_password, salt []byte, iterations int) ([]byte, []byte) {
+	// Derive key
+	dk := pbkdf1_sha1(byte_password, salt, iterations, 16)
+
+	// See RFC 2898 Section 6.1.1
+	k := dk[:8]
+	iv := dk[8:]
+	return k, iv
+}
+
+func pad_msg(msg []byte) []byte {
+	ps := make([]byte, 8-(len(msg)%8))
+	for i := 0; i < len(ps); i++ {
+		ps[i] = byte(len(ps))
+	}
+	return append(msg, ps...)
+}
+
+func conv_password(password string) []byte {
+	runes := []rune(password)
+	if runes[len(runes)-1] != 0 {
+		runes = append(runes, 0)
+	}
+
+	seq := utf16.Encode(runes)
+	passwd := make([]byte, 2*len(seq))
+	for i, _ := range seq {
+		binary.BigEndian.PutUint16(passwd[2*i:], seq[i])
+		fmt.Printf("%0x %0x ", passwd[2*i], passwd[2*i+1])
+	}
+	fmt.Println()
+
+	return passwd
 }
