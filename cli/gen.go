@@ -64,7 +64,7 @@ func GenFunc(ctx *cli.Context) error {
 		}
 
 		// Load issuer
-		issuer_pfx, err := libICP.NewPFXFromFile(argv.Issuer)
+		issuer_pfx, err := libICP.NewPFXFromFile(argv.Issuer, argv.Password)
 		if err != nil {
 			return err
 		}

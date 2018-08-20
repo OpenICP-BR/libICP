@@ -62,14 +62,17 @@ type other_prime_info struct {
 	Coefficient *big.Int // ti
 }
 
-func unmarshal_rsa_private_key(dat []byte) (priv rsa.PrivateKey, cerr CodedError) {
+func unmarshal_rsa_private_key(dat []byte) (priv *rsa.PrivateKey, cerr CodedError) {
 	raw := rsa_private_key_raw{}
 	_, err := asn1.Unmarshal(dat, &raw)
 	if err != nil {
-		cerr = NewMultiError("failed to unmarshal RSA private key", ERR_PARSE_RSA_PRIVKEY, nil, err)
+		merr := NewMultiError("failed to unmarshal RSA private key", ERR_PARSE_RSA_PRIVKEY, nil, err)
+		merr.SetParam("raw", dat)
+		cerr = merr
 		return
 	}
 
+	priv = new(rsa.PrivateKey)
 	priv.N = raw.Modulus
 	priv.E = raw.PublicExponent
 	priv.D = raw.PrivateExponent

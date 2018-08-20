@@ -23,7 +23,7 @@ func (pfx PFX) HasKey() bool {
 	return pfx.rsa_key != nil
 }
 
-func NewPFXFromFile(path string) (PFX, CodedError) {
+func NewPFXFromFile(path string, password string) (PFX, CodedError) {
 	pfx := PFX{}
 	var cerr CodedError
 
@@ -42,7 +42,7 @@ func NewPFXFromFile(path string) (PFX, CodedError) {
 		merr.SetParam("raw-data", dat)
 		return PFX{}, merr
 	}
-	pfx.Cert.base, pfx.rsa_key, cerr = pfx.base.Unmarshal("")
+	pfx.Cert.base, pfx.rsa_key, cerr = pfx.base.Unmarshal(password)
 	if cerr != nil {
 		return PFX{}, cerr
 	}
