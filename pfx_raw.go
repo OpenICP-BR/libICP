@@ -57,6 +57,7 @@ func (pfx *pfx_raw) Marshal(password string, cert certificate_pack, key *rsa.Pri
 
 func (pfx *pfx_raw) Unmarshal(password string) (certificate_pack, *rsa.PrivateKey, CodedError) {
 	cert_pack := certificate_pack{}
+	got_cert := false
 	var ans_key *rsa.PrivateKey
 
 	// Get raw bytes
@@ -79,34 +80,31 @@ func (pfx *pfx_raw) Unmarshal(password string) (certificate_pack, *rsa.PrivateKe
 	}
 
 	// For each bag
-	for bag_i := range safe1 {
-		fmt.Println(safe1[bag_i].ContentType)
-
+	for _, bag_l1 := range safe1 {
 		// Remove outer octect string if possible
-		dat = safe1[bag_i].Content.Bytes
+		dat = bag_l1.Content.Bytes
 		raw1 := make([]byte, 0)
 		_, err = asn1.Unmarshal(dat, &raw1)
 		if err == nil {
 			dat = raw1
 		}
 
-		// Get bags
-		safe2 := make([]content_info_decode, 0)
-		_, err = asn1.Unmarshal(dat, &safe2)
-		if err != nil {
-			continue
-		}
-
 		// Here we should look for keys
-		if safe1[bag_i].ContentType.Equal(idData) {
+		if bag_l1.ContentType.Equal(idData) {
+			// Get bags
+			safe2 := make([]content_info_decode, 0)
+			_, err = asn1.Unmarshal(dat, &safe2)
+			if err != nil {
+				continue
+			}
 			// Find the right bag
-			for _, bag := range safe2 {
-				if bag.ContentType.Equal(idPKCS12_8ShroudedKeyBag) {
+			for _, bag_l2 := range safe2 {
+				if bag_l2.ContentType.Equal(idPKCS12_8ShroudedKeyBag) {
 					item := encrypted_private_key_info{}
 					item_tmp := encrypted_private_key_info_decode{}
 
 					// First decode key info
-					dat = bag.Content.Bytes
+					dat = bag_l2.Content.Bytes
 					_, err = asn1.Unmarshal(dat, &item_tmp)
 					if err != nil {
 						continue
@@ -153,86 +151,31 @@ func (pfx *pfx_raw) Unmarshal(password string) (certificate_pack, *rsa.PrivateKe
 				}
 			}
 		}
-
-		if safe1[bag_i].ContentType.Equal(idEncryptedData) {
-			fmt.Println("got cert?")
-			fmt.Println(to_hex(safe1[bag_i].Content.Bytes))
-
-			// Find the right bag
-			for _, bag := range safe2 {
-				if bag.ContentType.Equal(idPbeWithSHAAnd40BitRC2_CBC) {
-					fmt.Println("got it")
-				}
+		if bag_l1.ContentType.Equal(idEncryptedData) {
+			// Decode
+			hack := safe_bag_cert_hack_decode{}
+			dat = bag_l1.Content.Bytes
+			_, err = asn1.Unmarshal(dat, &hack)
+			if err != nil {
+				fmt.Println(err.Error())
+				continue
 			}
-		}
 
-		// dat = safe1[bag_i].Content.Bytes
-		// raw1 := make([]byte, 0)
-		// _, err = asn1.Unmarshal(dat, &raw1)
-		// if err == nil {
-		// 	dat = raw1
-		// 	// Decode safe level 2
-		// 	safe2 := make([]content_info_decode, 0)
-		// 	_, err = asn1.Unmarshal(dat, &safe2)
-		// 	if err != nil {
-		// 		merr := NewMultiError("failed to parse PKCS7 safe bags", ERR_PARSE_PFX, nil, err)
-		// 		merr.SetParam("raw-data", to_hex(dat))
-		// 		return cert_pack, ans_key, merr
-		// 	}
-		// } else {
-		// 	safe2 := content_info_decode{}
-		// 	_, err = asn1.Unmarshal(dat, &safe2)
-		// 	if err != nil {
-		// 		merr := NewMultiError("failed to parse PKCS7 safe bags", ERR_PARSE_PFX, nil, err)
-		// 		merr.SetParam("raw-data", to_hex(dat))
-		// 		return cert_pack, ans_key, merr
-		// 	}
-		// }
+			fmt.Println("TODO: decode this thing")
+			fmt.Println(to_hex(hack.Value.EncValue))
+		}
 	}
 
-	// pfx.AuthSafe.Content = make([]safe_bag, 0)
-	// for _, raw_item := range safe2 {
-	// 	fmt.Println(raw_item.BagId)
-	// 	dat = raw_item.BagValue.Bytes
-	// 	if raw_item.BagId.Equal(idPKCS12_8ShroudedKeyBag) {
-	// 		item := encrypted_private_key_info{}
-	// 		item_tmp := encrypted_private_key_info_decode{}
-	// 		_, err = asn1.Unmarshal(dat, &item_tmp)
-	// 		if err != nil {
-	// 			merr := NewMultiError("failed to parse PKCS7 safe bags", ERR_PARSE_PFX, nil, err)
-	// 			merr.SetParam("raw-data", to_hex(dat))
-	// 			return cert_pack, ans_key, merr
-	// 		}
-	// 		// Decode parameters
-	// 		param := pbes1_parameters{}
-	// 		dat = item_tmp.Alg.Parameters.FullBytes
-	// 		_, err = asn1.Unmarshal(dat, &param)
-	// 		if err != nil {
-	// 			merr := NewMultiError("failed to parse parameters", ERR_PARSE_PFX, nil, err)
-	// 			merr.SetParam("raw-data", to_hex(dat))
-	// 			return cert_pack, ans_key, merr
-	// 		}
+	if ans_key == nil {
+		merr := NewMultiError("failed to get private key", ERR_PARSE_PFX, nil, err)
+		return cert_pack, ans_key, merr
+	}
+	if !got_cert {
+		merr := NewMultiError("failed to get certificate", ERR_PARSE_PFX, nil, err)
+		return cert_pack, ans_key, merr
+	}
 
-	// 		// Convert type
-	// 		item.EncData = item_tmp.EncData
-	// 		item.Alg.Algorithm = item_tmp.Alg.Algorithm
-	// 		item.Alg.Parameters = make([]interface{}, 2)
-	// 		item.Alg.Parameters[0] = param.Salt
-	// 		item.Alg.Parameters[1] = param.Iterations
-	// 		item.RawContent = nil
-
-	// 		// Decode data
-	// 		cerr := item.GetData(password)
-	// 		if cerr != nil {
-	// 			return cert_pack, ans_key, cerr
-	// 		}
-
-	// 		// THIS IS NOT WORKING AND I DON'T KNOW WHY!!!
-	// 		fmt.Println(to_hex(item.DecData))
-	// 	}
-	// }
-
-	return cert_pack, nil, nil
+	return cert_pack, ans_key, nil
 }
 
 type mac_data struct {
@@ -276,6 +219,21 @@ type safe_bag_decode struct {
 	BagId      asn1.ObjectIdentifier
 	BagValue   asn1.RawValue `asn1:"explicit,tag:0"`
 	BagAttr    []attribute   `asn1:"set,optional,omitempty"`
+}
+
+type safe_bag_cert_hack_decode struct {
+	Version int
+	Value   struct {
+		Oid   asn1.ObjectIdentifier
+		Value struct {
+			Alg  asn1.ObjectIdentifier
+			Pram struct {
+				A []byte
+				B int
+			}
+		}
+		EncValue []byte `asn1:"tag:0"`
+	}
 }
 
 // A KeyBag is a PKCS #8 PrivateKeyInfo. Note that a KeyBag contains only one private key. (OID: pkcs-12 10 1 1)
