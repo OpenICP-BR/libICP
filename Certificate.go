@@ -41,7 +41,7 @@ type Certificate struct {
 func NewCertificateFromFile(path string) ([]Certificate, []CodedError) {
 	dat, err := ioutil.ReadFile(path)
 	if err != nil {
-		merr := NewMultiError("failed to read certificate file", ERR_READ_CERT_FILE, nil, err)
+		merr := NewMultiError("failed to read certificate file", ERR_READ_FILE, nil, err)
 		merr.SetParam("path", path)
 		return nil, []CodedError{merr}
 	}
@@ -97,7 +97,7 @@ func NewCertificateFromBytes(raw []byte) ([]Certificate, []CodedError) {
 func new_CRL_from_file(path string) ([]certificate_list, []CodedError) {
 	dat, err := ioutil.ReadFile(path)
 	if err != nil {
-		merr := NewMultiError("failed to read CRL file", ERR_READ_CERT_FILE, nil, err)
+		merr := NewMultiError("failed to read CRL file", ERR_READ_FILE, nil, err)
 		merr.SetParam("path", path)
 		return nil, []CodedError{merr}
 	}

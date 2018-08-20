@@ -12,7 +12,7 @@ const (
 	ERR_MAX_DEPTH_REACHED
 	ERR_PARSE_CERT
 	ERR_PARSE_RSA_PUBKEY
-	ERR_READ_CERT_FILE
+	ERR_READ_FILE
 	ERR_NOT_BEFORE_DATE
 	ERR_NOT_AFTER_DATE
 	ERR_BAD_SIGNATURE
@@ -51,7 +51,7 @@ var errors_map_string = map[ErrorCode]string{
 	ERR_MAX_DEPTH_REACHED:                  "ERR_MAX_DEPTH_REACHED",
 	ERR_PARSE_CERT:                         "ERR_PARSE_CERT",
 	ERR_PARSE_RSA_PUBKEY:                   "ERR_PARSE_RSA_PUBKEY",
-	ERR_READ_CERT_FILE:                     "ERR_READ_CERT_FILE",
+	ERR_READ_FILE:                          "ERR_READ_CERT_FILE",
 	ERR_NOT_BEFORE_DATE:                    "ERR_NOT_BEFORE_DATE",
 	ERR_NOT_AFTER_DATE:                     "ERR_NOT_AFTER_DATE",
 	ERR_BAD_SIGNATURE:                      "ERR_BAD_SIGNATURE",

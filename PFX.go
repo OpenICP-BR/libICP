@@ -13,11 +13,21 @@ import (
 type PFX struct {
 	base pfx_raw
 
-	Cert Certificate
-	Key  *rsa.PrivateKey
+	Cert    Certificate
+	rsa_key *rsa.PrivateKey
+}
+
+func (pfx PFX) HasKey() bool {
+	return pfx.rsa_key != nil
 }
 
 func NewPFXFromFile(path string) (PFX, CodedError) {
+	_, err := ioutil.ReadFile(path)
+	if err != nil {
+		merr := NewMultiError("failed to read PFK file", ERR_READ_FILE, nil, err)
+		merr.SetParam("path", path)
+		return PFX{}, merr
+	}
 	return PFX{}, NewMultiError("not implemented", ERR_NOT_IMPLEMENTED, nil)
 }
 
@@ -51,7 +61,7 @@ func new_cert_and_key(subject_name, issuer_name nameT, serial *big.Int, not_befo
 	var pair pair_alg_pub_key
 
 	// Generate key pair
-	pfx.Key, pair, cerr = new_rsa_key(2048)
+	pfx.rsa_key, pair, cerr = new_rsa_key(2048)
 	if cerr != nil {
 		return
 	}
@@ -76,7 +86,7 @@ func new_cert_and_key(subject_name, issuer_name nameT, serial *big.Int, not_befo
 	}
 
 	// Sign certificate
-	cerr = Sign(&pfx.Cert.base, pfx.Key)
+	cerr = Sign(&pfx.Cert.base, pfx.rsa_key)
 	return
 }
 
@@ -99,7 +109,7 @@ func (pfx PFX) SaveCertToFile(path string) CodedError {
 // Saves the certificate and the private key to a DER file.
 func (pfx PFX) SaveToFile(path, password string) CodedError {
 	// Marshal
-	cerr := pfx.base.Marshal(password, pfx.Cert.base, pfx.Key)
+	cerr := pfx.base.Marshal(password, pfx.Cert.base, pfx.rsa_key)
 	if cerr != nil {
 		return cerr
 	}
