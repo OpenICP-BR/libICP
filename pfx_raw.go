@@ -8,6 +8,7 @@ import (
 	"crypto/rsa"
 	"crypto/sha1"
 	"encoding/binary"
+	"fmt"
 	"math/big"
 	"unicode/utf16"
 
@@ -45,6 +46,7 @@ func (pfx *pfx_raw) Marshal(password string, cert certificate_pack, key *rsa.Pri
 	// safe[0].BagValue
 
 	// Final encoding
+	pfx.RawContent = nil
 	dat, err := asn1.Marshal(pfx)
 	if err != nil {
 		return NewMultiError("failed to marshal pfx_raw", ERR_FAILED_TO_ENCODE, nil, err)
@@ -53,8 +55,93 @@ func (pfx *pfx_raw) Marshal(password string, cert certificate_pack, key *rsa.Pri
 	return nil
 }
 
+func (pfx *pfx_raw) Unmarshal(password string) (certificate_pack, *rsa.PrivateKey, CodedError) {
+	cert_pack := certificate_pack{}
+
+	// fmt.Println(pfx.AuthSafe.RawContent)
+	// fmt.Println(pfx)
+	// fmt.Println(pfx.AuthSafe)
+	// fmt.Println(pfx.AuthSafe.Content)
+	// fmt.Println(reflect.TypeOf(pfx.AuthSafe.Content))
+
+	// Get raw bytes
+	new_content := content_info_decode_shrouded{}
+	_, err := asn1.Unmarshal(pfx.AuthSafe.RawContent, &new_content)
+	if err != nil {
+		merr := NewMultiError("failed to parse PFX, get bytes from content_info", ERR_PARSE_PFX, nil, err)
+		merr.SetParam("raw-data", pfx.AuthSafe.RawContent)
+		return cert_pack, nil, merr
+	}
+
+	// Decode safe level 1
+	safe1 := make([]content_info_decode, 0)
+	dat := new_content.Content
+	_, err = asn1.Unmarshal(dat, &safe1)
+	if err != nil {
+		merr := NewMultiError("failed to parse PKCS7 safe bags", ERR_PARSE_PFX, nil, err)
+		merr.SetParam("raw-data", to_hex(dat))
+		return cert_pack, nil, merr
+	}
+
+	// Decode safe level 2
+	safe2 := make([]content_info_decode, 0)
+	dat = safe1[1].Content.Bytes
+	fmt.Println(safe1[1].ContentType)
+	fmt.Println(to_hex(dat))
+	_, err = asn1.Unmarshal(dat, &safe2)
+	if err != nil {
+		merr := NewMultiError("failed to parse PKCS7 safe bags", ERR_PARSE_PFX, nil, err)
+		merr.SetParam("raw-data", to_hex(dat))
+		return cert_pack, nil, merr
+	}
+
+	// pfx.AuthSafe.Content = make([]safe_bag, 0)
+	// for _, raw_item := range safe2 {
+	// 	fmt.Println(raw_item.BagId)
+	// 	dat = raw_item.BagValue.Bytes
+	// 	if raw_item.BagId.Equal(idPKCS12_8ShroudedKeyBag) {
+	// 		item := encrypted_private_key_info{}
+	// 		item_tmp := encrypted_private_key_info_decode{}
+	// 		_, err = asn1.Unmarshal(dat, &item_tmp)
+	// 		if err != nil {
+	// 			merr := NewMultiError("failed to parse PKCS7 safe bags", ERR_PARSE_PFX, nil, err)
+	// 			merr.SetParam("raw-data", to_hex(dat))
+	// 			return cert_pack, nil, merr
+	// 		}
+	// 		// Decode parameters
+	// 		param := pbes1_parameters{}
+	// 		dat = item_tmp.Alg.Parameters.FullBytes
+	// 		_, err = asn1.Unmarshal(dat, &param)
+	// 		if err != nil {
+	// 			merr := NewMultiError("failed to parse parameters", ERR_PARSE_PFX, nil, err)
+	// 			merr.SetParam("raw-data", to_hex(dat))
+	// 			return cert_pack, nil, merr
+	// 		}
+
+	// 		// Convert type
+	// 		item.EncData = item_tmp.EncData
+	// 		item.Alg.Algorithm = item_tmp.Alg.Algorithm
+	// 		item.Alg.Parameters = make([]interface{}, 2)
+	// 		item.Alg.Parameters[0] = param.Salt
+	// 		item.Alg.Parameters[1] = param.Iterations
+	// 		item.RawContent = nil
+
+	// 		// Decode data
+	// 		cerr := item.GetData(password)
+	// 		if cerr != nil {
+	// 			return cert_pack, nil, cerr
+	// 		}
+
+	// 		// THIS IS NOT WORKING AND I DON'T KNOW WHY!!!
+	// 		fmt.Println(to_hex(item.DecData))
+	// 	}
+	// }
+
+	return cert_pack, nil, nil
+}
+
 type mac_data struct {
-	Mac        object_digest_info
+	Mac        object_digest_info_simple_decode
 	MacSalt    []byte
 	Iterations int `asn1:"optional,default:1"`
 }
@@ -75,11 +162,25 @@ type safe_bag_octet struct {
 	BagAttr    []attribute `asn1:"set,optional,omitempty"`
 }
 
+type safe_bag_octet_decode struct {
+	RawContent asn1.RawContent
+	BagId      asn1.ObjectIdentifier
+	BagValue   []byte      `asn1:"explicit,tag:0"`
+	BagAttr    []attribute `asn1:"set,optional,omitempty"`
+}
+
 type safe_bag struct {
 	RawContent asn1.RawContent
 	BagId      asn1.ObjectIdentifier
 	BagValue   interface{} `asn1:"explicit,tag:0"`
 	BagAttr    []attribute `asn1:"set,optional,omitempty"`
+}
+
+type safe_bag_decode struct {
+	RawContent asn1.RawContent
+	BagId      asn1.ObjectIdentifier
+	BagValue   asn1.RawValue `asn1:"explicit,tag:0"`
+	BagAttr    []attribute   `asn1:"set,optional,omitempty"`
 }
 
 // A KeyBag is a PKCS #8 PrivateKeyInfo. Note that a KeyBag contains only one private key. (OID: pkcs-12 10 1 1)
@@ -118,6 +219,12 @@ type encrypted_private_key_info struct {
 	Alg        algorithm_identifier
 	EncData    []byte
 	DecData    []byte `asn1:"-"`
+}
+
+type encrypted_private_key_info_decode struct {
+	RawContent asn1.RawContent
+	Alg        algorithm_identifier_decode
+	EncData    []byte
 }
 
 func (s *encrypted_private_key_info) SetKey(priv *rsa.PrivateKey, password string) CodedError {
@@ -176,14 +283,27 @@ func (s *encrypted_private_key_info) GetData(password string) CodedError {
 	var cerr CodedError
 	var salt []byte
 	var real_decrypt func(password []byte, iterations int, salt []byte, enc_msg []byte) ([]byte, CodedError)
+	ok1 := false
+	ok2 := false
 
 	if alg.Equal(idPbeWithSHAAnd3KeyTripleDES_CBC) {
-		salt = s.Alg.Parameters[0].([]byte)
-		iterations = s.Alg.Parameters[1].(int)
+		salt, ok1 = s.Alg.Parameters[0].([]byte)
+		iterations, ok2 = s.Alg.Parameters[1].(int)
 		real_decrypt = decrypt_PbeWithSHAAnd3KeyTripleDES_CBC
+
+		if !(ok1 && ok2) {
+			println("failed")
+			println(ok1)
+			println(ok2)
+			merr := NewMultiError("unsupported parameters", ERR_UNKOWN_ALGORITHM, nil)
+			merr.SetParam("alg", s.Alg.Algorithm.String())
+			merr.SetParam("alg-param", s.Alg.Parameters)
+			return merr
+		}
 	} else {
 		merr := NewMultiError("unsupported encryption algorithm", ERR_UNKOWN_ALGORITHM, nil)
 		merr.SetParam("alg", s.Alg.Algorithm.String())
+		return merr
 	}
 
 	s.DecData, cerr = real_decrypt(byte_password, iterations, salt, s.EncData)

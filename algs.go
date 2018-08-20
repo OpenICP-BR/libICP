@@ -14,6 +14,12 @@ type algorithm_identifier struct {
 	Parameters []interface{} `asn1:"optional,omitempty"`
 }
 
+type algorithm_identifier_decode struct {
+	RawContent asn1.RawContent
+	Algorithm  asn1.ObjectIdentifier
+	Parameters asn1.RawValue `asn1:"optional,omitempty"`
+}
+
 func (ai algorithm_identifier) ToHex() string {
 	return nice_hex(ai.RawContent)
 }
@@ -31,8 +37,8 @@ func (p pair_alg_pub_key) RSAPubKey() (rsa.PublicKey, error) {
 }
 
 type pbes1_parameters struct {
-	Iterations int
 	Salt       []byte
+	Iterations int
 }
 
 // See RFC 3447 Section A.1.2 - RSA private key syntax

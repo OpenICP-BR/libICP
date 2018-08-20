@@ -67,6 +67,18 @@ type content_info struct {
 	Content     interface{} `asn1:"tag:0,explicit,octet"`
 }
 
+type content_info_decode_shrouded struct {
+	RawContent  asn1.RawContent
+	ContentType asn1.ObjectIdentifier
+	Content     []byte `asn1:"tag:0,explicit"`
+}
+
+type content_info_decode struct {
+	RawContent  asn1.RawContent
+	ContentType asn1.ObjectIdentifier
+	Content     asn1.RawValue `asn1:"tag:0,explicit"`
+}
+
 type signature_verifiable interface {
 	GetRawContent() []byte
 	GetSignatureAlgorithm() algorithm_identifier
@@ -194,10 +206,16 @@ const obj_digest_info_other_object_types = 2
 
 type object_digest_info struct {
 	RawContent         asn1.RawContent
-	DigestedObjectType int
+	DigestedObjectType int                   `asn1:"optional,omitempty"`
 	OtherObjectTypeID  asn1.ObjectIdentifier `asn1:"optional,omitempty"`
-	DigestAlgorithm    algorithm_identifier
-	ObjectDigest       asn1.BitString
+	DigestAlgorithm    algorithm_identifier_decode
+	ObjectDigest       asn1.BitString `asn1:"optional,omitempty"`
+}
+
+type object_digest_info_simple_decode struct {
+	RawContent      asn1.RawContent
+	DigestAlgorithm algorithm_identifier_decode
+	ObjectDigest    asn1.BitString `asn1:"optional,omitempty"`
 }
 
 // Also unmarshals UTCTime

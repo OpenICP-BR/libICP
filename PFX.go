@@ -5,6 +5,8 @@ import (
 	"io/ioutil"
 	"math/big"
 	"time"
+
+	"github.com/gjvnq/asn1"
 )
 
 // Represents a .p12/.pfx file containing a public certificate and a private key which is usually encrypted.
@@ -22,13 +24,30 @@ func (pfx PFX) HasKey() bool {
 }
 
 func NewPFXFromFile(path string) (PFX, CodedError) {
-	_, err := ioutil.ReadFile(path)
+	pfx := PFX{}
+	var cerr CodedError
+
+	// Open file
+	dat, err := ioutil.ReadFile(path)
 	if err != nil {
-		merr := NewMultiError("failed to read PFK file", ERR_READ_FILE, nil, err)
+		merr := NewMultiError("failed to read PFX file", ERR_READ_FILE, nil, err)
 		merr.SetParam("path", path)
 		return PFX{}, merr
 	}
-	return PFX{}, NewMultiError("not implemented", ERR_NOT_IMPLEMENTED, nil)
+
+	// Parse
+	_, err = asn1.Unmarshal(dat, &pfx.base)
+	if err != nil {
+		merr := NewMultiError("failed to parse PFX file", ERR_PARSE_PFX, nil, err)
+		merr.SetParam("raw-data", dat)
+		return PFX{}, merr
+	}
+	pfx.Cert.base, pfx.rsa_key, cerr = pfx.base.Unmarshal("")
+	if cerr != nil {
+		return PFX{}, cerr
+	}
+
+	return pfx, nil
 }
 
 // Generates a new root CA with subject and issuer TESTING_ROOT_CA_SUBJECT
