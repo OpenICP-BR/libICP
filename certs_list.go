@@ -4,7 +4,7 @@ import (
 	"math/big"
 	"time"
 
-	"github.com/gjvnq/asn1"
+	"github.com/OpenICP-BR/asn1"
 )
 
 type certificate_list struct {

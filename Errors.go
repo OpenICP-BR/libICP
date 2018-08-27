@@ -6,7 +6,7 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/gjvnq/asn1"
+	"github.com/OpenICP-BR/asn1"
 )
 
 type stringI interface {

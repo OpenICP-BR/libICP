@@ -3,7 +3,7 @@ package libICP
 import (
 	"testing"
 
-	"github.com/gjvnq/asn1"
+	"github.com/OpenICP-BR/asn1"
 	"github.com/stretchr/testify/assert"
 )
 

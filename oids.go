@@ -4,7 +4,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/gjvnq/asn1"
+	"github.com/OpenICP-BR/asn1"
 )
 
 var idRSAEncryption = asn1.ObjectIdentifier{1, 2, 840, 113549, 1, 1, 1}

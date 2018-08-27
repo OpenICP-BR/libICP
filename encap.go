@@ -4,7 +4,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/gjvnq/asn1"
+	"github.com/OpenICP-BR/asn1"
 )
 
 type encapsulated_content_info struct {

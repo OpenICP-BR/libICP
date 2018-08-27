@@ -12,7 +12,7 @@ import (
 	"math/big"
 	"unicode/utf16"
 
-	"github.com/gjvnq/asn1"
+	"github.com/OpenICP-BR/asn1"
 )
 
 type pfx_raw struct {

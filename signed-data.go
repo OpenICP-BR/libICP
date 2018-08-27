@@ -4,7 +4,7 @@ import (
 	"crypto/rsa"
 	"time"
 
-	"github.com/gjvnq/asn1"
+	"github.com/OpenICP-BR/asn1"
 )
 
 type signed_data_raw struct {

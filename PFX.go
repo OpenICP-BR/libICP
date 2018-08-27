@@ -6,7 +6,7 @@ import (
 	"math/big"
 	"time"
 
-	"github.com/gjvnq/asn1"
+	"github.com/OpenICP-BR/asn1"
 )
 
 // Represents a .p12/.pfx file containing a public certificate and a private key which is usually encrypted.

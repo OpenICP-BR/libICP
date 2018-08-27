@@ -3,7 +3,7 @@ package libICP
 import (
 	"math/big"
 
-	"github.com/gjvnq/asn1"
+	"github.com/OpenICP-BR/asn1"
 )
 
 type certificate_choice struct {

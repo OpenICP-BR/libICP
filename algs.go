@@ -5,7 +5,7 @@ import (
 	"crypto/rsa"
 	"math/big"
 
-	"github.com/gjvnq/asn1"
+	"github.com/OpenICP-BR/asn1"
 )
 
 type algorithm_identifier struct {

@@ -5,7 +5,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/gjvnq/asn1"
+	"github.com/OpenICP-BR/asn1"
 )
 
 type nameT []rdn_set

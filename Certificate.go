@@ -7,7 +7,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/gjvnq/asn1"
+	"github.com/OpenICP-BR/asn1"
 
 	"github.com/LK4D4/trylock"
 )
