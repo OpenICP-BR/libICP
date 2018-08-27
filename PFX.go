@@ -2,6 +2,7 @@ package libICP
 
 import (
 	"crypto/rsa"
+	"fmt"
 	"io/ioutil"
 	"math/big"
 	"time"
@@ -26,6 +27,7 @@ func (pfx PFX) HasKey() bool {
 func NewPFXFromFile(path string, password string) (PFX, CodedError) {
 	pfx := PFX{}
 	var cerr CodedError
+	var der_cert []byte
 
 	// Open file
 	dat, err := ioutil.ReadFile(path)
@@ -42,9 +44,17 @@ func NewPFXFromFile(path string, password string) (PFX, CodedError) {
 		merr.SetParam("raw-data", dat)
 		return PFX{}, merr
 	}
-	pfx.Cert.base, pfx.rsa_key, cerr = pfx.base.Unmarshal(password)
+	der_cert, pfx.rsa_key, cerr = pfx.base.Unmarshal(password)
 	if cerr != nil {
 		return PFX{}, cerr
+	}
+
+	certs, cerrs := NewCertificateFromBytes(der_cert)
+	if len(cerrs) > 1 {
+		return PFX{}, cerrs[0]
+	}
+	if len(certs) > 0 {
+		pfx.Cert = certs[0]
 	}
 
 	return pfx, nil

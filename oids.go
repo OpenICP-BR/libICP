@@ -51,7 +51,7 @@ var idCommonName = asn1.ObjectIdentifier{2, 5, 4, 3}
 var idEmailName = asn1.ObjectIdentifier{1, 2, 840, 113549, 1, 9, 1}
 var idPKCS12_8ShroudedKeyBag = asn1.ObjectIdentifier{1, 2, 840, 113549, 1, 12, 10, 1, 2}
 var idPbeWithSHAAnd3KeyTripleDES_CBC = asn1.ObjectIdentifier{1, 2, 840, 113549, 1, 12, 1, 3}
-var idPbeWithSHAAnd40BitRC2_CBC = asn1.ObjectIdentifier{}
+var idPbeWithSHAAnd40BitRC2_CBC = asn1.ObjectIdentifier{1, 2, 840, 113549, 1, 12, 1, 6}
 
 func oid_key2str(oid asn1.ObjectIdentifier) string {
 	switch {

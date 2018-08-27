@@ -7,7 +7,7 @@ import (
 
 	"errors"
 
-	"github.com/gjvnq/libICP"
+	"github.com/OpenICP-BR/libICP"
 	"github.com/mkideal/cli"
 	clix "github.com/mkideal/cli/ext"
 )

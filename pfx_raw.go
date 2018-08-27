@@ -13,6 +13,7 @@ import (
 	"unicode/utf16"
 
 	"github.com/OpenICP-BR/asn1"
+	"github.com/OpenICP-BR/libICP/dependencies/rc2"
 )
 
 type pfx_raw struct {
@@ -55,10 +56,9 @@ func (pfx *pfx_raw) Marshal(password string, cert certificate_pack, key *rsa.Pri
 	return nil
 }
 
-func (pfx *pfx_raw) Unmarshal(password string) (certificate_pack, *rsa.PrivateKey, CodedError) {
-	cert_pack := certificate_pack{}
-	got_cert := false
+func (pfx *pfx_raw) Unmarshal(password string) ([]byte, *rsa.PrivateKey, CodedError) {
 	var ans_key *rsa.PrivateKey
+	var cert_pack []byte
 
 	// Get raw bytes
 	new_content := content_info_decode_shrouded{}
@@ -161,8 +161,35 @@ func (pfx *pfx_raw) Unmarshal(password string) (certificate_pack, *rsa.PrivateKe
 				continue
 			}
 
-			fmt.Println("TODO: decode this thing")
-			fmt.Println(to_hex(hack.Value.EncValue))
+			item := hack.Value
+			if item.Value.Alg.Equal(idPbeWithSHAAnd40BitRC2_CBC) {
+				var cerr CodedError
+				item.DecValue, cerr = decrypt_PbeWithSHAAnd40BitRC2_CBC(conv_password(password), item.Value.Param.Iterations, item.Value.Param.Salt, item.EncValue)
+				if cerr != nil {
+					continue
+				}
+
+				// Unmarshal
+				part1 := hack_cert_pack_decode{}
+				_, err := asn1.Unmarshal(item.DecValue, &part1)
+				if err != nil {
+					fmt.Println(err.Error())
+					continue
+				}
+				part2 := hack_cert_pack_decode_subpart{}
+				dat = part1.A.B.Bytes
+				_, err = asn1.Unmarshal(dat, &part2)
+				if err != nil {
+					continue
+				}
+				dat = part2.C.Bytes
+				_, err = asn1.Unmarshal(dat, &cert_pack)
+				if err != nil {
+					continue
+				}
+			} else {
+				continue
+			}
 		}
 	}
 
@@ -170,7 +197,7 @@ func (pfx *pfx_raw) Unmarshal(password string) (certificate_pack, *rsa.PrivateKe
 		merr := NewMultiError("failed to get private key", ERR_PARSE_PFX, nil, err)
 		return cert_pack, ans_key, merr
 	}
-	if !got_cert {
+	if cert_pack == nil {
 		merr := NewMultiError("failed to get certificate", ERR_PARSE_PFX, nil, err)
 		return cert_pack, ans_key, merr
 	}
@@ -226,14 +253,39 @@ type safe_bag_cert_hack_decode struct {
 	Value   struct {
 		Oid   asn1.ObjectIdentifier
 		Value struct {
-			Alg  asn1.ObjectIdentifier
-			Pram struct {
-				A []byte
-				B int
+			Alg   asn1.ObjectIdentifier
+			Param struct {
+				Salt       []byte
+				Iterations int
 			}
 		}
 		EncValue []byte `asn1:"tag:0"`
+		DecValue []byte `asn1:"-"`
 	}
+}
+
+type hack_cert_pack_decode2 struct {
+	A struct {
+		Oid asn1.ObjectIdentifier
+		B   struct {
+			Oid   asn1.ObjectIdentifier
+			Value []byte `ans1:"tag:0"`
+		} `ans1:"tag:0"`
+		B2 asn1.RawValue
+	}
+}
+
+type hack_cert_pack_decode struct {
+	A struct {
+		Oid asn1.ObjectIdentifier
+		B   asn1.RawValue `ans1:"tag:0"`
+		Set asn1.RawValue
+	}
+}
+
+type hack_cert_pack_decode_subpart struct {
+	Oid asn1.ObjectIdentifier
+	C   asn1.RawValue `ans1:"tag:0"`
 }
 
 // A KeyBag is a PKCS #8 PrivateKeyInfo. Note that a KeyBag contains only one private key. (OID: pkcs-12 10 1 1)
@@ -569,7 +621,6 @@ func encrypt_PbeWithSHAAnd3KeyTripleDES_CBC(password []byte, iterations int, sal
 }
 
 func decrypt_PbeWithSHAAnd3KeyTripleDES_CBC(password []byte, iterations int, salt []byte, enc_msg []byte) ([]byte, CodedError) {
-
 	// Derive our key
 	k := pbkdf(sha1Sum, 20, 64, salt, password, iterations, 1, 24)
 
@@ -580,6 +631,23 @@ func decrypt_PbeWithSHAAnd3KeyTripleDES_CBC(password []byte, iterations int, sal
 	block, err := des.NewTripleDESCipher(k)
 	if err != nil {
 		return nil, NewMultiError("faield to open block cipher for triple DES", ERR_FAILED_TO_DECODE, nil, err)
+	}
+	block_mode := cipher.NewCBCDecrypter(block, iv)
+	ans := make([]byte, len(enc_msg))
+	block_mode.CryptBlocks(ans, enc_msg)
+	return unpad_msg(ans), nil
+}
+
+func decrypt_PbeWithSHAAnd40BitRC2_CBC(password []byte, iterations int, salt []byte, enc_msg []byte) ([]byte, CodedError) {
+	// Derive our key
+	k := pbkdf(sha1Sum, 20, 64, salt, password, iterations, 1, 5)
+
+	// Derive the IV
+	iv := pbkdf(sha1Sum, 20, 64, salt, password, iterations, 2, 8)
+	// Decrypt
+	block, err := rc2.New(k, 8*len(k))
+	if err != nil {
+		return nil, NewMultiError("faield to open block cipher for RC2", ERR_FAILED_TO_DECODE, nil, err)
 	}
 	block_mode := cipher.NewCBCDecrypter(block, iv)
 	ans := make([]byte, len(enc_msg))
