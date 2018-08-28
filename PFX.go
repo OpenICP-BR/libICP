@@ -2,7 +2,6 @@ package libICP
 
 import (
 	"crypto/rsa"
-	"fmt"
 	"io/ioutil"
 	"math/big"
 	"time"
