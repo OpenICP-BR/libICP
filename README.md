@@ -51,11 +51,12 @@ A golang library for CAdES (CMS Advanced Electronic Signatures) for the Brazilia
 - [ ] Support creation of AD-RA (Digital Signatures with References for Archival).
 - [ ] Support verification of AD-RA (Digital Signatures with References for Archival).
 
-¹: This is intended to handle situations in which multiple people signed a document "in parallel". Ex: a company contract is sent to five people via email. Each of the recipients generature their own signature file and send them back to the company. The company can simply "merge" these signatures into a single signature file as long as they are all valid and about the same document.
+¹: This is intended to handle situations in which multiple people signed a document "in parallel". Ex: a company contract is sent to five people via email. Each of the recipients generates their own signature file and send them back to the company. The company can simply "merge" these signatures into a single signature file as long as they are all valid and about the same document.
 
 # Limitations
 
   * Only idPbeWithSHAAnd3KeyTripleDES_CBC (1.2.840.113549.1.12.1.3) using SHA1 is supported for key encryption. (this will change in the future)
+  * The PFX handling is a total mess that should be rewritten at some point.
 
 # License
 
