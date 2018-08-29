@@ -23,32 +23,80 @@ type pfx_raw struct {
 	MacData    mac_data `asn1:"optional,omitempty"`
 }
 
-func (pfx *pfx_raw) Marshal(password string, cert certificate_pack, key *rsa.PrivateKey) CodedError {
+func (pfx *pfx_raw) Marshal(password string, cert_pack certificate_pack, key *rsa.PrivateKey) CodedError {
+	var err error
+
 	// Basics
 	pfx.Version = 3
 	pfx.AuthSafe.ContentType = idData
-	safe := make([]safe_bag_octet, 1)
+	safe := make([]safe_bag_octet, 2)
 	pfx.AuthSafe.Content = safe
 
-	// Encode private key
+	// Encrypt private key
 	enc_key_bag := encrypted_private_key_info{}
 	cerr := enc_key_bag.SetKey(key, password)
 	if cerr != nil {
 		return cerr
 	}
-	safe[0].BagId = idData
+	safe[1].BagId = idData
 	key_safe := make(safe_contents, 1)
 	key_safe[0].BagId = idPKCS12_8ShroudedKeyBag
 	key_safe[0].BagValue = enc_key_bag
-	safe[0].BagValue = key_safe
+	safe[1].BagValue = key_safe
 
-	// Encode certificate
-	// safe[1].BagId = idEncryptedData
-	// safe[0].BagValue
+	// Encrypt certificate
+	part := hack_cert_pack_encode{}
+	subpart := hack_cert_pack_encode_subpart{}
+	subpart.Oid = idData
+	subpart.C, err = asn1.Marshal(cert_pack)
+	fmt.Println("subpart.C = ", to_hex(subpart.C))
+	if err != nil {
+		return NewMultiError("failed to encode certificate", ERR_FAILED_TO_ENCODE, nil, err)
+	}
+	part.A.Oid = idSha1
+	part.A.B, err = asn1.Marshal(subpart)
+	fmt.Printf("part = %+v\n", part)
+	fmt.Println("part.A.B = ", to_hex(part.A.B))
+	if err != nil {
+		return NewMultiError("failed to encode certificate", ERR_FAILED_TO_ENCODE, nil, err)
+	}
+	var dec_value []byte
+	dec_value, err = asn1.Marshal(part)
+	fmt.Println("dec_value = ", to_hex(dec_value))
+	if err != nil {
+		return NewMultiError("failed to encode certificate", ERR_FAILED_TO_ENCODE, nil, err)
+	}
+	cert_bag := safe_bag_cert_hack_decode{}
+	cert_bag.Version = 42
+	cert_bag.Value.Oid = idData
+	cert_bag.Value.Value.Param.Iterations = 2048
+	cert_bag.Value.Value.Param.Salt = make([]byte, 8)
+	_, err = rand.Read(cert_bag.Value.Value.Param.Salt)
+	if err != nil {
+		return NewMultiError("faield to generate random salt", ERR_SECURE_RANDOM, nil, err)
+	}
+	cert_bag.Value.Value.Alg = idPbeWithSHAAnd40BitRC2_CBC
+	cert_bag.Value.EncValue, cerr = encrypt_PbeWithSHAAnd40BitRC2_CBC(conv_password(password), cert_bag.Value.Value.Param.Iterations, cert_bag.Value.Value.Param.Salt, dec_value)
+	safe[0].BagId = idEncryptedData
+	hack := hack_cert_pack_encode{}
+	hack.A.Oid = idEncryptedData
+	hack.A.B, err = asn1.Marshal(cert_bag)
+	fmt.Printf("hack.A.B = %s\n", to_hex(hack.A.B))
+	if err != nil {
+		return NewMultiError("failed to encode certificate", ERR_FAILED_TO_ENCODE, nil, err)
+	}
+	safe[0].BagValue = "hack"
+
+	dat1, err := asn1.Marshal(safe[0])
+	fmt.Printf("safe[0] = %s\n", to_hex(dat1))
+
+	// js, _ := json.Marshal(pfx)
+	// fmt.Printf("%s\n", js)
 
 	// Final encoding
 	pfx.RawContent = nil
 	dat, err := asn1.Marshal(pfx)
+	fmt.Printf("pfx = %+v\n", to_hex(dat))
 	if err != nil {
 		return NewMultiError("failed to marshal pfx_raw", ERR_FAILED_TO_ENCODE, nil, err)
 	}
@@ -264,28 +312,30 @@ type safe_bag_cert_hack_decode struct {
 	}
 }
 
-type hack_cert_pack_decode2 struct {
-	A struct {
-		Oid asn1.ObjectIdentifier
-		B   struct {
-			Oid   asn1.ObjectIdentifier
-			Value []byte `ans1:"tag:0"`
-		} `ans1:"tag:0"`
-		B2 asn1.RawValue
-	}
-}
-
 type hack_cert_pack_decode struct {
 	A struct {
 		Oid asn1.ObjectIdentifier
-		B   asn1.RawValue `ans1:"tag:0"`
+		B   asn1.RawValue `asn1:"tag:0"`
 		Set asn1.RawValue
+	}
+}
+
+type hack_cert_pack_encode struct {
+	A struct {
+		Oid asn1.ObjectIdentifier
+		B   []byte        `asn1:"tag:0"`
+		Set asn1.RawValue `asn1:"optional,omitempty"`
 	}
 }
 
 type hack_cert_pack_decode_subpart struct {
 	Oid asn1.ObjectIdentifier
-	C   asn1.RawValue `ans1:"tag:0"`
+	C   asn1.RawValue `asn1:"tag:0"`
+}
+
+type hack_cert_pack_encode_subpart struct {
+	Oid asn1.ObjectIdentifier
+	C   []byte `asn1:"tag:0"`
 }
 
 // A KeyBag is a PKCS #8 PrivateKeyInfo. Note that a KeyBag contains only one private key. (OID: pkcs-12 10 1 1)
@@ -653,4 +703,24 @@ func decrypt_PbeWithSHAAnd40BitRC2_CBC(password []byte, iterations int, salt []b
 	ans := make([]byte, len(enc_msg))
 	block_mode.CryptBlocks(ans, enc_msg)
 	return unpad_msg(ans), nil
+}
+
+func encrypt_PbeWithSHAAnd40BitRC2_CBC(password []byte, iterations int, salt []byte, msg []byte) ([]byte, CodedError) {
+	// Generate key
+	k := pbkdf(sha1Sum, 20, 64, salt, password, iterations, 1, 5)
+
+	// Generate IV
+	iv := pbkdf(sha1Sum, 20, 64, salt, password, iterations, 2, 8)
+
+	// Encrypt
+	block, err := rc2.New(k, 8*len(k))
+	if err != nil {
+		return nil, NewMultiError("faield to open block cipher for RC2", ERR_FAILED_TO_ENCODE, nil, err)
+	}
+	block_mode := cipher.NewCBCEncrypter(block, iv)
+	paded_msg := pad_msg(msg)
+	ans := make([]byte, len(paded_msg))
+	block_mode.CryptBlocks(ans, paded_msg)
+
+	return ans, nil
 }
