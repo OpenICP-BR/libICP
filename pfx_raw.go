@@ -23,85 +23,64 @@ type pfx_raw struct {
 	MacData    mac_data `asn1:"optional,omitempty"`
 }
 
-func (pfx *pfx_raw) Marshal(password string, cert_pack certificate_pack, key *rsa.PrivateKey) CodedError {
+func marshal_pfx(password string, cert_pack certificate_pack, key *rsa.PrivateKey) ([]byte, CodedError) {
 	var err error
-
-	// Basics
-	pfx.Version = 3
-	pfx.AuthSafe.ContentType = idData
-	safe := make([]safe_bag_octet, 2)
-	pfx.AuthSafe.Content = safe
 
 	// Encrypt private key
 	enc_key_bag := encrypted_private_key_info{}
 	cerr := enc_key_bag.SetKey(key, password)
 	if cerr != nil {
-		return cerr
+		return nil, cerr
 	}
-	safe[1].BagId = idData
-	key_safe := make(safe_contents, 1)
-	key_safe[0].BagId = idPKCS12_8ShroudedKeyBag
-	key_safe[0].BagValue = enc_key_bag
-	safe[1].BagValue = key_safe
 
+	// Wrap certificate
+	cert := pfx_cert_encode{}
+	cert.Value.OidCertBag = idPKCS12_CertBag
+	cert.Value.Value.Value.OidX509Cert = idX509Cert
+	cert.Value.Value.Value.Cert = cert_pack
+	// Get salt
+	salt := make([]byte, 8)
+	_, err = rand.Read(salt)
+	if err != nil {
+		return nil, NewMultiError("faield to generate random salt", ERR_SECURE_RANDOM, nil, err)
+	}
+	// Encode certificate
+	cert_dat, err := asn1.Marshal(cert)
+	if err != nil {
+		return nil, NewMultiError("failed to marshal pfx_cert_encode", ERR_FAILED_TO_ENCODE, nil, err)
+	}
 	// Encrypt certificate
-	part := hack_cert_pack_encode{}
-	subpart := hack_cert_pack_encode_subpart{}
-	subpart.Oid = idData
-	subpart.C, err = asn1.Marshal(cert_pack)
-	fmt.Println("subpart.C = ", to_hex(subpart.C))
-	if err != nil {
-		return NewMultiError("failed to encode certificate", ERR_FAILED_TO_ENCODE, nil, err)
+	cert_enc, cerr := encrypt_PbeWithSHAAnd40BitRC2_CBC(conv_password(password), 2048, salt, cert_dat)
+	if cerr != nil {
+		return nil, cerr
 	}
-	part.A.Oid = idSha1
-	part.A.B, err = asn1.Marshal(subpart)
-	fmt.Printf("part = %+v\n", part)
-	fmt.Println("part.A.B = ", to_hex(part.A.B))
-	if err != nil {
-		return NewMultiError("failed to encode certificate", ERR_FAILED_TO_ENCODE, nil, err)
-	}
-	var dec_value []byte
-	dec_value, err = asn1.Marshal(part)
-	fmt.Println("dec_value = ", to_hex(dec_value))
-	if err != nil {
-		return NewMultiError("failed to encode certificate", ERR_FAILED_TO_ENCODE, nil, err)
-	}
-	cert_bag := safe_bag_cert_hack_decode{}
-	cert_bag.Version = 42
-	cert_bag.Value.Oid = idData
-	cert_bag.Value.Value.Param.Iterations = 2048
-	cert_bag.Value.Value.Param.Salt = make([]byte, 8)
-	_, err = rand.Read(cert_bag.Value.Value.Param.Salt)
-	if err != nil {
-		return NewMultiError("faield to generate random salt", ERR_SECURE_RANDOM, nil, err)
-	}
-	cert_bag.Value.Value.Alg = idPbeWithSHAAnd40BitRC2_CBC
-	cert_bag.Value.EncValue, cerr = encrypt_PbeWithSHAAnd40BitRC2_CBC(conv_password(password), cert_bag.Value.Value.Param.Iterations, cert_bag.Value.Value.Param.Salt, dec_value)
-	safe[0].BagId = idEncryptedData
-	hack := hack_cert_pack_encode{}
-	hack.A.Oid = idEncryptedData
-	hack.A.B, err = asn1.Marshal(cert_bag)
-	fmt.Printf("hack.A.B = %s\n", to_hex(hack.A.B))
-	if err != nil {
-		return NewMultiError("failed to encode certificate", ERR_FAILED_TO_ENCODE, nil, err)
-	}
-	safe[0].BagValue = "hack"
 
-	dat1, err := asn1.Marshal(safe[0])
-	fmt.Printf("safe[0] = %s\n", to_hex(dat1))
+	pfx := pfx_encode{}
+	pfx.Version = 3
+	pfx.AuthSafe.ContentType = idData
 
-	// js, _ := json.Marshal(pfx)
-	// fmt.Printf("%s\n", js)
+	pfx.AuthSafe.Content.Key.OidData = idData
+	pfx.AuthSafe.Content.Key.Value.Value.OidKeyBag = idPKCS12_8ShroudedKeyBag
+	pfx.AuthSafe.Content.Key.Value.Value.Key.Alg.OidPbe = enc_key_bag.Alg.Algorithm
+	pfx.AuthSafe.Content.Key.Value.Value.Key.Alg.Param = enc_key_bag.Alg.Parameters
+	pfx.AuthSafe.Content.Key.Value.Value.Key.EncValue = enc_key_bag.EncData
+
+	pfx.AuthSafe.Content.Cert.OidEncData = idEncryptedData
+	pfx.AuthSafe.Content.Cert.Value.Version = 0
+	pfx.AuthSafe.Content.Cert.Value.Value.OidData = idData
+	pfx.AuthSafe.Content.Cert.Value.Value.Alg.OidPbe = idPbeWithSHAAnd40BitRC2_CBC
+	pfx.AuthSafe.Content.Cert.Value.Value.Alg.Param.Iteractions = 2048
+	pfx.AuthSafe.Content.Cert.Value.Value.Alg.Param.Salt = salt
+	pfx.AuthSafe.Content.Cert.Value.Value.EncValue = cert_enc
+	fmt.Printf("cert_dat = %s\n", to_hex(cert_dat))
 
 	// Final encoding
-	pfx.RawContent = nil
 	dat, err := asn1.Marshal(pfx)
-	fmt.Printf("pfx = %+v\n", to_hex(dat))
+	fmt.Printf("dat = %s\n", to_hex(dat))
 	if err != nil {
-		return NewMultiError("failed to marshal pfx_raw", ERR_FAILED_TO_ENCODE, nil, err)
+		return nil, NewMultiError("failed to marshal pfx_raw", ERR_FAILED_TO_ENCODE, nil, err)
 	}
-	pfx.RawContent = asn1.RawContent(dat)
-	return nil
+	return dat, nil
 }
 
 func (pfx *pfx_raw) Unmarshal(password string) ([]byte, *rsa.PrivateKey, CodedError) {
@@ -216,6 +195,7 @@ func (pfx *pfx_raw) Unmarshal(password string) ([]byte, *rsa.PrivateKey, CodedEr
 				if cerr != nil {
 					continue
 				}
+				fmt.Println(to_hex(item.DecValue))
 
 				// Unmarshal
 				part1 := hack_cert_pack_decode{}
@@ -251,6 +231,61 @@ func (pfx *pfx_raw) Unmarshal(password string) ([]byte, *rsa.PrivateKey, CodedEr
 	}
 
 	return cert_pack, ans_key, nil
+}
+
+type pfx_encode struct {
+	Version  int
+	AuthSafe struct {
+		ContentType asn1.ObjectIdentifier
+		Content     struct {
+			Cert struct {
+				OidEncData asn1.ObjectIdentifier
+				Value      struct {
+					Version int
+					Value   struct {
+						OidData asn1.ObjectIdentifier
+						Alg     struct {
+							OidPbe asn1.ObjectIdentifier
+							Param  struct {
+								Salt        []byte
+								Iteractions int
+							}
+						}
+						EncValue []byte `asn1:"tag:0"`
+					}
+				} `asn1:"tag:0,explicit"`
+			}
+			Key struct {
+				OidData asn1.ObjectIdentifier
+				Value   struct {
+					Value struct {
+						OidKeyBag asn1.ObjectIdentifier
+						Key       struct {
+							Alg struct {
+								OidPbe asn1.ObjectIdentifier
+								Param  []interface{}
+							}
+							EncValue []byte
+						} `asn1:"tag:0,explicit"`
+						Set asn1.RawValue `asn1:"optional,omitempty"`
+					}
+				} `asn1:"tag:0,explicit,octet"`
+			}
+		} `asn1:"tag:0,explicit,octet"`
+	}
+	MacData asn1.RawValue `asn1:"optional,omitempty"`
+}
+
+type pfx_cert_encode struct {
+	Value struct {
+		OidCertBag asn1.ObjectIdentifier
+		Value      struct {
+			Value struct {
+				OidX509Cert asn1.ObjectIdentifier
+				Cert        interface{} `asn1:"tag:0,explicit,octet"`
+			}
+		} `asn1:"tag:0"`
+	}
 }
 
 type mac_data struct {

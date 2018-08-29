@@ -137,12 +137,12 @@ func (pfx PFX) SaveCertToFile(path string) CodedError {
 // Saves the certificate and the private key to a DER file.
 func (pfx PFX) SaveToFile(path, password string) CodedError {
 	// Marshal
-	cerr := pfx.base.Marshal(password, pfx.Cert.base, pfx.rsa_key)
+	dat, cerr := marshal_pfx(password, pfx.Cert.base, pfx.rsa_key)
 	if cerr != nil {
 		return cerr
 	}
 
-	err := ioutil.WriteFile(path, pfx.base.RawContent, 0644)
+	err := ioutil.WriteFile(path, dat, 0644)
 	if err != nil {
 		return NewMultiError("failed to write to file", ERR_FAILED_TO_WRITE_FILE, nil, err)
 	}

@@ -20,11 +20,11 @@ func Test_encrypt_PbeWithSHAAnd3KeyTripleDES_CBC(t *testing.T) {
 }
 
 func Test_pfx_raw_Marshal(t *testing.T) {
-	pfx := pfx_raw{}
 	pack := certificate_pack{}
 	key, _, _ := new_rsa_key(2048)
-	assert.Nil(t, pfx.Marshal("beltrano", pack, key))
-	assert.NotNil(t, pfx.RawContent)
+	dat, cerr := marshal_pfx("beltrano", pack, key)
+	assert.Nil(t, cerr)
+	assert.NotNil(t, dat)
 }
 
 var beltrano_cert_salt []byte = from_hex("676F447E2F72BA4D")

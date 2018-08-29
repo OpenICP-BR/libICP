@@ -93,6 +93,7 @@ func (cert *certificate_pack) SetSignature(dat []byte) {
 }
 
 func (cert *certificate_pack) MarshalCert() CodedError {
+	cert.TBSCertificate.SetAppropriateVersion()
 	dat, err := asn1.Marshal(cert.TBSCertificate)
 	if err != nil {
 		return NewMultiError("failed to marshal TBSCertificate", ERR_FAILED_TO_ENCODE, nil, err)

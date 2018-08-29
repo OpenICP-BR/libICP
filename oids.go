@@ -49,7 +49,9 @@ var idOrganizationName = asn1.ObjectIdentifier{2, 5, 4, 10}
 var idOrganizationalUnitName = asn1.ObjectIdentifier{2, 5, 4, 11}
 var idCommonName = asn1.ObjectIdentifier{2, 5, 4, 3}
 var idEmailName = asn1.ObjectIdentifier{1, 2, 840, 113549, 1, 9, 1}
+var idX509Cert = asn1.ObjectIdentifier{1, 2, 840, 113549, 1, 9, 22, 1}
 var idPKCS12_8ShroudedKeyBag = asn1.ObjectIdentifier{1, 2, 840, 113549, 1, 12, 10, 1, 2}
+var idPKCS12_CertBag = asn1.ObjectIdentifier{1, 2, 840, 113549, 1, 12, 10, 1, 3}
 var idPbeWithSHAAnd3KeyTripleDES_CBC = asn1.ObjectIdentifier{1, 2, 840, 113549, 1, 12, 1, 3}
 var idPbeWithSHAAnd40BitRC2_CBC = asn1.ObjectIdentifier{1, 2, 840, 113549, 1, 12, 1, 6}
 
