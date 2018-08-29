@@ -8,7 +8,6 @@ import (
 	"crypto/rsa"
 	"crypto/sha1"
 	"encoding/binary"
-	"fmt"
 	"math/big"
 	"unicode/utf16"
 
@@ -72,11 +71,9 @@ func marshal_pfx(password string, cert_pack certificate_pack, key *rsa.PrivateKe
 	pfx.AuthSafe.Content.Cert.Value.Value.Alg.Param.Iteractions = 2048
 	pfx.AuthSafe.Content.Cert.Value.Value.Alg.Param.Salt = salt
 	pfx.AuthSafe.Content.Cert.Value.Value.EncValue = cert_enc
-	fmt.Printf("cert_dat = %s\n", to_hex(cert_dat))
 
 	// Final encoding
 	dat, err := asn1.Marshal(pfx)
-	fmt.Printf("dat = %s\n", to_hex(dat))
 	if err != nil {
 		return nil, NewMultiError("failed to marshal pfx_raw", ERR_FAILED_TO_ENCODE, nil, err)
 	}
@@ -184,7 +181,6 @@ func (pfx *pfx_raw) Unmarshal(password string) ([]byte, *rsa.PrivateKey, CodedEr
 			dat = bag_l1.Content.Bytes
 			_, err = asn1.Unmarshal(dat, &hack)
 			if err != nil {
-				fmt.Println(err.Error())
 				continue
 			}
 
@@ -195,13 +191,11 @@ func (pfx *pfx_raw) Unmarshal(password string) ([]byte, *rsa.PrivateKey, CodedEr
 				if cerr != nil {
 					continue
 				}
-				fmt.Println(to_hex(item.DecValue))
 
 				// Unmarshal
 				part1 := hack_cert_pack_decode{}
 				_, err := asn1.Unmarshal(item.DecValue, &part1)
 				if err != nil {
-					fmt.Println(err.Error())
 					continue
 				}
 				part2 := hack_cert_pack_decode_subpart{}
@@ -482,9 +476,6 @@ func (s *encrypted_private_key_info) GetData(password string) CodedError {
 		real_decrypt = decrypt_PbeWithSHAAnd3KeyTripleDES_CBC
 
 		if !(ok1 && ok2) {
-			println("failed")
-			println(ok1)
-			println(ok2)
 			merr := NewMultiError("unsupported parameters", ERR_UNKOWN_ALGORITHM, nil)
 			merr.SetParam("alg", s.Alg.Algorithm.String())
 			merr.SetParam("alg-param", s.Alg.Parameters)

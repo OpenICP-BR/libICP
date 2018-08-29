@@ -1,8 +1,10 @@
 package libICP
 
 import (
+	"math/big"
 	"testing"
 
+	"github.com/OpenICP-BR/asn1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -21,9 +23,16 @@ func Test_encrypt_PbeWithSHAAnd3KeyTripleDES_CBC(t *testing.T) {
 
 func Test_pfx_raw_Marshal(t *testing.T) {
 	pack := certificate_pack{}
+	pack.SignatureAlgorithm.Algorithm = idRSAEncryption
+	pack.TBSCertificate.Signature.Algorithm = idRSAEncryption
+	pack.TBSCertificate.SubjectPublicKeyInfo.Algorithm.Algorithm = idRSAEncryption
+	pack.TBSCertificate.SerialNumber = big.NewInt(10)
+	_, cerr := asn1.Marshal(pack.TBSCertificate)
+
+	require.Nil(t, cerr)
 	key, _, _ := new_rsa_key(2048)
 	dat, cerr := marshal_pfx("beltrano", pack, key)
-	assert.Nil(t, cerr)
+	require.Nil(t, cerr)
 	assert.NotNil(t, dat)
 }
 
