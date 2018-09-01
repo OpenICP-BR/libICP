@@ -9,6 +9,10 @@ import (
 	"github.com/mkideal/cli"
 )
 
+var FgGreen = "\u001b[32m"
+var Bold = "\u001b[1m"
+var Reset = "\u001b[0m"
+
 var help = cli.HelpCommand("display help information (see man page for examples)")
 
 type rootT struct {

@@ -15,6 +15,12 @@ import (
 	"github.com/OpenICP-BR/libICP/dependencies/rc2"
 )
 
+func debug_err(err error) {
+	// function, file, line := get_stack_pos(2)
+	// fmt.Printf("%s %s %d: ", function, file, line)
+	// fmt.Println(err)
+}
+
 type pfx_raw struct {
 	RawContent asn1.RawContent
 	Version    int
@@ -119,6 +125,7 @@ func (pfx *pfx_raw) Unmarshal(password string) ([]byte, *rsa.PrivateKey, CodedEr
 			safe2 := make([]content_info_decode, 0)
 			_, err = asn1.Unmarshal(dat, &safe2)
 			if err != nil {
+				debug_err(err)
 				continue
 			}
 			// Find the right bag
@@ -131,6 +138,7 @@ func (pfx *pfx_raw) Unmarshal(password string) ([]byte, *rsa.PrivateKey, CodedEr
 					dat = bag_l2.Content.Bytes
 					_, err = asn1.Unmarshal(dat, &item_tmp)
 					if err != nil {
+						debug_err(err)
 						continue
 					}
 
@@ -139,6 +147,7 @@ func (pfx *pfx_raw) Unmarshal(password string) ([]byte, *rsa.PrivateKey, CodedEr
 					dat = item_tmp.Alg.Parameters.FullBytes
 					_, err = asn1.Unmarshal(dat, &param)
 					if err != nil {
+						debug_err(err)
 						continue
 					}
 
@@ -153,6 +162,7 @@ func (pfx *pfx_raw) Unmarshal(password string) ([]byte, *rsa.PrivateKey, CodedEr
 					// Decode data
 					cerr := item.GetData(password)
 					if cerr != nil {
+						debug_err(cerr)
 						continue
 					}
 
@@ -161,6 +171,7 @@ func (pfx *pfx_raw) Unmarshal(password string) ([]byte, *rsa.PrivateKey, CodedEr
 					dat = item.DecData
 					_, err = asn1.Unmarshal(dat, &key_info)
 					if err != nil {
+						debug_err(err)
 						continue
 					}
 
@@ -168,6 +179,7 @@ func (pfx *pfx_raw) Unmarshal(password string) ([]byte, *rsa.PrivateKey, CodedEr
 					var new_key *rsa.PrivateKey
 					new_key, cerr = unmarshal_rsa_private_key(key_info.PrivateKey)
 					if cerr != nil {
+						debug_err(cerr)
 						continue
 					} else {
 						ans_key = new_key
@@ -189,24 +201,24 @@ func (pfx *pfx_raw) Unmarshal(password string) ([]byte, *rsa.PrivateKey, CodedEr
 				var cerr CodedError
 				item.DecValue, cerr = decrypt_PbeWithSHAAnd40BitRC2_CBC(conv_password(password), item.Value.Param.Iterations, item.Value.Param.Salt, item.EncValue)
 				if cerr != nil {
+					debug_err(cerr)
 					continue
 				}
 
 				// Unmarshal
 				part1 := hack_cert_pack_decode{}
-				_, err := asn1.Unmarshal(item.DecValue, &part1)
-				if err != nil {
-					continue
-				}
+				asn1.Unmarshal(item.DecValue, &part1) // error ignored on propuse
 				part2 := hack_cert_pack_decode_subpart{}
 				dat = part1.A.B.Bytes
 				_, err = asn1.Unmarshal(dat, &part2)
 				if err != nil {
+					debug_err(err)
 					continue
 				}
 				dat = part2.C.Bytes
 				_, err = asn1.Unmarshal(dat, &cert_pack)
 				if err != nil {
+					debug_err(err)
 					continue
 				}
 			} else {
@@ -216,11 +228,11 @@ func (pfx *pfx_raw) Unmarshal(password string) ([]byte, *rsa.PrivateKey, CodedEr
 	}
 
 	if ans_key == nil {
-		merr := NewMultiError("failed to get private key", ERR_PARSE_PFX, nil, err)
+		merr := NewMultiError("failed to get private key", ERR_PARSE_PFX, nil)
 		return cert_pack, ans_key, merr
 	}
 	if cert_pack == nil {
-		merr := NewMultiError("failed to get certificate", ERR_PARSE_PFX, nil, err)
+		merr := NewMultiError("failed to get certificate", ERR_PARSE_PFX, nil)
 		return cert_pack, ans_key, merr
 	}
 

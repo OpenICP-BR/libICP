@@ -56,7 +56,7 @@ A golang library for CAdES (CMS Advanced Electronic Signatures) for the Brazilia
 # Limitations
 
   * Only idPbeWithSHAAnd3KeyTripleDES_CBC (1.2.840.113549.1.12.1.3) using SHA1 is supported for key encryption. (this will change in the future)
-  * The PFX handling is a total mess that should be rewritten at some point.
+  * The PFX decoding is a total mess that should be rewritten at some point.
 
 # License
 
