@@ -33,7 +33,7 @@ func marshal_pfx(password string, cert_pack certificate_pack, key *rsa.PrivateKe
 	}
 
 	// Wrap certificate
-	cert := pfx_cert_encode{}
+	cert := pfx_encode_cert_inner{}
 	cert.Value.OidCertBag = idPKCS12_CertBag
 	cert.Value.Value.Value.OidX509Cert = idX509Cert
 	cert.Value.Value.Value.Cert = cert_pack
@@ -46,7 +46,7 @@ func marshal_pfx(password string, cert_pack certificate_pack, key *rsa.PrivateKe
 	// Encode certificate
 	cert_dat, err := asn1.Marshal(cert)
 	if err != nil {
-		return nil, NewMultiError("failed to marshal pfx_cert_encode", ERR_FAILED_TO_ENCODE, nil, err)
+		return nil, NewMultiError("failed to marshal pfx_encode_cert_inner", ERR_FAILED_TO_ENCODE, nil, err)
 	}
 	// Encrypt certificate
 	cert_enc, cerr := encrypt_PbeWithSHAAnd40BitRC2_CBC(conv_password(password), 2048, salt, cert_dat)
@@ -232,45 +232,49 @@ type pfx_encode struct {
 	AuthSafe struct {
 		ContentType asn1.ObjectIdentifier
 		Content     struct {
-			Cert struct {
-				OidEncData asn1.ObjectIdentifier
-				Value      struct {
-					Version int
-					Value   struct {
-						OidData asn1.ObjectIdentifier
-						Alg     struct {
-							OidPbe asn1.ObjectIdentifier
-							Param  struct {
-								Salt        []byte
-								Iteractions int
-							}
-						}
-						EncValue []byte `asn1:"tag:0"`
-					}
-				} `asn1:"tag:0,explicit"`
-			}
-			Key struct {
-				OidData asn1.ObjectIdentifier
-				Value   struct {
-					Value struct {
-						OidKeyBag asn1.ObjectIdentifier
-						Key       struct {
-							Alg struct {
-								OidPbe asn1.ObjectIdentifier
-								Param  []interface{}
-							}
-							EncValue []byte
-						} `asn1:"tag:0,explicit"`
-						Set asn1.RawValue `asn1:"optional,omitempty"`
-					}
-				} `asn1:"tag:0,explicit,octet"`
-			}
+			Cert pfx_encode_cert_outer
+			Key  pfx_encode_key
 		} `asn1:"tag:0,explicit,octet"`
 	}
 	MacData asn1.RawValue `asn1:"optional,omitempty"`
 }
 
-type pfx_cert_encode struct {
+type pfx_encode_key struct {
+	OidData asn1.ObjectIdentifier
+	Value   struct {
+		Value struct {
+			OidKeyBag asn1.ObjectIdentifier
+			Key       struct {
+				Alg struct {
+					OidPbe asn1.ObjectIdentifier
+					Param  []interface{}
+				}
+				EncValue []byte
+			} `asn1:"tag:0,explicit"`
+			Set asn1.RawValue `asn1:"optional,omitempty"`
+		}
+	} `asn1:"tag:0,explicit,octet"`
+}
+
+type pfx_encode_cert_outer struct {
+	OidEncData asn1.ObjectIdentifier
+	Value      struct {
+		Version int
+		Value   struct {
+			OidData asn1.ObjectIdentifier
+			Alg     struct {
+				OidPbe asn1.ObjectIdentifier
+				Param  struct {
+					Salt        []byte
+					Iteractions int
+				}
+			}
+			EncValue []byte `asn1:"tag:0"`
+		}
+	} `asn1:"tag:0,explicit"`
+}
+
+type pfx_encode_cert_inner struct {
 	Value struct {
 		OidCertBag asn1.ObjectIdentifier
 		Value      struct {
