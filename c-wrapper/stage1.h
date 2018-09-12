@@ -1,6 +1,6 @@
 /* Created by "go tool cgo" - DO NOT EDIT. */
 
-/* package command-line-arguments */
+/* package github.com/OpenICP-BR/libICP/c-wrapper/stage1 */
 
 
 #line 1 "cgo-builtin-prolog"
@@ -17,6 +17,10 @@ typedef struct { const char *p; ptrdiff_t n; } _GoString_;
 /* Start of preamble from import "C" comments.  */
 
 
+#line 3 "/Users/gqueiroz/go/src/github.com/OpenICP-BR/libICP/c-wrapper/stage1/stage1.go"
+ void set_void_vet_ptr (void **vec, int i, void *ptr);
+
+#line 1 "cgo-generated-wrapper"
 
 
 /* End of preamble from import "C" comments.  */
@@ -71,9 +75,13 @@ extern char* CodedErrorGetErrorStr(void* p0);
 
 extern int CodedErrorGetErrorInt(void* p0);
 
-extern void* NewCertificate();
+extern char* CertSubject(void* p0);
 
-extern void NewCertificateFromFile(GoString p0, GoSlice p1, GoSlice p2);
+extern char* CertIssuer(void* p0);
+
+extern char* ErrorStr(void* p0);
+
+extern int NewCertificateFromFile(char* p0, void** p1, void** p2, GoInt p3);
 
 #ifdef __cplusplus
 }
