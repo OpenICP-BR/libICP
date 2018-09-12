@@ -65,6 +65,12 @@ extern "C" {
 #endif
 
 
+extern char* Version();
+
+extern char* CodedErrorGetErrorStr(void* p0);
+
+extern int CodedErrorGetErrorInt(void* p0);
+
 extern void* NewCertificate();
 
 extern void NewCertificateFromFile(GoString p0, GoSlice p1, GoSlice p2);

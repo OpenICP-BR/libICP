@@ -15,6 +15,23 @@ func new_vec_ptr(src []interface{}) []unsafe.Pointer {
 	return ans
 }
 
+//export Version
+func Version() *C.char {
+	return C.CString(libICP.Version())
+}
+
+//export CodedErrorGetErrorStr
+func CodedErrorGetErrorStr(ptr unsafe.Pointer) *C.char {
+	err := *(*libICP.CodedError)(ptr)
+	return C.CString(err.CodeString())
+}
+
+//export CodedErrorGetErrorInt
+func CodedErrorGetErrorInt(ptr unsafe.Pointer) C.int {
+	err := *(*libICP.CodedError)(ptr)
+	return C.int(err.Code())
+}
+
 //export NewCertificate
 func NewCertificate() unsafe.Pointer {
 	cert := new(libICP.Certificate)
