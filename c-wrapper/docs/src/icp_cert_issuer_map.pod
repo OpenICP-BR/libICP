@@ -2,19 +2,19 @@
 
 =head1 NAME
 
-icp_cert - A digital certificate
+icp_cert_issuer_map - Gets the certificate issuer as an array of L<icp_name_entry(3)>
 
 =head1 SYNOPSIS
 
-A X.509 digital certificate.
+  #include "libICP.h"
+
+  name_entry* icp_cert_issuer_map(icp_cert cert);
 
 =head1 SEE ALSO
 
 L<libICP(3)> - General library documentation
 
-L<icp_new_cert_from_file(3)>
-
-L<icp_free_cert(3)>, L<icp_free_certs(3)>
+L<icp_cert(3)>
 
 L<icp_cert_subject(3)>, L<icp_cert_subject_map(3)>, L<icp_cert_issuer(3)>, L<icp_cert_issuer_map(3)>
 

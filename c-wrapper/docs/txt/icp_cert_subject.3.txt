@@ -1,0 +1,23 @@
+icp_cert_subject(3)               OpenICP-BR               icp_cert_subject(3)
+
+
+
+NNAAMMEE
+       icp_cert_subject - Gets the certificate subject as string
+
+SSYYNNOOPPSSIISS
+         #include "libICP.h"
+
+         char* icp_cert_subject(icp_cert cert);
+
+SSEEEE AALLSSOO
+       _l_i_b_I_C_P(3) - General library documentation
+
+       _i_c_p___c_e_r_t(3)
+
+       _i_c_p___c_e_r_t___s_u_b_j_e_c_t(3), _i_c_p___c_e_r_t___s_u_b_j_e_c_t___m_a_p(3), _i_c_p___c_e_r_t___i_s_s_u_e_r(3),
+       _i_c_p___c_e_r_t___i_s_s_u_e_r___m_a_p(3)
+
+
+
+0.0.1                             2018-09-13               icp_cert_subject(3)

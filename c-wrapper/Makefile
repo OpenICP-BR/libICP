@@ -50,11 +50,12 @@ docs/html/%.3.html: docs/txt/%.3.txt
 clean:
 	rm *.a *.o *.so
 
-install: libICP.a libICP.h $(MANFILES)
+install: libICP.a libICP.h $(MANFILES) $(HTMLFILES)
 	-mkdir -pv $(INSTALL_PATH)/share/man/man3/
 	-mkdir -pv $(INSTALL_PATH)/include/
 	-mkdir -pv $(INSTALL_PATH)/lib/
 	cp docs/man/*.3 $(INSTALL_PATH)/share/man/man3/
+	cp docs/html/*.3.html $(INSTALL_PATH)/share/man/man3/
 	cp libICP.h $(INSTALL_PATH)/include/
 	cp libICP.a $(INSTALL_PATH)/lib
 

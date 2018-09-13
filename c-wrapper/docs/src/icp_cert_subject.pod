@@ -2,19 +2,19 @@
 
 =head1 NAME
 
-icp_cert - A digital certificate
+icp_cert_subject - Gets the certificate subject as string
 
 =head1 SYNOPSIS
 
-A X.509 digital certificate.
+  #include "libICP.h"
+  
+  char* icp_cert_subject(icp_cert cert);
 
 =head1 SEE ALSO
 
 L<libICP(3)> - General library documentation
 
-L<icp_new_cert_from_file(3)>
-
-L<icp_free_cert(3)>, L<icp_free_certs(3)>
+L<icp_cert(3)>
 
 L<icp_cert_subject(3)>, L<icp_cert_subject_map(3)>, L<icp_cert_issuer(3)>, L<icp_cert_issuer_map(3)>
 

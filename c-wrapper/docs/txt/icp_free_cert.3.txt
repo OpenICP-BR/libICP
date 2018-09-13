@@ -1,0 +1,20 @@
+icp_free_cert(3)                  OpenICP-BR                  icp_free_cert(3)
+
+
+
+NNAAMMEE
+       icp_free_cert - Frees a single icp_cert(3)
+
+SSYYNNOOPPSSIISS
+         #include "libICP.h"
+
+         void icp_free_cert(icp_cert cert);
+
+SSEEEE AALLSSOO
+       _l_i_b_I_C_P(3) - General library documentation
+
+       _i_c_p___f_r_e_e___c_e_r_t_s(3)
+
+
+
+0.0.1                             2018-09-13                  icp_free_cert(3)

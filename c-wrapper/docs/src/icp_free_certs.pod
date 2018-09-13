@@ -1,0 +1,19 @@
+=pod
+
+=head1 NAME
+
+icp_free_certs - Frees an array of L<icp_cert(3)>
+
+=head1 SYNOPSIS
+
+  #include "libICP.h"
+
+  void icp_free_certs(icp_cert *certs);
+
+=head1 SEE ALSO
+
+L<libICP(3)> - General library documentation
+
+L<icp_free_cert(3)>
+
+=cut
