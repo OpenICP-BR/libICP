@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-icp_errc_code - Returns the erro code as a string from a L<icp_errc(3)>
+icp_errc_code - Returns the error code as a string from a L<icp_errc(3)>
 
 =head1 SYNOPSIS
 

@@ -128,25 +128,19 @@
 .rm #[ #] #H #V #F C
 .\" ========================================================================
 .\"
-.IX Title "icp_errc 3"
-.TH icp_errc 3 "2018-09-13" "0.0.1" "OpenICP-BR"
+.IX Title "icp_cert 3"
+.TH icp_cert 3 "2018-09-13" "0.0.1" "OpenICP-BR"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
 .nh
 .SH "NAME"
-icp_errc \- A coded error
+icp_cert \- A digital certificate
 .SH "SYNOPSIS"
 .IX Header "SYNOPSIS"
-A type that describes an error and carries both a text message and an error code. This last part is available as an int and as a string.
-.PP
-All icp_errc \*(L"inherit\*(R" \fIicp_err\fR\|(3).
+A X.509 digital certificate.
 .SH "SEE ALSO"
 .IX Header "SEE ALSO"
 \&\fIlibICP\fR\|(3) \- General library documentation
 .PP
-\&\fIicp_errc_code\fR\|(3) \- To get the int code
-.PP
-\&\fIicp_errc_code_str\fR\|(3) \- To get the string
-.PP
-\&\fIicp_err_str\fR\|(3) \- To get the text message
+\&\fIicp_new_cert_from_file\fR\|(3)

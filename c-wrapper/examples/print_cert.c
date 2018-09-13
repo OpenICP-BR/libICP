@@ -4,6 +4,7 @@
 int main (int argc, char **argv) {
 	icp_cert *certs;
 	icp_errc *errcs;
+	name_entry *entries;
 	int ok;
 
 	if (argc < 2) {
@@ -22,6 +23,19 @@ int main (int argc, char **argv) {
 	for (int i=0; certs != NULL && certs[i] != NULL; i++) {
 		printf("icp_cert_subject(certs[%d]) = %s\n", i, icp_cert_subject(certs[i]));
 		printf("icp_cert_issuer(certs[%d])  = %s\n", i, icp_cert_issuer(certs[i]));
+		entries = icp_cert_issuer_map(certs[i]);
+		printf("icp_cert_issuer_map(certs[%d]):\n", i);
+		for (int j=0; entries[j].key != NULL; j++) {
+			printf("\tKey: %s\tValue: %s\n", entries[j].key, entries[j].val);
+		}
+		icp_free_name_entries(entries);
+
+		entries = icp_cert_subject_map(certs[i]);
+		printf("icp_cert_subject_map(certs[%d]):\n", i);
+		for (int j=0; entries[j].key != NULL; j++) {
+			printf("\tKey: %s\tValue: %s\n", entries[j].key, entries[j].val);
+		}
+		icp_free_name_entries(entries);
 	}
 	return 0;
 }

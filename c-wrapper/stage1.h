@@ -18,7 +18,7 @@ typedef struct { const char *p; ptrdiff_t n; } _GoString_;
 
 
 #line 3 "/Users/gqueiroz/go/src/github.com/OpenICP-BR/libICP/c-wrapper/stage1/stage1.go"
- void set_void_vet_ptr (void **vec, int i, void *ptr);
+ #import "helper.h"
 
 #line 1 "cgo-generated-wrapper"
 
@@ -76,6 +76,10 @@ extern char* CodedErrorGetErrorStr(void* p0);
 extern int CodedErrorGetErrorInt(void* p0);
 
 extern char* CertSubject(void* p0);
+
+extern void CertSubjectMap(void* p0, name_entry* p1);
+
+extern void CertIssuerMap(void* p0, name_entry* p1);
 
 extern char* CertIssuer(void* p0);
 

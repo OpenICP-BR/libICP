@@ -1,6 +1,6 @@
 package main
 
-// void set_void_vet_ptr (void **vec, int i, void *ptr);
+// #import "helper.h"
 import "C"
 
 import (
@@ -39,6 +39,28 @@ func CodedErrorGetErrorInt(ptr unsafe.Pointer) C.int {
 func CertSubject(ptr unsafe.Pointer) *C.char {
 	cert := pointer.Restore(ptr).(*libICP.Certificate)
 	return C.CString(cert.Subject)
+}
+
+//export CertSubjectMap
+func CertSubjectMap(cert_ptr unsafe.Pointer, output *C.name_entry) {
+	cert := pointer.Restore(cert_ptr).(*libICP.Certificate)
+	i := 0
+	for key, val := range cert.SubjectMap {
+		C.set_name_entry_key(output, C.int(i), C.CString(key))
+		C.set_name_entry_val(output, C.int(i), C.CString(val))
+		i++
+	}
+}
+
+//export CertIssuerMap
+func CertIssuerMap(cert_ptr unsafe.Pointer, output *C.name_entry) {
+	cert := pointer.Restore(cert_ptr).(*libICP.Certificate)
+	i := 0
+	for key, val := range cert.IssuerMap {
+		C.set_name_entry_key(output, C.int(i), C.CString(key))
+		C.set_name_entry_val(output, C.int(i), C.CString(val))
+		i++
+	}
 }
 
 //export CertIssuer

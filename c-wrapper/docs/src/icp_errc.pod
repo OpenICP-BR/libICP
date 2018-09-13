@@ -8,6 +8,8 @@ icp_errc - A coded error
 
 A type that describes an error and carries both a text message and an error code. This last part is available as an int and as a string.
 
+All icp_errc "inherit" L<icp_err(3)>.
+
 =head1 SEE ALSO
 
 L<libICP(3)> - General library documentation

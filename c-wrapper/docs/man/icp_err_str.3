@@ -128,25 +128,30 @@
 .rm #[ #] #H #V #F C
 .\" ========================================================================
 .\"
-.IX Title "icp_errc 3"
-.TH icp_errc 3 "2018-09-13" "0.0.1" "OpenICP-BR"
+.IX Title "icp_err_str 3"
+.TH icp_err_str 3 "2018-09-13" "0.0.1" "OpenICP-BR"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
 .nh
 .SH "NAME"
-icp_errc \- A coded error
+icp_err_str \- Returns the error text message as a string from a icp_err(3) and icp_errc(3)
 .SH "SYNOPSIS"
 .IX Header "SYNOPSIS"
-A type that describes an error and carries both a text message and an error code. This last part is available as an int and as a string.
-.PP
-All icp_errc \*(L"inherit\*(R" \fIicp_err\fR\|(3).
+.Vb 1
+\&  #include "libICP.h"
+\&
+\&  char* icp_err_str(icp_err err);
+.Ve
+.SH "EXAMPLE"
+.IX Header "EXAMPLE"
+.Vb 1
+\&  #include "libICP.h"
+\&  
+\&  printf("%s\en", icp_err_str(some_err));
+.Ve
 .SH "SEE ALSO"
 .IX Header "SEE ALSO"
 \&\fIlibICP\fR\|(3) \- General library documentation
 .PP
-\&\fIicp_errc_code\fR\|(3) \- To get the int code
-.PP
-\&\fIicp_errc_code_str\fR\|(3) \- To get the string
-.PP
-\&\fIicp_err_str\fR\|(3) \- To get the text message
+\&\fIicp_err\fR\|(3)

@@ -23,13 +23,13 @@ HTMLFILES := ${subst docs/src,docs/html,$(patsubst %.pod,%.3.html,$(DOCFILES))}
 
 all: libICP.a
 
-stage1.a: stage1/stage1.go
+stage1.a: stage1/*
 	cd stage1 && goimports -w .
 	cd stage1 && go fmt
 	cd stage1 && go build -v -i -o ../$@ -buildmode=c-archive
 
-stage2.o: stage1.h stage2/stage2.c
-	$(CC) -c stage2/stage2.c -o $@ -I.
+stage2.o: stage2/stage2.c stage1.a
+	$(CC) -c stage2/stage2.c -o $@ -I. -Istage1
 
 libICP.a: stage1.a stage2.o
 	libtool -o libICP.a stage1.a stage2.o

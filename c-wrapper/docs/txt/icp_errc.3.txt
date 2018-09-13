@@ -9,6 +9,8 @@ SSYYNNOOPPSSIISS
        A type that describes an error and carries both a text message and an
        error code. This last part is available as an int and as a string.
 
+       All icp_errc "inherit" _i_c_p___e_r_r(3).
+
 SSEEEE AALLSSOO
        _l_i_b_I_C_P(3) - General library documentation
 

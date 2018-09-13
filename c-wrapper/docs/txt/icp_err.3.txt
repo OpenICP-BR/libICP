@@ -1,0 +1,18 @@
+icp_err(3)                        OpenICP-BR                        icp_err(3)
+
+
+
+NNAAMMEE
+       icp_err - An error
+
+SSYYNNOOPPSSIISS
+       A type that describes an error as a text message.
+
+SSEEEE AALLSSOO
+       _l_i_b_I_C_P(3) - General library documentation
+
+       _i_c_p___e_r_r___s_t_r(3) - To get the text message
+
+
+
+0.0.1                             2018-09-13                        icp_err(3)

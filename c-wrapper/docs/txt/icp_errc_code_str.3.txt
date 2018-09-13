@@ -3,7 +3,7 @@ icp_errc_code_str(3)              OpenICP-BR              icp_errc_code_str(3)
 
 
 NNAAMMEE
-       icp_errc_code - Returns the erro code as a string from a icp_errc(3)
+       icp_errc_code - Returns the error code as a string from a icp_errc(3)
 
 SSYYNNOOPPSSIISS
          #include "libICP.h"

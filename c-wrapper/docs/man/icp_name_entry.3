@@ -128,25 +128,29 @@
 .rm #[ #] #H #V #F C
 .\" ========================================================================
 .\"
-.IX Title "icp_errc 3"
-.TH icp_errc 3 "2018-09-13" "0.0.1" "OpenICP-BR"
+.IX Title "icp_name_entry 3"
+.TH icp_name_entry 3 "2018-09-13" "0.0.1" "OpenICP-BR"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
 .nh
 .SH "NAME"
-icp_errc \- A coded error
+icp_name_entry \- A string key value pair
 .SH "SYNOPSIS"
 .IX Header "SYNOPSIS"
-A type that describes an error and carries both a text message and an error code. This last part is available as an int and as a string.
-.PP
-All icp_errc \*(L"inherit\*(R" \fIicp_err\fR\|(3).
+.Vb 3
+\&  typedef struct {
+\&        char *key, *val;
+\&  } name_entry;
+.Ve
 .SH "SEE ALSO"
 .IX Header "SEE ALSO"
 \&\fIlibICP\fR\|(3) \- General library documentation
 .PP
-\&\fIicp_errc_code\fR\|(3) \- To get the int code
+\&\fIicp_cert_issuer_map\fR\|(3)
 .PP
-\&\fIicp_errc_code_str\fR\|(3) \- To get the string
+\&\fIicp_cert_subject_map\fR\|(3)
 .PP
-\&\fIicp_err_str\fR\|(3) \- To get the text message
+\&\fIicp_free_name_entry\fR\|(3)
+.PP
+\&\fIicp_free_name_entries\fR\|(3)

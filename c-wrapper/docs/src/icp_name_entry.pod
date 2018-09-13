@@ -1,0 +1,26 @@
+=pod
+
+=head1 NAME
+
+icp_name_entry - A string key value pair
+
+=head1 SYNOPSIS
+
+  typedef struct {
+	char *key, *val;
+  } name_entry;
+
+=head1 SEE ALSO
+
+L<libICP(3)> - General library documentation
+
+L<icp_cert_issuer_map(3)>
+
+L<icp_cert_subject_map(3)>
+
+L<icp_free_name_entry(3)>
+
+L<icp_free_name_entries(3)>
+
+
+=cut

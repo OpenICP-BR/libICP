@@ -1,0 +1,18 @@
+=pod
+
+=head1 NAME
+
+icp_cert - A digital certificate
+
+=head1 SYNOPSIS
+
+A X.509 digital certificate.
+
+=head1 SEE ALSO
+
+L<libICP(3)> - General library documentation
+
+L<icp_new_cert_from_file(3)>
+
+
+=cut

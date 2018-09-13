@@ -1,0 +1,25 @@
+=pod
+
+=head1 NAME
+
+icp_err_str - Returns the error text message as a string from a L<icp_err(3)> and L<icp_errc(3)>
+
+=head1 SYNOPSIS
+
+  #include "libICP.h"
+
+  char* icp_err_str(icp_err err);
+
+=head1 EXAMPLE
+
+  #include "libICP.h"
+  
+  printf("%s\n", icp_err_str(some_err));
+
+=head1 SEE ALSO
+
+L<libICP(3)> - General library documentation
+
+L<icp_err(3)>
+
+=cut

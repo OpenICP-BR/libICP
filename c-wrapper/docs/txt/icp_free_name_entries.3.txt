@@ -1,0 +1,20 @@
+icp_free_name_entries(3)          OpenICP-BR          icp_free_name_entries(3)
+
+
+
+NNAAMMEE
+       icp_free_name_entries - Frees an array of icp_name_entry(3)
+
+SSYYNNOOPPSSIISS
+         #include "libICP.h"
+
+         void free_name_entries(name_entry *entries);
+
+SSEEEE AALLSSOO
+       _l_i_b_I_C_P(3) - General library documentation
+
+       _i_c_p___n_a_m_e___e_n_t_r_y(3)
+
+
+
+0.0.1                             2018-09-13          icp_free_name_entries(3)

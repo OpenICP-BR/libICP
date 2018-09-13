@@ -1,5 +1,3 @@
-icp_new_cert_from_file
-
 =pod
 
 =head1 NAME

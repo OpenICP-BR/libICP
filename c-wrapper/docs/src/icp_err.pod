@@ -1,0 +1,17 @@
+=pod
+
+=head1 NAME
+
+icp_err - An error
+
+=head1 SYNOPSIS
+
+A type that describes an error as a text message.
+
+=head1 SEE ALSO
+
+L<libICP(3)> - General library documentation
+
+L<icp_err_str(3)> - To get the text message
+
+=cut
