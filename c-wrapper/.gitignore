@@ -5,3 +5,7 @@
 *.dll
 *.exe
 *.bin
+
+docs/html/*
+docs/man/*
+docs/txt/*
