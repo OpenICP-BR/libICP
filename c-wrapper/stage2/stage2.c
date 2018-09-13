@@ -5,12 +5,12 @@ char* icp_version() {
 	return Version();
 }
 
-int icp_cerr_code(icp_cerr cerr) {
-	return CodedErrorGetErrorInt(cerr);
+int icp_errc_code(icp_errc errc) {
+	return CodedErrorGetErrorInt(errc);
 }
 
-char* icp_cerr_code_str(icp_cerr cerr) {
-	return CodedErrorGetErrorStr(cerr);
+char* icp_errc_code_str(icp_errc errc) {
+	return CodedErrorGetErrorStr(errc);
 }
 
 char* icp_err_str(icp_err err) {
@@ -25,13 +25,13 @@ char* icp_cert_issuer(icp_cert cert) {
 	return CertIssuer(cert);
 }
 
-int icp_new_cert_from_file(char *path, icp_cert **ret_certs, icp_cerr **ret_cerrs) {
+int icp_new_cert_from_file(char *path, icp_cert **ret_certs, icp_errc **ret_errcs) {
 	// Make buffers
-	int buf_size = 9;
+	int buf_size = 64;
 	icp_cert *certs = calloc(buf_size+1, sizeof(icp_cert));
-	icp_cerr *cerrs = calloc(buf_size+1, sizeof(icp_cerr));
+	icp_errc *errcs = calloc(buf_size+1, sizeof(icp_errc));
 	*ret_certs = certs;
-	*ret_cerrs = cerrs;
+	*ret_errcs = errcs;
 
-	return NewCertificateFromFile(path, certs, cerrs, buf_size);
+	return NewCertificateFromFile(path, certs, errcs, buf_size);
 }

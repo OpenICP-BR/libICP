@@ -1,0 +1,54 @@
+icp_new_cert_from_file
+
+=pod
+
+=head1 NAME
+
+icp_new_cert_from_file - Loads one or more L<icp_cert(3)> from a PEM or DER file
+
+=head1 SYNOPSIS
+
+  #include "libICP.h"
+
+  int icp_new_cert_from_file(char *path, icp_cert **certs, icp_errc **errcs);
+
+=head1 EXAMPLE
+
+  #include "libICP.h"
+  
+  icp_cert *certs;
+  icp_errc *errcs;
+  int ok;
+
+  ok = icp_new_cert_from_file("my_certs.pem", &certs, &errcs);
+  printf("icp_new_cert_from_file(...) = %d\n", ok);
+  for (int i=0; errcs != NULL && errcs[i] != NULL; i++) {
+    printf("errcs[%d]: %d %s\n", i, icp_errc_code(errcs[i]), icp_errc_code_str(errcs[i]));
+    printf("errcs[%d]: %s\n", i, icp_err_str(errcs[i]));    
+  }
+  for (int i=0; certs != NULL && certs[i] != NULL; i++) {
+    printf("icp_cert_subject(certs[%d]) = %s\n", i, icp_cert_subject(certs[i]));
+    printf("icp_cert_issuer(certs[%d])  = %s\n", i, icp_cert_issuer(certs[i]));
+  }
+
+=head1 PARAMETERS
+
+path is a NULL-terminated string pointing to the file. (immutable)
+
+icp_cert (output) is a pointer to a NULL-terminated array of L<icp_cert(3)> which will hold all the certificates from the original file.
+
+icp_errc (output) is a pointer to a NULL-terminated array of L<icp_errc(3)> which will hold all the errors found during the reading process.
+
+=head1 RETURN VALUE
+
+icp_new_cert_from_file returns the number of errors found.
+
+=head1 SEE ALSO
+
+L<libICP(3)> - General library documentation
+
+L<icp_errc(3)>
+
+L<icp_cert(3)>
+
+=cut

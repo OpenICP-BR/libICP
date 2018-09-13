@@ -1,0 +1,21 @@
+=pod
+
+=head1 NAME
+
+icp_errc - A coded error
+
+=head1 SYNOPSIS
+
+A type that describes an error and carries both a text message and an error code. This last part is available as an int and as a string.
+
+=head1 SEE ALSO
+
+L<libICP(3)> - General library documentation
+
+L<icp_errc_code(3)> - To get the int code
+
+L<icp_errc_code_str(3)> - To get the string
+
+L<icp_err_str(3)> - To get the text message
+
+=cut

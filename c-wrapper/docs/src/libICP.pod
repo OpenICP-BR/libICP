@@ -1,0 +1,29 @@
+icp_new_cert_from_file
+
+=pod
+
+=head1 NAME
+
+libICP - An ICP-Brasil CAdES library (part of the OpenICP-BR project)
+
+=head1 SYNOPSIS
+
+libICP is a golang library for processing ICP-Brasil CAdES digital signatures.
+
+These man pages document the C wrapper for the original library.
+
+=head1 COMPILATION
+
+To compile a program that uses this library, simply run:
+
+  gcc my_program.c -o my_program /path/to/installation/libICP.a -I/path/to/installation
+
+=head1 SEE ALSO
+
+L<icp_version(3)>
+
+L<icp_errc(3)>
+
+L<icp_cert(3)>
+
+=cut

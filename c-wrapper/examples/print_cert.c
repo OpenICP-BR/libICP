@@ -3,7 +3,7 @@
 
 int main (int argc, char **argv) {
 	icp_cert *certs;
-	icp_cerr *cerrs;
+	icp_errc *errcs;
 	int ok;
 
 	if (argc < 2) {
@@ -11,17 +11,17 @@ int main (int argc, char **argv) {
 		return 1;
 	}
 
-	ok = icp_new_cert_from_file(argv[1], &certs, &cerrs);
+	ok = icp_new_cert_from_file(argv[1], &certs, &errcs);
 	printf("icp_new_cert_from_file(...) = %d\n", ok);
-	for (int i=0; cerrs != NULL && cerrs[i] != NULL; i++) {
-		printf("icp_cerr_code(cerrs[%d])     = %d\n", i, icp_cerr_code(cerrs[i]));
-		printf("AAA\n");
-		printf("icp_cerr_code_str(cerrs[%d]) = %s\n", i, icp_cerr_code_str(cerrs[i]));	
-		printf("icp_err_str(cerrs[%d])       = %s\n", i, icp_err_str(cerrs[i]));	
+	printf("certs = %p errcs = %p\n", certs, errcs);
+	for (int i=0; errcs != NULL && errcs[i] != NULL; i++) {
+		printf("icp_errc_code(errcs[%d])     = %d\n", i, icp_errc_code(errcs[i]));
+		printf("icp_errc_code_str(errcs[%d]) = %s\n", i, icp_errc_code_str(errcs[i]));	
+		printf("icp_err_str(errcs[%d])       = %s\n", i, icp_err_str(errcs[i]));	
 	}
 	for (int i=0; certs != NULL && certs[i] != NULL; i++) {
-		printf("icp_cert_subject(certs[%d]) = %s\n", i, icp_cert_subject(certs[0]));
-		printf("icp_cert_issuer(certs[%d])  = %s\n", i, icp_cert_issuer(certs[0]));
+		printf("icp_cert_subject(certs[%d]) = %s\n", i, icp_cert_subject(certs[i]));
+		printf("icp_cert_issuer(certs[%d])  = %s\n", i, icp_cert_issuer(certs[i]));
 	}
 	return 0;
 }

@@ -12,8 +12,14 @@ else
 	endif
 endif
 
+DOCFILES := $(shell find ./docs/src -type f -name "*.pod")
+MANFILES := ${subst docs/src,docs/man,$(patsubst %.pod,%.3,$(DOCFILES))}
+TXTFILES := ${subst docs/src,docs/txt,$(patsubst %.pod,%.3.txt,$(DOCFILES))}
+HTMLFILES := ${subst docs/src,docs/html,$(patsubst %.pod,%.3.html,$(DOCFILES))}
 
-.PHONY: all clean
+
+
+.PHONY: all clean docs
 
 all: libICP.a
 
@@ -30,6 +36,17 @@ libICP.a: stage1.a stage2.o
 
 examples/%.bin: examples/%.c libICP.a
 	$(CC) $(CCFLAGS) -o $@ $^
+
+docs: $(MANFILES) $(TXTFILES) $(HTMLFILES)
+
+docs/man/%.3: docs/src/%.pod
+	pod2man -n ${subst .3,,${subst docs/man/,,$@}} -s "3" -r "0.0.1" -c "OpenICP-BR" $^ > $@
+
+docs/txt/%.3.txt: docs/man/%.3
+	man $^ > $@
+
+docs/html/%.3.html: docs/txt/%.3.txt
+	man2html -cgiurl \$$title.\$$section.html -topm 0 < $^ > $@
 
 clean:
 	rm *.a *.o *.so

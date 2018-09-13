@@ -1,0 +1,25 @@
+=pod
+
+=head1 NAME
+
+icp_version - Returns the libICP version as a NULL-terminated string
+
+=head1 SYNOPSIS
+
+  #include "libICP.h"
+
+  char* icp_version();
+
+=head1 EXAMPLE
+
+	#include "libICP.h"
+
+	int main() {
+	    printf("%s\n", icp_version());
+	}
+
+=head1 SEE ALSO
+
+L<libICP(3)> - General library documentation
+
+=cut

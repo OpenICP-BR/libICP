@@ -1,0 +1,25 @@
+=pod
+
+=head1 NAME
+
+icp_errc_code - Returns the erro code as a string from a L<icp_errc(3)>
+
+=head1 SYNOPSIS
+
+  #include "libICP.h"
+
+  char* icp_errc_code(icp_errc errc);
+
+=head1 EXAMPLE
+
+  #include "libICP.h"
+  
+  printf("%s\n", icp_errc_code_str(some_errc));
+
+=head1 SEE ALSO
+
+L<libICP(3)> - General library documentation
+
+L<icp_errc(3)>
+
+=cut

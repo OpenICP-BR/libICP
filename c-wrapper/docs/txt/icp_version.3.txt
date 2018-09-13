@@ -1,0 +1,25 @@
+icp_version(3)                    OpenICP-BR                    icp_version(3)
+
+
+
+NNAAMMEE
+       icp_version - Returns the libICP version as a NULL-terminated string
+
+SSYYNNOOPPSSIISS
+         #include "libICP.h"
+
+         char* icp_version();
+
+EEXXAAMMPPLLEE
+               #include "libICP.h"
+
+               int main() {
+                   printf("%s\n", icp_version());
+               }
+
+SSEEEE AALLSSOO
+       _l_i_b_I_C_P(3) - General library documentation
+
+
+
+0.0.1                             2018-09-13                    icp_version(3)

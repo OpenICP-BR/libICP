@@ -25,14 +25,14 @@ func Version() *C.char {
 
 //export CodedErrorGetErrorStr
 func CodedErrorGetErrorStr(ptr unsafe.Pointer) *C.char {
-	cerr := pointer.Restore(ptr).(libICP.CodedError)
-	return C.CString(cerr.CodeString())
+	errc := pointer.Restore(ptr).(libICP.CodedError)
+	return C.CString(errc.CodeString())
 }
 
 //export CodedErrorGetErrorInt
 func CodedErrorGetErrorInt(ptr unsafe.Pointer) C.int {
-	cerr := pointer.Restore(ptr).(libICP.CodedError)
-	return C.int(cerr.Code())
+	errc := pointer.Restore(ptr).(libICP.CodedError)
+	return C.int(errc.Code())
 }
 
 //export CertSubject
@@ -54,7 +54,7 @@ func ErrorStr(ptr unsafe.Pointer) *C.char {
 }
 
 //export NewCertificateFromFile
-func NewCertificateFromFile(path_c *C.char, certs_ptr *unsafe.Pointer, cerrs_ptr *unsafe.Pointer, buf_size int) C.int {
+func NewCertificateFromFile(path_c *C.char, certs_ptr *unsafe.Pointer, errcs_ptr *unsafe.Pointer, buf_size int) C.int {
 	path := C.GoString(path_c)
 
 	ans_certs, ans_errs := libICP.NewCertificateFromFile(path)
@@ -70,8 +70,8 @@ func NewCertificateFromFile(path_c *C.char, certs_ptr *unsafe.Pointer, cerrs_ptr
 		if i >= buf_size {
 			break
 		}
-		ptr := pointer.Save(&ans_errs[i])
-		C.set_void_vet_ptr(certs_ptr, C.int(i), ptr)
+		ptr := pointer.Save(ans_errs[i])
+		C.set_void_vet_ptr(errcs_ptr, C.int(i), ptr)
 	}
 
 	return C.int(len(ans_errs))

@@ -1,0 +1,28 @@
+libICP(3)                         OpenICP-BR                         libICP(3)
+
+
+
+NNAAMMEE
+       libICP - An ICP-Brasil CAdES library (part of the OpenICP-BR project)
+
+SSYYNNOOPPSSIISS
+       libICP is a golang library for processing ICP-Brasil CAdES digital
+       signatures.
+
+       These man pages document the C wrapper for the original library.
+
+CCOOMMPPIILLAATTIIOONN
+       To compile a program that uses this library, simply run:
+
+         gcc my_program.c -o my_program /path/to/installation/libICP.a -I/path/to/installation
+
+SSEEEE AALLSSOO
+       _i_c_p___v_e_r_s_i_o_n(3)
+
+       _i_c_p___e_r_r_c(3)
+
+       _i_c_p___c_e_r_t(3)
+
+
+
+0.0.1                             2018-09-13                         libICP(3)
