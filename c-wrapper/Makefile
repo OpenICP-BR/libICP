@@ -16,10 +16,9 @@ DOCFILES := $(shell find ./docs/src -type f -name "*.pod")
 MANFILES := ${subst docs/src,docs/man,$(patsubst %.pod,%.3,$(DOCFILES))}
 TXTFILES := ${subst docs/src,docs/txt,$(patsubst %.pod,%.3.txt,$(DOCFILES))}
 HTMLFILES := ${subst docs/src,docs/html,$(patsubst %.pod,%.3.html,$(DOCFILES))}
+INSTALL_PATH=/usr/local/
 
-
-
-.PHONY: all clean docs
+.PHONY: all clean docs install
 
 all: libICP.a
 
@@ -50,3 +49,13 @@ docs/html/%.3.html: docs/txt/%.3.txt
 
 clean:
 	rm *.a *.o *.so
+
+install: libICP.a libICP.h $(MANFILES)
+	-mkdir -pv $(INSTALL_PATH)/share/man/man3/
+	-mkdir -pv $(INSTALL_PATH)/include/
+	-mkdir -pv $(INSTALL_PATH)/lib/
+	cp docs/man/*.3 $(INSTALL_PATH)/share/man/man3/
+	cp libICP.h $(INSTALL_PATH)/include/
+	cp libICP.a $(INSTALL_PATH)/lib
+
+
