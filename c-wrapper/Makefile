@@ -38,17 +38,21 @@ examples/%.bin: examples/%.c libICP.a
 
 docs: $(MANFILES) $(TXTFILES) $(HTMLFILES)
 
-docs/%:
+docs/man:
+	mkdir -p $@
+docs/html:
+	mkdir -p $@
+docs/txt:
 	mkdir -p $@
 
 docs/man/%.3: docs/src/%.pod docs/man
-	pod2man -n ${subst .3,,${subst docs/man/,,$@}} -s "3" -r "0.0.1" -c "OpenICP-BR" $^ > $@
+	pod2man -n ${subst .3,,${subst docs/man/,,$@}} -s "3" -r "0.0.1" -c "OpenICP-BR" $< > $@
 
 docs/txt/%.3.txt: docs/man/%.3 docs/txt
-	man $^ > $@
+	man $< > $@
 
 docs/html/%.3.html: docs/txt/%.3.txt docs/html
-	man2html -cgiurl \$$title.\$$section.html -topm 0 < $^ > $@
+	man2html -cgiurl \$$title.\$$section.html -topm 0 < $< > $@
 
 clean:
 	rm *.a *.o *.so
