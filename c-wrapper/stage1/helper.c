@@ -1,5 +1,6 @@
 #include "helper.h"
 #include "stdlib.h"
+#include "stdint.h"
 #include "stdio.h"
 
 void set_voids_ptr(void **vec, int i, void *ptr) {

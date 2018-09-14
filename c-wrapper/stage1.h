@@ -17,7 +17,22 @@ typedef struct { const char *p; ptrdiff_t n; } _GoString_;
 /* Start of preamble from import "C" comments.  */
 
 
-#line 3 "/Users/gqueiroz/go/src/github.com/OpenICP-BR/libICP/c-wrapper/stage1/stage1.go"
+#line 3 "/Users/gqueiroz/go/src/github.com/OpenICP-BR/libICP/c-wrapper/stage1/ca-store.go"
+ #import "helper.h"
+
+#line 1 "cgo-generated-wrapper"
+
+#line 3 "/Users/gqueiroz/go/src/github.com/OpenICP-BR/libICP/c-wrapper/stage1/cert.go"
+ #import "helper.h"
+
+#line 1 "cgo-generated-wrapper"
+
+#line 3 "/Users/gqueiroz/go/src/github.com/OpenICP-BR/libICP/c-wrapper/stage1/main.go"
+ #import "helper.h"
+
+#line 1 "cgo-generated-wrapper"
+
+#line 3 "/Users/gqueiroz/go/src/github.com/OpenICP-BR/libICP/c-wrapper/stage1/pfx.go"
  #import "helper.h"
 
 #line 1 "cgo-generated-wrapper"
@@ -69,11 +84,19 @@ extern "C" {
 #endif
 
 
-extern char* Version();
+extern GoUint8 CAStoreAutoDownload(void* p0);
 
-extern char* CodedErrorGetErrorStr(void* p0);
+extern void CAStoreAutoDownloadSet(void* p0, GoUint8 p1);
 
-extern int CodedErrorGetErrorInt(void* p0);
+extern GoUint8 CAStoreDebug(void* p0);
+
+extern void CAStoreDebugSet(void* p0, GoUint8 p1);
+
+extern void* NewCAStore(GoUint8 p0);
+
+extern int CAStoreVerifyCert(void* p0, void* p1, void*** p2, void*** p3, void*** p4);
+
+extern void CAStoreDownloadAll(void* p0);
 
 extern char* CertSubject(void* p0);
 
@@ -83,9 +106,33 @@ extern icp_kvp* CertIssuerMap(void* p0);
 
 extern char* CertIssuer(void* p0);
 
-extern char* ErrorStr(void* p0);
+extern GoInt64 CertNotBefore(void* p0);
+
+extern GoInt64 CertNotAfter(void* p0);
+
+extern GoUint8 CertIsCA(void* p0);
+
+extern GoUint8 CertIsSelfSigned(void* p0);
 
 extern int NewCertificateFromFile(char* p0, void*** p1, void*** p2);
+
+extern char* Version();
+
+extern char* CodedErrorGetErrorStr(void* p0);
+
+extern int CodedErrorGetErrorInt(void* p0);
+
+extern char* ErrorStr(void* p0);
+
+extern void* NewPFXFromFile(char* p0, char* p1, void** p2);
+
+extern void* PFXCert(void* p0);
+
+extern GoUint8 PFXHasKey(void* p0);
+
+extern GoUint8 PFXSaveCertToFile(void* p0, char* p1, void** p2);
+
+extern GoUint8 PFXSaveToFile(void* p0, char* p1, char* p2, void** p3);
 
 #ifdef __cplusplus
 }

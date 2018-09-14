@@ -3,6 +3,7 @@ package libICP
 import (
 	"archive/zip"
 	"bytes"
+	"fmt"
 	"io/ioutil"
 	"sync"
 	"time"
@@ -19,6 +20,7 @@ type CAStore struct {
 	cas          map[string]*Certificate
 	inited       bool
 	wg           *sync.WaitGroup
+	Debug        bool
 }
 
 func NewCAStore(AutoDownload bool) *CAStore {
@@ -166,6 +168,9 @@ func (store *CAStore) AddTestingRootCA(cert *Certificate) []CodedError {
 // Adds a new CA (certificate authority) if, and only if, it is valid when check against the existing CAs.
 func (store *CAStore) add_ca_at_time(cert *Certificate, now time.Time) []CodedError {
 	if !cert.IsCA() {
+		if store.Debug {
+			fmt.Println("[libICP-DEBUG] INVALID CA: " + cert.Subject)
+		}
 		return []CodedError{NewMultiError("certificate is not a certificate authority", ERR_NOT_CA, nil)}
 	}
 	if _, errs, _ := store.verify_cert_at(cert, now); errs != nil {
@@ -190,6 +195,10 @@ func (store *CAStore) direct_add_ca(cert *Certificate) {
 
 	store.cas[cert.SubjectKeyId] = cert
 	store.cas[cert.Subject] = cert
+
+	if store.Debug {
+		fmt.Println("[libICP-DEBUG] Added CA: " + cert.Subject)
+	}
 }
 
 func (store CAStore) WaitDownloads() {
@@ -266,6 +275,9 @@ func (store *CAStore) add_CAs_in_zip_file(file *zip.File) bool {
 }
 
 func (store *CAStore) parse_CAs_zip(raw []byte, raw_len int64) error {
+	if store.Debug {
+		fmt.Println("[libICP-DEBUG] Adding all CAs from a zip file")
+	}
 	// Load zip
 	zreader, err := zip.NewReader(bytes.NewReader(raw), raw_len)
 	if err != nil {
@@ -288,6 +300,9 @@ func (store *CAStore) parse_CAs_zip(raw []byte, raw_len int64) error {
 
 // This function will attempt download all CAs from ALL_CAs_ZIP_URL. This runs regardless of CAStore.AutoDownload
 func (store *CAStore) DownloadAllCAs() error {
+	if store.Debug {
+		fmt.Println("[libICP-DEBUG] Downloading all CAs from " + ALL_CAs_ZIP_URL)
+	}
 	buf, l, err := http_get(ALL_CAs_ZIP_URL)
 	if err != nil {
 		return err

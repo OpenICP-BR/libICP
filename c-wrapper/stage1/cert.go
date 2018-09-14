@@ -10,31 +10,6 @@ import (
 	pointer "github.com/mattn/go-pointer"
 )
 
-func new_vec_ptr(src []interface{}) []unsafe.Pointer {
-	ans := make([]unsafe.Pointer, len(src))
-	for i, v := range src {
-		ans[i] = unsafe.Pointer(&v)
-	}
-	return ans
-}
-
-//export Version
-func Version() *C.char {
-	return C.CString(libICP.Version())
-}
-
-//export CodedErrorGetErrorStr
-func CodedErrorGetErrorStr(ptr unsafe.Pointer) *C.char {
-	errc := pointer.Restore(ptr).(libICP.CodedError)
-	return C.CString(errc.CodeString())
-}
-
-//export CodedErrorGetErrorInt
-func CodedErrorGetErrorInt(ptr unsafe.Pointer) C.int {
-	errc := pointer.Restore(ptr).(libICP.CodedError)
-	return C.int(errc.Code())
-}
-
 //export CertSubject
 func CertSubject(ptr unsafe.Pointer) *C.char {
 	cert := pointer.Restore(ptr).(*libICP.Certificate)
@@ -72,10 +47,28 @@ func CertIssuer(ptr unsafe.Pointer) *C.char {
 	return C.CString(cert.Issuer)
 }
 
-//export ErrorStr
-func ErrorStr(ptr unsafe.Pointer) *C.char {
-	err := pointer.Restore(ptr).(error)
-	return C.CString(err.Error())
+//export CertNotBefore
+func CertNotBefore(ptr unsafe.Pointer) int64 {
+	cert := pointer.Restore(ptr).(*libICP.Certificate)
+	return cert.NotBefore.Unix()
+}
+
+//export CertNotAfter
+func CertNotAfter(ptr unsafe.Pointer) int64 {
+	cert := pointer.Restore(ptr).(*libICP.Certificate)
+	return cert.NotAfter.Unix()
+}
+
+//export CertIsCA
+func CertIsCA(ptr unsafe.Pointer) bool {
+	cert := pointer.Restore(ptr).(*libICP.Certificate)
+	return cert.IsCA()
+}
+
+//export CertIsSelfSigned
+func CertIsSelfSigned(ptr unsafe.Pointer) bool {
+	cert := pointer.Restore(ptr).(*libICP.Certificate)
+	return cert.IsSelfSigned()
 }
 
 //export NewCertificateFromFile
@@ -97,5 +90,3 @@ func NewCertificateFromFile(path_c *C.char, certs_ptr **unsafe.Pointer, errcs_pt
 
 	return C.int(len(ans_errs))
 }
-
-func main() {}
