@@ -2,13 +2,13 @@
 
 =head1 NAME
 
-icp_name_entry - A string key value pair
+icp_kvp - A string key value pair
 
 =head1 SYNOPSIS
 
   typedef struct {
 	char *key, *val;
-  } name_entry;
+  } icp_kvp;
 
 =head1 SEE ALSO
 
@@ -18,9 +18,9 @@ L<icp_cert_issuer_map(3)>
 
 L<icp_cert_subject_map(3)>
 
-L<icp_free_name_entry(3)>
+L<icp_free_kvp(3)>
 
-L<icp_free_name_entries(3)>
+L<icp_free_kvps(3)>
 
 
 =cut

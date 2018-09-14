@@ -65,6 +65,25 @@ bool icp_cert_is_ca(icp_cert cert) {
 	return CertIsCA(cert);
 }
 
+void icp_free_cert(icp_cert cert) {
+	FreeGoStuff(cert);
+}
+
+void icp_free_certs(icp_cert *certs) {
+	for (int i=0; certs[i] != NULL; i++) {
+		icp_free_cert(certs[i]);
+	}
+	safe_free(certs);
+}
+
+void icp_free_store(icp_store store) {
+	FreeGoStuff(store);
+}
+
+void icp_free_pfx(icp_pfx pfx) {
+	FreeGoStuff(pfx);
+}
+
 void icp_free_kvps(icp_kvp *vec) {
 	for (int i=0; vec[i].key != NULL || vec[i].val != NULL; i++) {
 		icp_free_kvp(vec[i]);

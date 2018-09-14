@@ -2,13 +2,13 @@
 
 =head1 NAME
 
-icp_cert_issuer_map - Gets the certificate issuer as an array of L<icp_name_entry(3)>
+icp_cert_issuer_map - Gets the certificate issuer as an array of L<icp_kvp(3)>
 
 =head1 SYNOPSIS
 
   #include "libICP.h"
 
-  name_entry* icp_cert_issuer_map(icp_cert cert);
+  icp_kvp* icp_cert_issuer_map(icp_cert cert);
 
 =head1 SEE ALSO
 

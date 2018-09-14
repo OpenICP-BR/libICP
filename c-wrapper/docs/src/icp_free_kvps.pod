@@ -2,18 +2,18 @@
 
 =head1 NAME
 
-icp_free_cert - Frees a single L<icp_cert(3)>
+icp_free_kvps - Frees an array of L<icp_kvp(3)>
 
 =head1 SYNOPSIS
 
   #include "libICP.h"
 
-  void icp_free_cert(icp_cert cert);
+  void free_kvps(kvp *array);
 
 =head1 SEE ALSO
 
 L<libICP(3)> - General library documentation
 
-L<icp_cert(3)>
+L<icp_kvp(3)>
 
 =cut

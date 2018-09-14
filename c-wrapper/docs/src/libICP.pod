@@ -20,8 +20,14 @@ To compile a program that uses this library, simply run:
 
 L<icp_version(3)>
 
-L<icp_errc(3)>
+L<icp_errc(3)> - Error
 
-L<icp_cert(3)>
+L<icp_errc(3)> - Coded error
+
+L<icp_cert(3)> - Certificate
+
+L<icp_store(3)> - CA Store
+
+L<icp_pfx(3)> - PFX/p12 file (certificate with encrypted key) 
 
 =cut

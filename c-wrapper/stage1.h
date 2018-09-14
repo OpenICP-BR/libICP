@@ -116,6 +116,8 @@ extern GoUint8 CertIsSelfSigned(void* p0);
 
 extern int NewCertificateFromFile(char* p0, void*** p1, void*** p2);
 
+extern void FreeGoStuff(void* p0);
+
 extern char* Version();
 
 extern char* CodedErrorGetErrorStr(void* p0);

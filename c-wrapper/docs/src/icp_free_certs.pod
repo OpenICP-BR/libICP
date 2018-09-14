@@ -14,6 +14,6 @@ icp_free_certs - Frees an array of L<icp_cert(3)>
 
 L<libICP(3)> - General library documentation
 
-L<icp_free_cert(3)>
+L<icp_cert(3)>
 
 =cut

@@ -2,18 +2,18 @@
 
 =head1 NAME
 
-icp_free_name_entry - Frees a single L<icp_name_entry(3)>
+icp_free_pfx - Frees a single L<icp_pfx(3)>
 
 =head1 SYNOPSIS
 
   #include "libICP.h"
 
-  void free_name_entry(name_entry entry);
+  void icp_free_pfx(icp_pfx pfx);
 
 =head1 SEE ALSO
 
 L<libICP(3)> - General library documentation
 
-L<icp_name_entry(3)>
+L<icp_pfx(3)>
 
 =cut

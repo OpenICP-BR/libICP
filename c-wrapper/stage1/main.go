@@ -18,6 +18,11 @@ func new_vec_ptr(src []interface{}) []unsafe.Pointer {
 	return ans
 }
 
+//export FreeGoStuff
+func FreeGoStuff(ptr unsafe.Pointer) {
+	pointer.Unref(ptr)
+}
+
 //export Version
 func Version() *C.char {
 	return C.CString(libICP.Version())
