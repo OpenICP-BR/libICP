@@ -1,0 +1,19 @@
+=pod
+
+=head1 NAME
+
+icp_pfx - A PFX/P12 file.
+
+=head1 SYNOPSIS
+
+PKCS #12 file. libICP supports only password encrypted files carrying only a single certificate and a single private key.
+
+=head1 SEE ALSO
+
+L<libICP(3)> - General library documentation
+
+L<icp_pfx_from_file(3)>
+
+L<icp_free_pfx(3)>
+
+=cut

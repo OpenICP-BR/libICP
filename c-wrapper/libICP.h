@@ -39,6 +39,8 @@ icp_kvp* icp_cert_issuer_map(icp_cert cert);
 icp_kvp* icp_cert_subject_map(icp_cert cert);
 icp_time icp_cert_not_before(icp_cert cert);
 icp_time icp_cert_not_after(icp_cert cert);
+bool icp_cert_is_self_signed(icp_cert cert);
+bool icp_cert_is_ca(icp_cert cert);
 int icp_new_cert_from_file(char *path, icp_cert **certs, icp_errc **errcs);
 
 // icp_kvp as subject
@@ -47,8 +49,6 @@ void icp_free_kvp(icp_kvp pair);
 
 // icp_store as subject
 icp_store icp_new_store(bool auto_download);
-bool icp_cert_is_self_signed(icp_cert cert);
-bool icp_cert_is_ca(icp_cert cert);
 int icp_store_verify(icp_store store, icp_cert *cert, icp_cert **chain, icp_errc **errcs, icp_errc **warns);
 bool icp_store_auto_download(icp_store store);
 void icp_store_auto_download_set(icp_store store, bool flag);

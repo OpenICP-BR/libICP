@@ -1,0 +1,29 @@
+icp_store
+
+=pod
+
+=head1 NAME
+
+icp_store - CA Store.
+
+=head1 SYNOPSIS
+
+An object that handles certificate validation and downloads the necessary CAs.
+
+=head1 SEE ALSO
+
+L<libICP(3)> - General library documentation
+
+L<icp_new_store(3)>
+
+L<icp_store_verify(3)>
+
+L<icp_store_auto_download(3)> L<icp_store_auto_download_set(3)>
+
+L<icp_store_debug(3)> L<icp_store_debug_set(3)>
+
+L<icp_store_download_all(3)>
+
+L<icp_free_store(3)>
+
+=cut

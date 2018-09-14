@@ -1,0 +1,21 @@
+=pod
+
+=head1 NAME
+
+icp_pfx_from_file - Opens PFX/P12 file.
+
+=head1 SYNOPSIS
+
+icp_pfx icp_pfx_from_file(char *path, char *password, icp_errc *err);
+
+=head1 NOTES
+
+The password parameter will be emptied.
+
+=head1 SEE ALSO
+
+L<libICP(3)> - General library documentation
+
+L<icp_free_pfx(3)>
+
+=cut
