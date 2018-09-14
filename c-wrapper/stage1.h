@@ -77,15 +77,15 @@ extern int CodedErrorGetErrorInt(void* p0);
 
 extern char* CertSubject(void* p0);
 
-extern void CertSubjectMap(void* p0, name_entry* p1);
+extern icp_kvp* CertSubjectMap(void* p0);
 
-extern void CertIssuerMap(void* p0, name_entry* p1);
+extern icp_kvp* CertIssuerMap(void* p0);
 
 extern char* CertIssuer(void* p0);
 
 extern char* ErrorStr(void* p0);
 
-extern int NewCertificateFromFile(char* p0, void** p1, void** p2, GoInt p3);
+extern int NewCertificateFromFile(char* p0, void*** p1, void*** p2);
 
 #ifdef __cplusplus
 }

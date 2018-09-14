@@ -11,11 +11,11 @@
 typedef void* icp_cert;
 typedef void* icp_errc;
 typedef void* icp_err;
-#ifndef __ICP__NAME_ENTRY__
-#define __ICP__NAME_ENTRY__
+#ifndef __ICP__STRUCTS__
+#define __ICP__STRUCTS__
 typedef struct {
 	char *key, *val;
-} name_entry;
+} icp_kvp;
 #endif
 
 #ifdef __cplusplus
@@ -29,10 +29,10 @@ char* icp_errc_code_str(icp_errc errc);
 char* icp_err_str(icp_err err);
 char* icp_cert_subject(icp_cert cert);
 char* icp_cert_issuer(icp_cert cert);
-name_entry* icp_cert_issuer_map(icp_cert cert);
-name_entry* icp_cert_subject_map(icp_cert cert);
-void icp_free_name_entries(name_entry *entries);
-void icp_free_name_entry(name_entry entry);
+icp_kvp* icp_cert_issuer_map(icp_cert cert);
+icp_kvp* icp_cert_subject_map(icp_cert cert);
+void icp_free_kvps(icp_kvp *pairs);
+void icp_free_kvp(icp_kvp pair);
 int icp_new_cert_from_file(char *path, icp_cert **certs, icp_errc **errcs);
 
 #ifdef __cplusplus

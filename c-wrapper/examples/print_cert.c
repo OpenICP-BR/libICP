@@ -4,7 +4,7 @@
 int main (int argc, char **argv) {
 	icp_cert *certs;
 	icp_errc *errcs;
-	name_entry *entries;
+	icp_kvp *entries;
 	int ok;
 
 	if (argc < 2) {
@@ -14,7 +14,8 @@ int main (int argc, char **argv) {
 
 	ok = icp_new_cert_from_file(argv[1], &certs, &errcs);
 	printf("icp_new_cert_from_file(...) = %d\n", ok);
-	printf("certs = %p errcs = %p\n", certs, errcs);
+	printf("certs    = %p errcs    = %p\n", certs, errcs);
+	printf("certs[0] = %p errcs[0] = %p\n", certs[0], errcs[0]);
 	for (int i=0; errcs != NULL && errcs[i] != NULL; i++) {
 		printf("icp_errc_code(errcs[%d])     = %d\n", i, icp_errc_code(errcs[i]));
 		printf("icp_errc_code_str(errcs[%d]) = %s\n", i, icp_errc_code_str(errcs[i]));	
@@ -28,14 +29,14 @@ int main (int argc, char **argv) {
 		for (int j=0; entries[j].key != NULL; j++) {
 			printf("\tKey: %s\tValue: %s\n", entries[j].key, entries[j].val);
 		}
-		icp_free_name_entries(entries);
+		icp_free_kvps(entries);
 
 		entries = icp_cert_subject_map(certs[i]);
 		printf("icp_cert_subject_map(certs[%d]):\n", i);
 		for (int j=0; entries[j].key != NULL; j++) {
 			printf("\tKey: %s\tValue: %s\n", entries[j].key, entries[j].val);
 		}
-		icp_free_name_entries(entries);
+		icp_free_kvps(entries);
 	}
 	return 0;
 }

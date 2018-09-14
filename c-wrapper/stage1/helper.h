@@ -1,12 +1,14 @@
 #pragma once
 
-#ifndef __ICP__NAME_ENTRY__
-#define __ICP__NAME_ENTRY__
+#ifndef __ICP__STRUCTS__
+#define __ICP__STRUCTS__
 typedef struct {
 	char *key, *val;
-} name_entry;
+} icp_kvp;
 #endif
 
-void set_void_vet_ptr(void **vec, int i, void *ptr);
-void set_name_entry_key(name_entry *vec, int i, char *key);
-void set_name_entry_val(name_entry *vec, int i, char *val);
+void print_voids_ptr(void **vec);
+icp_kvp* new_icp_kvps(int l);
+void set_icp_kvp(icp_kvp *vec, int i, char *key, char *val);
+void set_voids_ptr(void **vec, int i, void *ptr);
+void** new_voids_ptr(int l);

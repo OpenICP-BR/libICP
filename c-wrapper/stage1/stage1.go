@@ -42,25 +42,28 @@ func CertSubject(ptr unsafe.Pointer) *C.char {
 }
 
 //export CertSubjectMap
-func CertSubjectMap(cert_ptr unsafe.Pointer, output *C.name_entry) {
+func CertSubjectMap(cert_ptr unsafe.Pointer) *C.icp_kvp {
 	cert := pointer.Restore(cert_ptr).(*libICP.Certificate)
+	output := C.new_icp_kvps(C.int(len(cert.SubjectMap)))
 	i := 0
 	for key, val := range cert.SubjectMap {
-		C.set_name_entry_key(output, C.int(i), C.CString(key))
-		C.set_name_entry_val(output, C.int(i), C.CString(val))
+		C.set_icp_kvp(output, C.int(i), C.CString(key), C.CString(val))
 		i++
 	}
+
+	return output
 }
 
 //export CertIssuerMap
-func CertIssuerMap(cert_ptr unsafe.Pointer, output *C.name_entry) {
+func CertIssuerMap(cert_ptr unsafe.Pointer) *C.icp_kvp {
 	cert := pointer.Restore(cert_ptr).(*libICP.Certificate)
+	output := C.new_icp_kvps(C.int(len(cert.IssuerMap)))
 	i := 0
 	for key, val := range cert.IssuerMap {
-		C.set_name_entry_key(output, C.int(i), C.CString(key))
-		C.set_name_entry_val(output, C.int(i), C.CString(val))
+		C.set_icp_kvp(output, C.int(i), C.CString(key), C.CString(val))
 		i++
 	}
+	return output
 }
 
 //export CertIssuer
@@ -76,24 +79,20 @@ func ErrorStr(ptr unsafe.Pointer) *C.char {
 }
 
 //export NewCertificateFromFile
-func NewCertificateFromFile(path_c *C.char, certs_ptr *unsafe.Pointer, errcs_ptr *unsafe.Pointer, buf_size int) C.int {
+func NewCertificateFromFile(path_c *C.char, certs_ptr **unsafe.Pointer, errcs_ptr **unsafe.Pointer) C.int {
 	path := C.GoString(path_c)
 
 	ans_certs, ans_errs := libICP.NewCertificateFromFile(path)
+	*certs_ptr = C.new_voids_ptr(C.int(len(ans_certs)))
+	*errcs_ptr = C.new_voids_ptr(C.int(len(ans_errs)))
 
 	for i := range ans_certs {
-		if i >= buf_size {
-			break
-		}
 		ptr := pointer.Save(&ans_certs[i])
-		C.set_void_vet_ptr(certs_ptr, C.int(i), ptr)
+		C.set_voids_ptr(*certs_ptr, C.int(i), ptr)
 	}
 	for i := range ans_errs {
-		if i >= buf_size {
-			break
-		}
 		ptr := pointer.Save(ans_errs[i])
-		C.set_void_vet_ptr(errcs_ptr, C.int(i), ptr)
+		C.set_voids_ptr(*errcs_ptr, C.int(i), ptr)
 	}
 
 	return C.int(len(ans_errs))
