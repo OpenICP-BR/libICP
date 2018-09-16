@@ -6,6 +6,7 @@ go:
 before_install:
   - go get -t -v golang.org/x/tools/cmd/goimports
   - go get -t -v . ./cli/.
+  - go get -t -v . ./c-wrapper/stage1/.
 
 script:
   - make test
