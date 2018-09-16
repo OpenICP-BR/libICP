@@ -21,7 +21,7 @@ void** new_voids_ptr(int l) {
 }
 
 void print_voids_ptr(void **vec) {
-	printf("print_voids_ptr(%p): ", vec);
+	printf("print_voids_ptr(%p): ", (void *)vec);
 	for (int i=0; vec != NULL && vec[i] != NULL; i++) {
 		printf("%p ", vec[i]);
 	}

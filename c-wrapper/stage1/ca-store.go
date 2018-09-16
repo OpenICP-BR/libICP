@@ -1,6 +1,6 @@
 package main
 
-// #import "helper.h"
+// #include "helper.h"
 import "C"
 
 import (

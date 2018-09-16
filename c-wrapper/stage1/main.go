@@ -1,6 +1,7 @@
 package main
 
-// #import "helper.h"
+// #cgo CFLAGS: -std=c99 -O2 -pedantic -Werror -Wall -Wextra -Wundef -Wshadow -Wunreachable-code -Wfloat-equal -Wno-unused-parameter
+// #include "helper.h"
 import "C"
 
 import (

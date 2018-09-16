@@ -18,22 +18,23 @@ typedef struct { const char *p; ptrdiff_t n; } _GoString_;
 
 
 #line 3 "/Users/gqueiroz/go/src/github.com/OpenICP-BR/libICP/c-wrapper/stage1/ca-store.go"
- #import "helper.h"
+ #include "helper.h"
 
 #line 1 "cgo-generated-wrapper"
 
 #line 3 "/Users/gqueiroz/go/src/github.com/OpenICP-BR/libICP/c-wrapper/stage1/cert.go"
- #import "helper.h"
+ #include "helper.h"
 
 #line 1 "cgo-generated-wrapper"
 
 #line 3 "/Users/gqueiroz/go/src/github.com/OpenICP-BR/libICP/c-wrapper/stage1/main.go"
- #import "helper.h"
+
+ #include "helper.h"
 
 #line 1 "cgo-generated-wrapper"
 
 #line 3 "/Users/gqueiroz/go/src/github.com/OpenICP-BR/libICP/c-wrapper/stage1/pfx.go"
- #import "helper.h"
+ #include "helper.h"
 
 #line 1 "cgo-generated-wrapper"
 

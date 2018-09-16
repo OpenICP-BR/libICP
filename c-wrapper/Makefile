@@ -1,5 +1,5 @@
 CC=gcc
-CCFLAGS=-I.
+CCFLAGS=-I. -std=c99 -O2 -pedantic -Wall -Wextra -Wundef -Wshadow -Wunreachable-code -Wfloat-equal -Werror
 ifeq ($(OS),Windows_NT)
 	CCFLAGS += -D WIN32
 else
