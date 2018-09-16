@@ -11,7 +11,11 @@ endif
 
 .PHONY: all test test-html docs
 
-all: libICP.a cli/openicpbr-cli
+all: libICP.a cli/openicpbr-cli c-wrapper/libICP.a
+
+c-wrapper/libICP.a: c-wrapper/Makefile c-wrapper/libICP.h
+	cd c-wrapper && make
+
 docs:
 	xdg-open "http://localhost:6060/pkg/github.com/gjvnq/libICP/"
 docs-server:

@@ -16,6 +16,10 @@ To compile a program that uses this library, simply run:
 
   gcc my_program.c -o my_program /path/to/installation/libICP.a -I/path/to/installation
 
+On macOS:
+
+  gcc my_program.c -o my_program -lICP -framework CoreFoundation -framework Security
+
 =head1 SEE ALSO
 
 L<icp_version(3)>
