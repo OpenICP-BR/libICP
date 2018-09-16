@@ -9,6 +9,7 @@ before_install:
 
 script:
   - make test
+  - make all
 
 after_success:
   - bash <(curl -s https://codecov.io/bash)
