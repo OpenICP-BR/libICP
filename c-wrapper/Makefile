@@ -1,13 +1,16 @@
 CC=gcc
+LIBTOOL = libtool
 CFLAGS=-std=c99 -O2 -pedantic -Wall -Wextra -Wundef -Wshadow -Wunreachable-code -Wfloat-equal -Werror -Wno-unused-command-line-argument
 ifeq ($(OS),Windows_NT)
 	CFLAGS += -D WIN32
 else
 	UNAME_S := $(shell uname -s)
 	ifeq ($(UNAME_S),Linux)
+		LIBTOOL = libtool
 		CFLAGS += -D LINUX
 	endif
 	ifeq ($(UNAME_S),Darwin)
+		LIBTOOL = glibtool
 		CFLAGS += -framework CoreFoundation -framework Security
 	endif
 endif
@@ -50,7 +53,7 @@ stage2.o: stage2/stage2.c stage1.a
 
 libICP.a: stage1.a stage2.o
 	@$(ECHO) -e $(ANSI_GREEN)"["$@"] Joining libraries..."$(ANSI_RESET)
-	libtool -o libICP.a stage1.a stage2.o
+	$(LIBTOOL) --tag=CC --mode=link gcc -o libICP.a stage1.a stage2.o
 	@$(ECHO) -e $(ANSI_BLUE)"["$@"] Finished target $@"$(ANSI_RESET)
 
 examples: $(EXAMPLES)
