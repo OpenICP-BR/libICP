@@ -1,6 +1,6 @@
 CC=gcc
 LIBTOOL = libtool
-CFLAGS=-std=c99 -O2 -pedantic -Wall -Wextra -Wundef -Wshadow -Wunreachable-code -Wfloat-equal -Werror -Wno-unused-command-line-argument
+CFLAGS=-std=c99 -O2 -pedantic -Wall -Wextra -Wundef -Wshadow -Wunreachable-code -Wfloat-equal -Werror -Wno-unused-command-line-argument -I.
 ifeq ($(OS),Windows_NT)
 	CFLAGS += -D WIN32
 else
