@@ -7,7 +7,7 @@ import (
 )
 
 func Test_Version(t *testing.T) {
-	assert.Equal(t, "0.0.1", Version())
+	assert.Equal(t, "0.1.0", Version())
 }
 
 func Test_NiceHex(t *testing.T) {
