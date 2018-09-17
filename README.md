@@ -5,7 +5,7 @@ Status](https://travis-ci.com/OpenICP-BR/libICP.svg?branch=master)](https://trav
 [![Code 
 Coverage](https://codecov.io/gh/OpenICP-BR/libICP/branch/master/graph/badge.svg)](https://codecov.io/gh/OpenICP-BR/libICP)
 [![GoDoc](https://godoc.org/github.com/OpenICP-BR/libICP?status.svg)](https://godoc.org/github.com/gjvnq/OpenICP-BR)
-![Semantic Version](https://img.shields.io/badge/semantic%20version-0.0.1-blue.svg)
+![Semantic Version](https://img.shields.io/badge/semantic%20version-0.1.0-blue.svg)
 
 A golang library for CAdES (CMS Advanced Electronic Signatures) for the Brazilian Public Key Infrastructure (ICP-Brasil).
 
@@ -57,6 +57,12 @@ A golang library for CAdES (CMS Advanced Electronic Signatures) for the Brazilia
 
   * Only idPbeWithSHAAnd3KeyTripleDES_CBC (1.2.840.113549.1.12.1.3) using SHA1 is supported for key encryption. (this will change in the future)
   * The PFX decoding is a total mess that should be rewritten at some point.
+
+# C Wrapper
+
+A C wrapper is available under the `c-wrapper` directory. See the man files for reference.
+
+If you can't run `make docs`, look at the `.pod` file in `c-wrapper/docs/src`.
 
 # License
 

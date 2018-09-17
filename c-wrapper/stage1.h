@@ -17,23 +17,23 @@ typedef struct { const char *p; ptrdiff_t n; } _GoString_;
 /* Start of preamble from import "C" comments.  */
 
 
-#line 3 "/Users/gqueiroz/go/src/github.com/OpenICP-BR/libICP/c-wrapper/stage1/ca-store.go"
+#line 3 "/home/poli/go/src/github.com/OpenICP-BR/libICP/c-wrapper/stage1/ca-store.go"
  #include "helper.h"
 
 #line 1 "cgo-generated-wrapper"
 
-#line 3 "/Users/gqueiroz/go/src/github.com/OpenICP-BR/libICP/c-wrapper/stage1/cert.go"
+#line 3 "/home/poli/go/src/github.com/OpenICP-BR/libICP/c-wrapper/stage1/cert.go"
  #include "helper.h"
 
 #line 1 "cgo-generated-wrapper"
 
-#line 3 "/Users/gqueiroz/go/src/github.com/OpenICP-BR/libICP/c-wrapper/stage1/main.go"
+#line 3 "/home/poli/go/src/github.com/OpenICP-BR/libICP/c-wrapper/stage1/main.go"
 
  #include "helper.h"
 
 #line 1 "cgo-generated-wrapper"
 
-#line 3 "/Users/gqueiroz/go/src/github.com/OpenICP-BR/libICP/c-wrapper/stage1/pfx.go"
+#line 3 "/home/poli/go/src/github.com/OpenICP-BR/libICP/c-wrapper/stage1/pfx.go"
  #include "helper.h"
 
 #line 1 "cgo-generated-wrapper"

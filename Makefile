@@ -43,3 +43,9 @@ coverage.out: *.go libICP.a
 
 cli/openicpbr-cli: cli/*.go cli/Makefile libICP.a
 	cd cli && make openicpbr-cli
+
+install-deps:
+	go get -t -v golang.org/x/tools/cmd/goimports
+	go get -t -v .
+	go get -t -v . ./cli/.
+	go get -t -v . ./c-wrapper/stage1/.

@@ -7,7 +7,7 @@ else
 	UNAME_S := $(shell uname -s)
 	ifeq ($(UNAME_S),Linux)
 		LIBTOOL = libtool
-		CFLAGS += -D LINUX
+		CFLAGS += -D LINUX -pthread
 	endif
 	ifeq ($(UNAME_S),Darwin)
 		LIBTOOL = glibtool
@@ -35,11 +35,11 @@ INSTALL_PATH=/usr/local/
 
 .PHONY: all clean docs install examples
 
-all: libICP.a examples docs
+all: libICP.a examples
 
 stage1.a: stage1/*
 	@$(ECHO) -e $(ANSI_GREEN)"["$@"] Fixing imports..."$(ANSI_RESET)
-	cd stage1 && goimports -w .
+	-cd stage1 && goimports -w .
 	@$(ECHO) -e $(ANSI_GREEN)"["$@"] Formatting code..."$(ANSI_RESET)
 	cd stage1 && go fmt
 	@$(ECHO) -e $(ANSI_GREEN)"["$@"] Compiling code..."$(ANSI_RESET)
@@ -53,7 +53,10 @@ stage2.o: stage2/stage2.c stage1.a
 
 libICP.a: stage1.a stage2.o
 	@$(ECHO) -e $(ANSI_GREEN)"["$@"] Joining libraries..."$(ANSI_RESET)
-	$(LIBTOOL) --tag=CC --mode=link gcc -o libICP.a stage1.a stage2.o
+	cp stage1.a libICP.a
+	ar cru libICP.a stage2.o
+	ranlib libICP.a
+	# $(LIBTOOL) --tag=CC --mode=link gcc -o libICP.a stage1.a stage2.o
 	@$(ECHO) -e $(ANSI_BLUE)"["$@"] Finished target $@"$(ANSI_RESET)
 
 examples: $(EXAMPLES)

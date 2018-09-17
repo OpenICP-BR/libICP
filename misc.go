@@ -21,8 +21,8 @@ import (
 )
 
 const VERSION_MAJOR = 0
-const VERSION_MINOR = 0
-const VERSION_PATCH = 1
+const VERSION_MINOR = 1
+const VERSION_PATCH = 0
 
 // Returns this library version as a string
 func Version() string {

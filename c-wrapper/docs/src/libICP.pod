@@ -12,13 +12,14 @@ These man pages document the C wrapper for the original library.
 
 =head1 COMPILATION
 
-To compile a program that uses this library, simply run:
-
-  gcc my_program.c -o my_program /path/to/installation/libICP.a -I/path/to/installation
-
 On macOS:
 
   gcc my_program.c -o my_program -lICP -framework CoreFoundation -framework Security
+
+On Linux:
+
+  gcc my_program.c -o my_program -lICP -pthread
+
 
 =head1 SEE ALSO
 

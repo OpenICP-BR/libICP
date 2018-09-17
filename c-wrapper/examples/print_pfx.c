@@ -1,7 +1,9 @@
-#include "stdio.h"
-#include "pwd.h"
-#include "unistd.h"
-#include "libICP.h"
+#include <unistd.h>
+#include <stdio.h>
+#include <pwd.h>
+#include <libICP.h>
+
+char *getpass(const char *prompt);
 
 int main (int argc, char **argv) {
 	icp_cert cert;
