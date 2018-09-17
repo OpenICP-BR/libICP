@@ -5,6 +5,7 @@
 *.dll
 *.exe
 *.bin
+stage1.h
 
 docs/html/*
 docs/man/*
