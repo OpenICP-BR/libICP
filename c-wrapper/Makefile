@@ -1,14 +1,14 @@
 CC=gcc
-CCFLAGS=-I. -std=c99 -O2 -pedantic -Wall -Wextra -Wundef -Wshadow -Wunreachable-code -Wfloat-equal -Werror
+CFLAGS=-std=c99 -O2 -pedantic -Wall -Wextra -Wundef -Wshadow -Wunreachable-code -Wfloat-equal -Werror -Wno-unused-command-line-argument
 ifeq ($(OS),Windows_NT)
-	CCFLAGS += -D WIN32
+	CFLAGS += -D WIN32
 else
 	UNAME_S := $(shell uname -s)
 	ifeq ($(UNAME_S),Linux)
-		CCFLAGS += -D LINUX
+		CFLAGS += -D LINUX
 	endif
 	ifeq ($(UNAME_S),Darwin)
-		CCFLAGS += -framework CoreFoundation -framework Security
+		CFLAGS += -framework CoreFoundation -framework Security
 	endif
 endif
 
@@ -25,13 +25,14 @@ endif
 
 DOCFILES := $(shell find ./docs/src -type f -name "*.pod")
 MANFILES := ${subst docs/src,docs/man,$(patsubst %.pod,%.3,$(DOCFILES))}
+EXAMPLES := $(patsubst %.c,%.bin,$(shell find ./examples -type f -name "*.c"))
 TXTFILES := ${subst docs/src,docs/txt,$(patsubst %.pod,%.3.txt,$(DOCFILES))}
 HTMLFILES := ${subst docs/src,docs/html,$(patsubst %.pod,%.3.html,$(DOCFILES))}
 INSTALL_PATH=/usr/local/
 
-.PHONY: all clean docs install
+.PHONY: all clean docs install examples
 
-all: libICP.a
+all: libICP.a examples docs
 
 stage1.a: stage1/*
 	@$(ECHO) -e $(ANSI_GREEN)"["$@"] Fixing imports..."$(ANSI_RESET)
@@ -44,7 +45,7 @@ stage1.a: stage1/*
 
 stage2.o: stage2/stage2.c stage1.a
 	@$(ECHO) -e $(ANSI_GREEN)"["$@"] Compiling code..."$(ANSI_RESET)
-	$(CC) -c stage2/stage2.c -o $@ -I. -Istage1
+	$(CC) $(CFLAGS) -c stage2/stage2.c -o $@ -I. -Istage1
 	@$(ECHO) -e $(ANSI_BLUE)"["$@"] Finished target $@"$(ANSI_RESET)
 
 libICP.a: stage1.a stage2.o
@@ -52,8 +53,10 @@ libICP.a: stage1.a stage2.o
 	libtool -o libICP.a stage1.a stage2.o
 	@$(ECHO) -e $(ANSI_BLUE)"["$@"] Finished target $@"$(ANSI_RESET)
 
+examples: $(EXAMPLES)
+
 examples/%.bin: examples/%.c libICP.a
-	$(CC) $(CCFLAGS) -o $@ $^
+	$(CC) $(CFLAGS) -o $@ $^
 
 docs: $(MANFILES) $(TXTFILES) $(HTMLFILES)
 	@$(ECHO) -e $(ANSI_BLUE)"["$@"] Finished target $@"$(ANSI_RESET)

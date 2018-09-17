@@ -1,7 +1,7 @@
 #include "stdio.h"
 #include "libICP.h"
 
-int main (int argc, char **argv) {
+int main () {
 	icp_store store;
 
 	store = icp_new_store(false);
