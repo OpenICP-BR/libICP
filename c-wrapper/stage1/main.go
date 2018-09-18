@@ -5,6 +5,8 @@ package main
 import "C"
 
 import (
+	"encoding/hex"
+	"regexp"
 	"unsafe"
 
 	"github.com/OpenICP-BR/libICP"
@@ -45,6 +47,17 @@ func CodedErrorGetErrorInt(ptr unsafe.Pointer) C.int {
 func ErrorStr(ptr unsafe.Pointer) *C.char {
 	err := pointer.Restore(ptr).(error)
 	return C.CString(err.Error())
+}
+
+// Returns nil in case of failure
+func from_hex(s string) []byte {
+	re := regexp.MustCompile("[^A-Fa-f0-9]")
+	s = re.ReplaceAllString(s, "")
+	ans, err := hex.DecodeString(s)
+	if err != nil {
+		return nil
+	}
+	return ans
 }
 
 func main() {}

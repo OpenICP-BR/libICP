@@ -12,6 +12,10 @@ void set_icp_kvp(icp_kvp *vec, int i, char *key, char *val) {
 	vec[i].val = val;
 }
 
+char char_at(char *str, int i) {
+	return str[i];
+}
+
 icp_kvp* new_icp_kvps(int l) {
 	return calloc(l+1, sizeof(icp_kvp));
 }

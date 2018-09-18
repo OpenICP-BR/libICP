@@ -165,11 +165,15 @@ func (store *CAStore) AddTestingRootCA(cert *Certificate) []CodedError {
 	return nil
 }
 
+func (store *CAStore) AddCA(cert *Certificate) []CodedError {
+	return store.add_ca_at_time(cert, time.Now())
+}
+
 // Adds a new CA (certificate authority) if, and only if, it is valid when check against the existing CAs.
 func (store *CAStore) add_ca_at_time(cert *Certificate, now time.Time) []CodedError {
 	if !cert.IsCA() {
 		if store.Debug {
-			fmt.Println("[libICP-DEBUG] INVALID CA: " + cert.Subject)
+			fmt.Println("[libICP-DEBUG] NOT A CA: " + cert.Subject)
 		}
 		return []CodedError{NewMultiError("certificate is not a certificate authority", ERR_NOT_CA, nil)}
 	}

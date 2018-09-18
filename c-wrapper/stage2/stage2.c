@@ -17,6 +17,13 @@ void garbage_fill(char *str) {
 	str[0] = 0;
 }
 
+int icp_len(icp_any *array) {
+	int i;
+	for (i=0; array[i] != NULL; i++) {
+	}
+	return i;
+}
+
 char* icp_version() {
 	return Version();
 }
@@ -76,6 +83,17 @@ void icp_free_certs(icp_cert *certs) {
 	safe_free(certs);
 }
 
+void icp_free_errs(icp_err *errs) {
+	for (int i=0; errs[i] != NULL; i++) {
+		FreeGoStuff(errs[i]);
+	}
+	safe_free(errs);
+}
+
+void icp_free_errcs(icp_errc *errcs) {
+	icp_free_errs((icp_err*) errcs);
+}
+
 void icp_free_store(icp_store store) {
 	FreeGoStuff(store);
 }
@@ -100,11 +118,15 @@ int icp_new_cert_from_file(char *path, icp_cert **certs, icp_errc **errcs) {
 	return NewCertificateFromFile(path, certs, errcs);
 }
 
+int icp_new_cert_from_bytes(uint8_t *data, int n, icp_cert **certs, icp_errc **errcs) {
+	return NewCertificateFromBytes((char*) data, n, certs, errcs);
+}
+
 icp_store icp_new_store(bool auto_download) {
 	return NewCAStore(auto_download);
 }
 
-int icp_store_verify(icp_store store, icp_cert *cert, icp_cert **chain, icp_errc **errcs, icp_errc **warns) {
+int icp_store_verify(icp_store store, icp_cert cert, icp_cert **chain, icp_errc **errcs, icp_errc **warns) {
 	return CAStoreVerifyCert(store, cert, chain, errcs, warns);
 }
 
@@ -126,6 +148,14 @@ void icp_store_debug_set(icp_store store, bool flag) {
 
 void icp_store_download_all(icp_store store) {
 	CAStoreDownloadAll(store);
+}
+
+int icp_store_add_ca(icp_store store, icp_cert cert, icp_errc **errcs) {
+	return CAStoreAddCA(store, cert, errcs);
+}
+
+int icp_store_add_testing_root_ca(icp_store store, icp_cert cert, icp_errc **errcs) {
+	return CAStoreAddTestingRootCA(store, cert, errcs);	
 }
 
 icp_pfx icp_pfx_from_file(char *path, char *password, icp_errc *err) {

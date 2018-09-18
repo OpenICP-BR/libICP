@@ -73,3 +73,35 @@ func CAStoreDownloadAll(ptr unsafe.Pointer) {
 	store := pointer.Restore(ptr).(*libICP.CAStore)
 	store.DownloadAllCAs()
 }
+
+//export CAStoreAddCA
+func CAStoreAddCA(ptr, cert_ptr unsafe.Pointer, errs **unsafe.Pointer) C.int {
+	store := pointer.Restore(ptr).(*libICP.CAStore)
+	cert := pointer.Restore(ptr).(*libICP.Certificate)
+
+	ans_errs := store.AddCA(cert)
+	*errs = C.new_voids_ptr(C.int(len(ans_errs)))
+
+	for i := range ans_errs {
+		ptr := pointer.Save(ans_errs[i])
+		C.set_voids_ptr(*errs, C.int(i), ptr)
+	}
+
+	return C.int(len(ans_errs))
+}
+
+//export CAStoreAddTestingRootCA
+func CAStoreAddTestingRootCA(ptr, cert_ptr unsafe.Pointer, errs **unsafe.Pointer) C.int {
+	store := pointer.Restore(ptr).(*libICP.CAStore)
+	cert := pointer.Restore(ptr).(*libICP.Certificate)
+
+	ans_errs := store.AddTestingRootCA(cert)
+	*errs = C.new_voids_ptr(C.int(len(ans_errs)))
+
+	for i := range ans_errs {
+		ptr := pointer.Save(ans_errs[i])
+		C.set_voids_ptr(*errs, C.int(i), ptr)
+	}
+
+	return C.int(len(ans_errs))
+}

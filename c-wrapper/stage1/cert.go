@@ -71,11 +71,7 @@ func CertIsSelfSigned(ptr unsafe.Pointer) bool {
 	return cert.IsSelfSigned()
 }
 
-//export NewCertificateFromFile
-func NewCertificateFromFile(path_c *C.char, certs_ptr **unsafe.Pointer, errcs_ptr **unsafe.Pointer) C.int {
-	path := C.GoString(path_c)
-
-	ans_certs, ans_errs := libICP.NewCertificateFromFile(path)
+func FinishNewCertificate(ans_certs []libICP.Certificate, ans_errs []libICP.CodedError, certs_ptr **unsafe.Pointer, errcs_ptr **unsafe.Pointer) C.int {
 	*certs_ptr = C.new_voids_ptr(C.int(len(ans_certs)))
 	*errcs_ptr = C.new_voids_ptr(C.int(len(ans_errs)))
 
@@ -89,4 +85,23 @@ func NewCertificateFromFile(path_c *C.char, certs_ptr **unsafe.Pointer, errcs_pt
 	}
 
 	return C.int(len(ans_errs))
+}
+
+//export NewCertificateFromFile
+func NewCertificateFromFile(path_c *C.char, certs_ptr **unsafe.Pointer, errcs_ptr **unsafe.Pointer) C.int {
+	path := C.GoString(path_c)
+
+	ans_certs, ans_errs := libICP.NewCertificateFromFile(path)
+	return FinishNewCertificate(ans_certs, ans_errs, certs_ptr, errcs_ptr)
+}
+
+//export NewCertificateFromBytes
+func NewCertificateFromBytes(data_c *C.char, n C.int, certs_ptr **unsafe.Pointer, errcs_ptr **unsafe.Pointer) C.int {
+	data := make([]byte, n)
+	for i := 0; i < int(n); i++ {
+		data[i] = byte(C.char_at(data_c, C.int(i)))
+	}
+
+	ans_certs, ans_errs := libICP.NewCertificateFromBytes(data)
+	return FinishNewCertificate(ans_certs, ans_errs, certs_ptr, errcs_ptr)
 }
