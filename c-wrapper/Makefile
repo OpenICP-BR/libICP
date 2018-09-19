@@ -1,6 +1,9 @@
 CC=gcc
+CXX=g++
 LIBTOOL = libtool
-CFLAGS=-std=c99 -O2 -pedantic -Wall -Wextra -Wundef -Wshadow -Wunreachable-code -Wfloat-equal -Werror -Wno-unused-command-line-argument -I.
+CFLAGS=-O2 -pedantic -Wall -Wextra -Wundef -Wshadow -Wunreachable-code -Wfloat-equal -Werror -Wno-unused-command-line-argument -I.
+CXXFLAGS=$(CFLAGS) -std=c++98
+CFLAGS+= -std=c99
 ifeq ($(OS),Windows_NT)
 	CFLAGS += -D WIN32
 else
@@ -8,10 +11,12 @@ else
 	ifeq ($(UNAME_S),Linux)
 		LIBTOOL = libtool
 		CFLAGS += -D LINUX -pthread
+		CXXFLAGS += -D LINUX -pthread
 	endif
 	ifeq ($(UNAME_S),Darwin)
 		LIBTOOL = glibtool
 		CFLAGS += -framework CoreFoundation -framework Security
+		CXXFLAGS += -framework CoreFoundation -framework Security
 	endif
 endif
 
@@ -31,11 +36,12 @@ MANFILES := ${subst docs/src,docs/man,$(patsubst %.pod,%.3,$(DOCFILES))}
 EXAMPLES := $(patsubst %.c,%.bin,$(shell find ./examples -type f -name "*.c"))
 TXTFILES := ${subst docs/src,docs/txt,$(patsubst %.pod,%.3.txt,$(DOCFILES))}
 HTMLFILES := ${subst docs/src,docs/html,$(patsubst %.pod,%.3.html,$(DOCFILES))}
+CPP_OBJECTS := $(patsubst %.cpp,%.o,$(shell find ./stage3 -type f -name "*.cpp"))
 INSTALL_PATH=/usr/local/
 
 .PHONY: all clean docs install examples
 
-all: libICP.a examples
+all: libICP++.a libICP.a examples
 
 stage1.a: stage1/*
 	@$(ECHO) -e $(ANSI_GREEN)"["$@"] Fixing imports..."$(ANSI_RESET)
@@ -48,7 +54,12 @@ stage1.a: stage1/*
 
 stage2.o: stage2/stage2.c stage1.a
 	@$(ECHO) -e $(ANSI_GREEN)"["$@"] Compiling code..."$(ANSI_RESET)
-	$(CC) $(CFLAGS) -c stage2/stage2.c -o $@ -I. -Istage1
+	$(CC) $(CFLAGS) -c $< -o $@ -I. -Istage1
+	@$(ECHO) -e $(ANSI_BLUE)"["$@"] Finished target $@"$(ANSI_RESET)
+
+stage3/%.o: stage3/%.cpp libICP.a libICP++.h
+	@$(ECHO) -e $(ANSI_GREEN)"["$@"] Compiling code..."$(ANSI_RESET)
+	$(CXX) $(CXXFLAGS) -c $< -o $@ -I. -L. -lICP.a
 	@$(ECHO) -e $(ANSI_BLUE)"["$@"] Finished target $@"$(ANSI_RESET)
 
 libICP.a: stage1.a stage2.o
@@ -56,7 +67,13 @@ libICP.a: stage1.a stage2.o
 	cp stage1.a libICP.a
 	ar cru libICP.a stage2.o
 	ranlib libICP.a
-	# $(LIBTOOL) --tag=CC --mode=link gcc -o libICP.a stage1.a stage2.o
+	@$(ECHO) -e $(ANSI_BLUE)"["$@"] Finished target $@"$(ANSI_RESET)
+
+libICP++.a: libICP.a $(CPP_OBJECTS)
+	@$(ECHO) -e $(ANSI_GREEN)"["$@"] Joining libraries..."$(ANSI_RESET)
+	cp libICP.a libICP++.a
+	ar cru libICP++.a $(CPP_OBJECTS)
+	ranlib libICP++.a
 	@$(ECHO) -e $(ANSI_BLUE)"["$@"] Finished target $@"$(ANSI_RESET)
 
 examples: $(EXAMPLES)
@@ -86,7 +103,7 @@ docs/html/%.3.html: docs/txt/%.3.txt docs/html
 clean:
 	rm *.a *.o *.so
 
-install: libICP.a libICP.h $(MANFILES) $(HTMLFILES)
+install: libICP.a libICP.h libICP++.a libICP++.h $(MANFILES) $(HTMLFILES)
 	@$(ECHO) -e $(ANSI_GREEN)"["$@"] Installing to "$(INSTALL_PATH)$(ANSI_RESET)
 	-mkdir -pv $(INSTALL_PATH)/share/man/man3/
 	-mkdir -pv $(INSTALL_PATH)/include/
@@ -95,6 +112,8 @@ install: libICP.a libICP.h $(MANFILES) $(HTMLFILES)
 	cp docs/html/*.3.html $(INSTALL_PATH)/share/man/man3/
 	cp libICP.h $(INSTALL_PATH)/include/
 	cp libICP.a $(INSTALL_PATH)/lib
+	cp libICP++.h $(INSTALL_PATH)/include/
+	cp libICP++.a $(INSTALL_PATH)/lib
 	@$(ECHO) -e $(ANSI_BLUE)"["$@"] Finished target $@"$(ANSI_RESET)
 
 

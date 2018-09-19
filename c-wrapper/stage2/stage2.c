@@ -94,8 +94,16 @@ void icp_free_errcs(icp_errc *errcs) {
 	icp_free_errs((icp_err*) errcs);
 }
 
+void icp_free_errc(icp_errc errc) {
+	icp_free_err((icp_err) errc);
+}
+
 void icp_free_store(icp_store store) {
 	FreeGoStuff(store);
+}
+
+void icp_free_err(icp_err err) {
+	FreeGoStuff(err);
 }
 
 void icp_free_pfx(icp_pfx pfx) {
@@ -114,15 +122,15 @@ void icp_free_kvp(icp_kvp entry) {
 	safe_free(entry.val);
 }
 
-int icp_new_cert_from_file(char *path, icp_cert **certs, icp_errc **errcs) {
-	return NewCertificateFromFile(path, certs, errcs);
+int icp_new_cert_from_file(const char *path, icp_cert **certs, icp_errc **errcs) {
+	return NewCertificateFromFile((char*) path, certs, errcs);
 }
 
 int icp_new_cert_from_bytes(uint8_t *data, int n, icp_cert **certs, icp_errc **errcs) {
 	return NewCertificateFromBytes((char*) data, n, certs, errcs);
 }
 
-icp_store icp_new_store(bool auto_download) {
+icp_store icp_store_new(bool auto_download) {
 	return NewCAStore(auto_download);
 }
 
@@ -158,10 +166,8 @@ int icp_store_add_testing_root_ca(icp_store store, icp_cert cert, icp_errc **err
 	return CAStoreAddTestingRootCA(store, cert, errcs);	
 }
 
-icp_pfx icp_pfx_from_file(char *path, char *password, icp_errc *err) {
-	icp_pfx pfx = NewPFXFromFile(path, password, err);
-	garbage_fill(password);
-	return pfx;
+icp_pfx icp_pfx_from_file(const char *path, const char *password, icp_errc *err) {
+	return NewPFXFromFile((char*) path, (char*) password, err);
 }
 
 icp_cert icp_pfx_cert(icp_pfx pfx) {
@@ -172,12 +178,10 @@ bool icp_pfx_has_key(icp_pfx pfx) {
 	return PFXHasKey(pfx);
 }
 
-bool icp_pfx_save_cert_to_file(icp_pfx pfx, char *path, icp_errc *err) {
-	return PFXSaveCertToFile(pfx, path, err);
+bool icp_pfx_save_cert_to_file(icp_pfx pfx, const char *path, icp_errc *err) {
+	return PFXSaveCertToFile(pfx, (char*) path, err);
 }
 
-bool icp_pfx_save_to_file(icp_pfx pfx, char *path, char *password, icp_errc *err) {
-	bool ret = PFXSaveToFile(pfx, path, password, err);
-	garbage_fill(password);
-	return ret;
+bool icp_pfx_save_to_file(icp_pfx pfx, const char *path, const char *password, icp_errc *err) {
+	return PFXSaveToFile(pfx, (char*) path, (char*) password, err);
 }

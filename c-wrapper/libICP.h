@@ -32,7 +32,10 @@ char* icp_version();
 int icp_errc_code(icp_errc errc);
 char* icp_errc_code_str(icp_errc errc);
 char* icp_err_str(icp_err err);
+
+void icp_free_err(icp_err err);
 void icp_free_errs(icp_err *errs);
+void icp_free_errc(icp_errc errc);
 void icp_free_errcs(icp_errc *errcs);
 int icp_len(icp_any *array);
 
@@ -47,7 +50,7 @@ bool icp_cert_is_self_signed(icp_cert cert);
 bool icp_cert_is_ca(icp_cert cert);
 void icp_free_certs(icp_cert *certs);
 void icp_free_cert(icp_cert cert);
-int icp_new_cert_from_file(char *path, icp_cert **certs, icp_errc **errcs);
+int icp_new_cert_from_file(const char *path, icp_cert **certs, icp_errc **errcs);
 int icp_new_cert_from_bytes(uint8_t *data, int n, icp_cert **certs, icp_errc **errcs);
 
 // icp_kvp as subject
@@ -55,7 +58,7 @@ void icp_free_kvps(icp_kvp *pairs);
 void icp_free_kvp(icp_kvp pair);
 
 // icp_store as subject
-icp_store icp_new_store(bool auto_download);
+icp_store icp_store_new(bool auto_download);
 int icp_store_verify(icp_store store, icp_cert cert, icp_cert **chain, icp_errc **errcs, icp_errc **warns);
 bool icp_store_auto_download(icp_store store);
 void icp_store_auto_download_set(icp_store store, bool flag);
@@ -67,11 +70,12 @@ int icp_store_add_testing_root_ca(icp_store store, icp_cert cert, icp_errc **err
 void icp_free_store(icp_store store);
 
 // icp_pfx as subject
-icp_pfx icp_pfx_from_file(char *path, char *password, icp_errc *err);
+icp_pfx icp_pfx_from_file(const char *path, const char *password, icp_errc *errc);
 icp_cert icp_pfx_cert(icp_pfx pfx);
 bool icp_pfx_has_key(icp_pfx pfx);
-bool icp_pfx_save_cert_to_file(icp_pfx pfx, char *path, icp_errc *err);
-bool icp_pfx_save_to_file(icp_pfx pfx, char *path, char *password, icp_errc *err);
+bool icp_pfx_save_cert_to_file(icp_pfx pfx, const char *path, icp_errc *err);
+bool icp_pfx_save_to_file(icp_pfx pfx, const char *path, const char *password, icp_errc *err);
+void icp_free_pfx(icp_pfx pfx);
 
 #ifdef __cplusplus
 }
