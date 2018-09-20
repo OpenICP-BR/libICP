@@ -27,7 +27,7 @@ bool CAStore::GetAutoDownload() {
 	return icp_store_auto_download(_store_ptr);
 }
 
-vector<CodedError> AddCA(Cert cert) {
+vector<CodedError> CAStore::AddCA(Cert cert) {
 	icp_errc *errcs_ptr;
 	vector<CodedError> errs;
 
@@ -40,7 +40,7 @@ vector<CodedError> AddCA(Cert cert) {
 	return errs;
 }
 
-vector<CodedError> AddTestingRootCA(Cert cert) {
+vector<CodedError> CAStore::AddTestingRootCA(Cert cert) {
 	icp_errc *errcs_ptr;
 	vector<CodedError> errs;
 
@@ -51,4 +51,9 @@ vector<CodedError> AddTestingRootCA(Cert cert) {
 	}
 
 	return errs;
+}
+
+CodedError CAStore::DownloadAll() {
+	icp_errc errc_ptr = icp_store_download_all(_store_ptr);
+	return CodedError(errc_ptr);
 }

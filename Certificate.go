@@ -38,7 +38,7 @@ type Certificate struct {
 }
 
 // Accepts PEM, DER and a mix of both.
-func NewCertificateFromFile(path string) ([]Certificate, []CodedError) {
+func NewCertificateFromFile(path string) ([]*Certificate, []CodedError) {
 	dat, err := ioutil.ReadFile(path)
 	if err != nil {
 		merr := NewMultiError("failed to read certificate file", ERR_READ_FILE, nil, err)
@@ -49,9 +49,9 @@ func NewCertificateFromFile(path string) ([]Certificate, []CodedError) {
 }
 
 // Accepts PEM, DER and a mix of both.
-func NewCertificateFromBytes(raw []byte) ([]Certificate, []CodedError) {
+func NewCertificateFromBytes(raw []byte) ([]*Certificate, []CodedError) {
 	var block *pem.Block
-	certs := make([]Certificate, 0)
+	certs := make([]*Certificate, 0)
 	merrs := make([]CodedError, 0)
 
 	// Try decoding all certificate PEM blocks
@@ -65,7 +65,7 @@ func NewCertificateFromBytes(raw []byte) ([]Certificate, []CodedError) {
 			new_cert := Certificate{}
 			new_cert.init()
 			_, merr := new_cert.load_from_der(block.Bytes)
-			certs = append(certs, new_cert)
+			certs = append(certs, &new_cert)
 			merrs = append(merrs, merr)
 		}
 	}
@@ -80,7 +80,7 @@ func NewCertificateFromBytes(raw []byte) ([]Certificate, []CodedError) {
 		new_cert := Certificate{}
 		new_cert.init()
 		rest, merr = new_cert.load_from_der(rest)
-		certs = append(certs, new_cert)
+		certs = append(certs, &new_cert)
 		merrs = append(merrs, merr)
 	}
 

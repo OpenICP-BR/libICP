@@ -15,10 +15,10 @@ func Test_CAStore_BuildPath_1(t *testing.T) {
 	certs, errs := NewCertificateFromBytes([]byte(ROOT_CA_BR_ICP_V1))
 	require.Nil(t, errs)
 	end_cert := certs[0]
-	ans, err := store.build_path(&end_cert, _PATH_BUILDING_MAX_DEPTH)
+	ans, err := store.build_path(end_cert, _PATH_BUILDING_MAX_DEPTH)
 	require.Nil(t, err)
 	right_ans := make([]*Certificate, 1)
-	right_ans[0] = &end_cert
+	right_ans[0] = end_cert
 	assert.Equal(t, right_ans, ans)
 }
 
@@ -29,11 +29,11 @@ func Test_CAStore_BuildPath_2(t *testing.T) {
 	require.Nil(t, err)
 	end_cert := certs[0]
 	root := certs[1]
-	ans, errs := store.build_path(&end_cert, _PATH_BUILDING_MAX_DEPTH)
+	ans, errs := store.build_path(end_cert, _PATH_BUILDING_MAX_DEPTH)
 	require.Nil(t, errs)
 	right_ans := make([]*Certificate, 2)
-	right_ans[0] = &end_cert
-	right_ans[1] = &root
+	right_ans[0] = end_cert
+	right_ans[1] = root
 	require.NotNil(t, ans)
 	assert.Equal(t, right_ans, ans)
 }
@@ -50,13 +50,13 @@ func Test_CAStore_BuildPath_3(t *testing.T) {
 	end_cert := certs[0]
 	middle_ca := certs[1]
 	root := certs[2]
-	store.direct_add_ca(&middle_ca)
-	ans, errs := store.build_path(&end_cert, _PATH_BUILDING_MAX_DEPTH)
+	store.direct_add_ca(middle_ca)
+	ans, errs := store.build_path(end_cert, _PATH_BUILDING_MAX_DEPTH)
 	assert.Nil(t, errs)
 	right_ans := make([]*Certificate, 3)
-	right_ans[0] = &end_cert
-	right_ans[1] = &middle_ca
-	right_ans[2] = &root
+	right_ans[0] = end_cert
+	right_ans[1] = middle_ca
+	right_ans[2] = root
 	assert.NotNil(t, ans)
 	assert.Equal(t, right_ans, ans)
 }
@@ -66,8 +66,8 @@ func Test_CAStore_VerifyCertAt_1(t *testing.T) {
 	store.Init()
 	certs, err := NewCertificateFromBytes([]byte(pem_ac_soluti + ROOT_CA_BR_ICP_V2))
 	assert.Nil(t, err)
-	end_cert := &certs[0]
-	root := &certs[1]
+	end_cert := certs[0]
+	root := certs[1]
 
 	right_ans := []*Certificate{root}
 	some_time := time.Unix(1528997864, 0)
@@ -91,8 +91,8 @@ func Test_CAStore_VerifyCertAt_2(t *testing.T) {
 	store.Init()
 	certs, err := NewCertificateFromBytes([]byte(pem_ac_soluti + ROOT_CA_BR_ICP_V2))
 	assert.Nil(t, err)
-	end_cert := &certs[0]
-	root := &certs[1]
+	end_cert := certs[0]
+	root := certs[1]
 
 	right_ans := []*Certificate{root}
 	some_time := time.Unix(0, 0)
@@ -119,7 +119,7 @@ func Test_CAStore_VerifyCertAt_3(t *testing.T) {
 	store.Init()
 	certs, err := NewCertificateFromBytes([]byte(pem_ac_digital))
 	assert.Nil(t, err)
-	end_cert := &certs[0]
+	end_cert := certs[0]
 
 	some_time := time.Unix(0, 0)
 	path, errs, warns := store.verify_cert_at(end_cert, some_time)
@@ -139,14 +139,14 @@ func Test_CAStore_AddCAatTime(t *testing.T) {
 	middle_ca := certs[1]
 	some_time := time.Unix(1528997864, 0)
 
-	errs := store.add_ca_at_time(&end_ca, some_time)
+	errs := store.add_ca_at_time(end_ca, some_time)
 	assert.Equal(t, len(errs), 1)
 	assert.EqualValues(t, errs[0].Code(), ERR_ISSUER_NOT_FOUND)
 
-	errs = store.add_ca_at_time(&middle_ca, some_time)
+	errs = store.add_ca_at_time(middle_ca, some_time)
 	assert.Nil(t, errs)
 
-	errs = store.add_ca_at_time(&end_ca, some_time)
+	errs = store.add_ca_at_time(end_ca, some_time)
 	assert.Nil(t, errs)
 }
 
@@ -162,7 +162,7 @@ func Test_CAStore_ParseCAsZip(t *testing.T) {
 
 func Test_CAStore_list_crls(t *testing.T) {
 	store := NewCAStore(false)
-	crls := store.ListCRLs()
+	crls := store.list_CRLs()
 	assert.Equal(t, crls, map[string]bool{
 		"http://acraiz.icpbrasil.gov.br/LCRacraizv1.crl": true,
 		"http://acraiz.icpbrasil.gov.br/LCRacraizv2.crl": true,
@@ -199,7 +199,7 @@ func Test_CAStore_AddTestingRootCA_2(t *testing.T) {
 	require.Equal(t, 1, len(certs))
 
 	store := NewCAStore(false)
-	errs = store.AddTestingRootCA(&certs[0])
+	errs = store.AddTestingRootCA(certs[0])
 	assert.Equal(t, 1, len(errs))
 	assert.EqualValues(t, ERR_TEST_CA_IMPROPPER_NAME, errs[0].Code())
 	assert.Equal(t, 6, len(store.cas))

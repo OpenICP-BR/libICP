@@ -154,8 +154,8 @@ void icp_store_debug_set(icp_store store, bool flag) {
 	CAStoreDebugSet(store, flag);
 }
 
-void icp_store_download_all(icp_store store) {
-	CAStoreDownloadAll(store);
+icp_errc icp_store_download_all(icp_store store) {
+	return CAStoreDownloadAll(store);
 }
 
 int icp_store_add_ca(icp_store store, icp_cert cert, icp_errc **errcs) {

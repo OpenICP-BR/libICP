@@ -15,7 +15,7 @@ import (
 type PFX struct {
 	base pfx_raw
 
-	Cert    Certificate
+	Cert    *Certificate
 	rsa_key *rsa.PrivateKey
 }
 
@@ -98,6 +98,7 @@ func new_cert_and_key(subject_name, issuer_name nameT, serial *big.Int, not_befo
 	}
 
 	// Set data
+	pfx.Cert = new(Certificate)
 	pfx.Cert.base.TBSCertificate.Issuer = issuer_name
 	pfx.Cert.base.TBSCertificate.Subject = subject_name
 	pfx.Cert.base.TBSCertificate.SerialNumber = serial

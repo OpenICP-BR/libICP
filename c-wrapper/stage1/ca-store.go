@@ -69,9 +69,10 @@ func CAStoreVerifyCert(store_ptr unsafe.Pointer, cert_ptr unsafe.Pointer, chain 
 }
 
 //export CAStoreDownloadAll
-func CAStoreDownloadAll(ptr unsafe.Pointer) {
+func CAStoreDownloadAll(ptr unsafe.Pointer) unsafe.Pointer {
 	store := pointer.Restore(ptr).(*libICP.CAStore)
-	store.DownloadAllCAs()
+	err := store.DownloadAllCAs()
+	return pointer.Save(err)
 }
 
 //export CAStoreAddCA

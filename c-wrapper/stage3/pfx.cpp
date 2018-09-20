@@ -26,3 +26,15 @@ PFX LoadPFXFromFile(std::string path, std::string password, CodedError &errc) {
 
 	return PFX(pfx);
 }
+
+CodedError PFX::SaveCertToFile(std::string path) {
+	icp_errc errc_ptr;
+	icp_pfx_save_cert_to_file(_pfx_ptr, path.c_str(), &errc_ptr);
+	return CodedError(errc_ptr);
+}
+
+CodedError PFX::SaveToFile(std::string path, std::string password) {
+	icp_errc errc_ptr;
+	icp_pfx_save_to_file(_pfx_ptr, path.c_str(), password.c_str(), &errc_ptr);
+	return CodedError(errc_ptr);
+}

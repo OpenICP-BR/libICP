@@ -20,6 +20,7 @@ namespace ICP {
 		icp_err _err_ptr;
 		std::string Message;
 		Error(icp_err new_err_ptr);
+		bool IsNull();
 		~Error();
 	};
 
@@ -56,7 +57,9 @@ namespace ICP {
 		void SetAutoDownload(bool flag);
 		bool GetDebug();
 		void SetDebug(bool flag);
+		CodedError DownloadAll();
 		std::vector<CodedError> AddCA(Cert cert);
+		std::vector<CodedError> AddCAsFromDir(std::string path);
 		std::vector<CodedError> AddTestingRootCA(Cert cert);
 		CAStore(bool AutoDownload);
 		~CAStore();	
@@ -66,8 +69,8 @@ namespace ICP {
 	public:
 		icp_pfx _pfx_ptr;
 		bool HasKey();
-		Error SaveCertToFile(std::string path);
-		Error SaveToFile(std::string path, std::string password);
+		CodedError SaveCertToFile(std::string path);
+		CodedError SaveToFile(std::string path, std::string password);
 		PFX(icp_pfx new_pfx_ptr);
 		~PFX();	
 	};

@@ -51,9 +51,43 @@ func (store *CAStore) Init() {
 	// Save them
 	store.cas = make(map[string]*Certificate)
 	for i, _ := range certs {
-		store.direct_add_ca(&certs[i])
+		store.direct_add_ca(certs[i])
 	}
 	store.inited = true
+}
+
+func (store *CAStore) AddCAsFromDir(path string) int {
+	added := 0
+	new_certs := -1
+	files, err := ioutil.ReadDir(path)
+
+	if err != nil {
+		if store.Debug {
+			fmt.Printf("[CAStore.AddCAsFromDir(%s): %s\n", path, err.Error())
+		}
+		return 0
+	}
+	for new_certs != 0 {
+		if new_certs < 0 {
+			new_certs = 0
+		}
+		for _, f := range files {
+			if f.IsDir() {
+				// We only know how to read files
+				continue
+			}
+			certs, _ := NewCertificateFromFile(path + "/" + f.Name())
+			for _, cert := range certs {
+				errs := store.AddCA(cert)
+				if errs == nil || len(errs) == 0 {
+					added++
+					new_certs++
+				}
+			}
+		}
+	}
+
+	return added
 }
 
 // For now, this functions verifies: validity, integrity, propper chain of certification.
@@ -272,20 +306,20 @@ func (store *CAStore) add_CAs_in_zip_file(file *zip.File) bool {
 
 	// Add them all!
 	for _, cert := range certs {
-		store.add_ca_at_time(&cert, time.Now())
+		store.add_ca_at_time(cert, time.Now())
 	}
 
 	return true
 }
 
-func (store *CAStore) parse_CAs_zip(raw []byte, raw_len int64) error {
+func (store *CAStore) parse_CAs_zip(raw []byte, raw_len int64) CodedError {
 	if store.Debug {
 		fmt.Println("[libICP-DEBUG] Adding all CAs from a zip file")
 	}
 	// Load zip
 	zreader, err := zip.NewReader(bytes.NewReader(raw), raw_len)
 	if err != nil {
-		return err
+		return NewMultiError(err.Error(), ERR_UNZIP_ERROR, nil)
 	}
 
 	// Try to add CAs until it is clear that no more are possible
@@ -303,7 +337,7 @@ func (store *CAStore) parse_CAs_zip(raw []byte, raw_len int64) error {
 }
 
 // This function will attempt download all CAs from ALL_CAs_ZIP_URL. This runs regardless of CAStore.AutoDownload
-func (store *CAStore) DownloadAllCAs() error {
+func (store *CAStore) DownloadAllCAs() CodedError {
 	if store.Debug {
 		fmt.Println("[libICP-DEBUG] Downloading all CAs from " + ALL_CAs_ZIP_URL)
 	}
@@ -315,7 +349,7 @@ func (store *CAStore) DownloadAllCAs() error {
 }
 
 // Returns a copy
-func (store CAStore) ListCRLs() map[string]bool {
+func (store CAStore) list_CRLs() map[string]bool {
 	urls_set := make(map[string]bool)
 
 	for _, ca := range store.cas {

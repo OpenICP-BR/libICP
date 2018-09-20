@@ -71,12 +71,12 @@ func CertIsSelfSigned(ptr unsafe.Pointer) bool {
 	return cert.IsSelfSigned()
 }
 
-func FinishNewCertificate(ans_certs []libICP.Certificate, ans_errs []libICP.CodedError, certs_ptr **unsafe.Pointer, errcs_ptr **unsafe.Pointer) C.int {
+func FinishNewCertificate(ans_certs []*libICP.Certificate, ans_errs []libICP.CodedError, certs_ptr **unsafe.Pointer, errcs_ptr **unsafe.Pointer) C.int {
 	*certs_ptr = C.new_voids_ptr(C.int(len(ans_certs)))
 	*errcs_ptr = C.new_voids_ptr(C.int(len(ans_errs)))
 
 	for i := range ans_certs {
-		ptr := pointer.Save(&ans_certs[i])
+		ptr := pointer.Save(ans_certs[i])
 		C.set_voids_ptr(*certs_ptr, C.int(i), ptr)
 	}
 	for i := range ans_errs {
