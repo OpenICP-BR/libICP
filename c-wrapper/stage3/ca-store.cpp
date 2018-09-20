@@ -1,6 +1,7 @@
 #include <libICP++.h>
 
 using std::vector;
+using std::string;
 using namespace ICP;
 
 CAStore::CAStore(bool AutoDownload) {
@@ -56,4 +57,8 @@ vector<CodedError> CAStore::AddTestingRootCA(Cert cert) {
 CodedError CAStore::DownloadAll() {
 	icp_errc errc_ptr = icp_store_download_all(_store_ptr);
 	return CodedError(errc_ptr);
+}
+
+int CAStore::AddAllCAsFromDir(string path) {
+	return icp_store_add_all_cas_from_dir(_store_ptr, path.c_str());
 }

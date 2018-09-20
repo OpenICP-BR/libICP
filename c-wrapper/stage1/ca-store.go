@@ -41,6 +41,12 @@ func NewCAStore(AutoDownload bool) unsafe.Pointer {
 	return ptr
 }
 
+//export CAStoreAddCAsFromDir
+func CAStoreAddCAsFromDir(store_ptr unsafe.Pointer, path *C.char) C.int {
+	store := pointer.Restore(store_ptr).(*libICP.CAStore)
+	return C.int(store.AddCAsFromDir(C.GoString(path)))
+}
+
 //export CAStoreVerifyCert
 func CAStoreVerifyCert(store_ptr unsafe.Pointer, cert_ptr unsafe.Pointer, chain **unsafe.Pointer, errs **unsafe.Pointer, warns **unsafe.Pointer) C.int {
 	store := pointer.Restore(store_ptr).(*libICP.CAStore)

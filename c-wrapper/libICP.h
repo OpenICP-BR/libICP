@@ -64,6 +64,7 @@ bool icp_store_auto_download(icp_store store);
 void icp_store_auto_download_set(icp_store store, bool flag);
 bool icp_store_debug(icp_store store);
 void icp_store_debug_set(icp_store store, bool flag);
+int icp_store_add_all_cas_from_dir(icp_store store, const char *path);
 icp_errc icp_store_download_all(icp_store store);
 int icp_store_add_ca(icp_store store, icp_cert cert, icp_errc **errcs);
 int icp_store_add_testing_root_ca(icp_store store, icp_cert cert, icp_errc **errcs);

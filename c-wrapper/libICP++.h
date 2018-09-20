@@ -58,6 +58,7 @@ namespace ICP {
 		bool GetDebug();
 		void SetDebug(bool flag);
 		CodedError DownloadAll();
+		int AddAllCAsFromDir(std::string path);
 		std::vector<CodedError> AddCA(Cert cert);
 		std::vector<CodedError> AddCAsFromDir(std::string path);
 		std::vector<CodedError> AddTestingRootCA(Cert cert);

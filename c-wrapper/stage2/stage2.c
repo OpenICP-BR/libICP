@@ -166,6 +166,10 @@ int icp_store_add_testing_root_ca(icp_store store, icp_cert cert, icp_errc **err
 	return CAStoreAddTestingRootCA(store, cert, errcs);	
 }
 
+int icp_store_add_all_cas_from_dir(icp_store store, const char *path) {
+	return CAStoreAddCAsFromDir(store, (char *) path);
+}
+
 icp_pfx icp_pfx_from_file(const char *path, const char *password, icp_errc *err) {
 	return NewPFXFromFile((char*) path, (char*) password, err);
 }
