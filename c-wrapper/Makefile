@@ -36,7 +36,8 @@ MANFILES := ${subst docs/src,docs/man,$(patsubst %.pod,%.3,$(DOCFILES))}
 EXAMPLES := $(patsubst %.c,%.bin,$(shell find ./examples -type f -name "*.c"))
 TXTFILES := ${subst docs/src,docs/txt,$(patsubst %.pod,%.3.txt,$(DOCFILES))}
 HTMLFILES := ${subst docs/src,docs/html,$(patsubst %.pod,%.3.html,$(DOCFILES))}
-CPP_OBJECTS := $(patsubst %.cpp,%.o,$(shell find ./stage3 -type f -name "*.cpp"))
+C_OBJS := $(patsubst %.c,%.o,$(shell find ./stage2 -type f -name "*.c"))
+CPP_OBJS := $(patsubst %.cpp,%.o,$(shell find ./stage3 -type f -name "*.cpp"))
 INSTALL_PATH=/usr/local/
 
 .PHONY: all clean docs install examples
@@ -52,7 +53,7 @@ stage1.a: stage1/*
 	cd stage1 && go build -v -i -o ../$@ -buildmode=c-archive
 	@$(ECHO) -e $(ANSI_BLUE)"["$@"] Finished target $@"$(ANSI_RESET)
 
-stage2.o: stage2/stage2.c stage1.a
+stage2/%.o: stage2/%.c stage1.a
 	@$(ECHO) -e $(ANSI_GREEN)"["$@"] Compiling code..."$(ANSI_RESET)
 	$(CC) $(CFLAGS) -c $< -o $@ -I. -Istage1
 	@$(ECHO) -e $(ANSI_BLUE)"["$@"] Finished target $@"$(ANSI_RESET)
@@ -62,17 +63,17 @@ stage3/%.o: stage3/%.cpp libICP.a libICP++.h
 	$(CXX) $(CXXFLAGS) -c $< -o $@ -I. -L. -lICP.a
 	@$(ECHO) -e $(ANSI_BLUE)"["$@"] Finished target $@"$(ANSI_RESET)
 
-libICP.a: stage1.a stage2.o
+libICP.a: stage1.a $(C_OBJS)
 	@$(ECHO) -e $(ANSI_GREEN)"["$@"] Joining libraries..."$(ANSI_RESET)
 	cp stage1.a libICP.a
-	ar cru libICP.a stage2.o
+	ar cru libICP.a $(C_OBJS)
 	ranlib libICP.a
 	@$(ECHO) -e $(ANSI_BLUE)"["$@"] Finished target $@"$(ANSI_RESET)
 
-libICP++.a: libICP.a $(CPP_OBJECTS)
+libICP++.a: libICP.a $(CPP_OBJS)
 	@$(ECHO) -e $(ANSI_GREEN)"["$@"] Joining libraries..."$(ANSI_RESET)
 	cp libICP.a libICP++.a
-	ar cru libICP++.a $(CPP_OBJECTS)
+	ar cru libICP++.a $(CPP_OBJS)
 	ranlib libICP++.a
 	@$(ECHO) -e $(ANSI_BLUE)"["$@"] Finished target $@"$(ANSI_RESET)
 
@@ -101,7 +102,10 @@ docs/html/%.3.html: docs/txt/%.3.txt docs/html
 	man2html -cgiurl \$$title.\$$section.html -topm 0 < $< > $@
 
 clean:
-	rm *.a *.o *.so
+	-rm *.a *.o *.so
+	-cd stage1 && rm *.a *.o *.so
+	-cd stage2 && rm *.a *.o *.so
+	-cd stage3 && rm *.a *.o *.so
 
 install: libICP.a libICP.h libICP++.a libICP++.h $(MANFILES) $(HTMLFILES)
 	@$(ECHO) -e $(ANSI_GREEN)"["$@"] Installing to "$(INSTALL_PATH)$(ANSI_RESET)

@@ -20,12 +20,20 @@ void CAStore::SetAutoDownload(bool flag) {
 	icp_store_auto_download_set(_store_ptr, flag);
 }
 
+void CAStore::SetCachePath(string new_path) {
+	icp_store_cache_path_set(_store_ptr, new_path.c_str());
+}
+
 bool CAStore::GetDebug() {
 	return icp_store_debug(_store_ptr);
 }
 
 bool CAStore::GetAutoDownload() {
 	return icp_store_auto_download(_store_ptr);
+}
+
+string CAStore::GetCachePath() {
+	return string(icp_store_cache_path(_store_ptr));
 }
 
 vector<CodedError> CAStore::AddCA(Cert cert) {

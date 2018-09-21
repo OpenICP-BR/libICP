@@ -55,6 +55,8 @@ namespace ICP {
 	class CAStore {
 	public:
 		icp_store _store_ptr;
+		std::string GetCachePath();
+		void SetCachePath(std::string new_cache_path);
 		bool GetAutoDownload();
 		void SetAutoDownload(bool flag);
 		bool GetDebug();
@@ -62,7 +64,6 @@ namespace ICP {
 		CodedError DownloadAll();
 		int AddAllCAsFromDir(std::string path);
 		std::vector<CodedError> AddCA(Cert cert);
-		std::vector<CodedError> AddCAsFromDir(std::string path);
 		std::vector<CodedError> AddTestingRootCA(Cert cert);
 		CAStore(bool AutoDownload);
 		~CAStore();	
