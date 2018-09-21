@@ -48,3 +48,7 @@ int icp_store_add_testing_root_ca(icp_store store, icp_cert cert, icp_errc **err
 icp_err icp_store_add_all_cas_from_dir(icp_store store, const char *path) {
 	return CAStoreAddCAsFromDir(store, (char *) path);
 }
+
+void icp_store_add_all_cas_from_dir_parallel(icp_store store, const char *path) {
+	CAStoreAddCAsFromDirParallel(store, (char *) path);
+}
