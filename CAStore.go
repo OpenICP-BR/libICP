@@ -52,11 +52,9 @@ func (store *CAStore) Init() {
 		panic(errs)
 	}
 	// Save them
-	fmt.Println("waiting for lock")
 	store.cas_lock.Lock()
 	store.cas = make(map[string]*Certificate)
 	store.cas_lock.Unlock()
-	fmt.Println("unlocked")
 	for i, _ := range certs {
 		store.direct_add_ca(certs[i])
 	}
@@ -229,7 +227,6 @@ func (store *CAStore) direct_add_ca(cert *Certificate) {
 	if cert == nil {
 		return
 	}
-	fmt.Println("direct_add waiting for lock")
 	store.cas_lock.Lock()
 	defer store.cas_lock.Unlock()
 
