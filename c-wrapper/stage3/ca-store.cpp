@@ -71,6 +71,6 @@ CodedError CAStore::DownloadAll() {
 	return CodedError(errc_ptr);
 }
 
-int CAStore::AddAllCAsFromDir(string path) {
-	return icp_store_add_all_cas_from_dir(_store_ptr, path.c_str());
+Error CAStore::AddAllCAsFromDir(string path) {
+	return Error(icp_store_add_all_cas_from_dir(_store_ptr, path.c_str()));
 }

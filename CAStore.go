@@ -61,38 +61,53 @@ func (store *CAStore) Init() {
 	store.inited = true
 }
 
-func (store *CAStore) AddCAsFromDir(path string) int {
-	added := 0
-	new_certs := -1
+func (store *CAStore) AddCAsFromDir(path string) error {
 	files, err := ioutil.ReadDir(path)
 
 	if err != nil {
 		if store.Debug {
-			fmt.Printf("[CAStore.AddCAsFromDir(%s): %s\n", path, err.Error())
+			fmt.Printf("CAStore.AddCAsFromDir(%s): %s\n", path, err.Error())
 		}
-		return 0
+		return err
 	}
-	for tries := 0; new_certs != 0 && tries < 5; tries++ {
-		if new_certs < 0 {
-			new_certs = 0
+
+	// Try to add CAs until it is clear that no more are possible
+	last_total := -1
+	store.cas_lock.RLock()
+	len_cas := len(store.cas)
+	store.cas_lock.RUnlock()
+	for i := 0; len_cas != last_total && i < 10; i++ {
+		store.cas_lock.RLock()
+		last_total = len(store.cas)
+		store.cas_lock.RUnlock()
+
+		if store.Debug {
+			fmt.Printf("CAStore.AddCAsFromDir(): last_total = %d\n", last_total)
 		}
+
+		// For each file...
 		for _, f := range files {
 			if f.IsDir() {
 				// We only know how to read files
 				continue
 			}
+			// ...load its certificates...
 			certs, _ := NewCertificateFromFile(path + "/" + f.Name())
 			for _, cert := range certs {
+				// ...and try to add them
 				errs := store.AddCA(cert)
-				if errs == nil || len(errs) == 0 {
-					added++
-					new_certs++
+				if errs != nil || store.Debug {
+					fmt.Printf("CAStore.AddCAsFromDir(): failed to add CA: %s\n", err.Error())
 				}
 			}
 		}
+
+		store.cas_lock.RLock()
+		len_cas = len(store.cas)
+		store.cas_lock.RUnlock()
 	}
 
-	return added
+	return nil
 }
 
 // For now, this functions verifies: validity, integrity, propper chain of certification.
@@ -349,12 +364,17 @@ func (store *CAStore) parse_CAs_zip(raw []byte, raw_len int64) CodedError {
 	len_cas := len(store.cas)
 	store.cas_lock.RUnlock()
 	for i := 0; len_cas != last_total && i < 10; i++ {
+
+		store.cas_lock.RLock()
 		last_total = len(store.cas)
+		store.cas_lock.RUnlock()
+
 		// For each file in the zip archive
 		for _, file := range zreader.File {
 			// Try to add its CA
 			store.add_CAs_in_zip_file(file)
 		}
+
 		store.cas_lock.RLock()
 		len_cas = len(store.cas)
 		store.cas_lock.RUnlock()

@@ -45,6 +45,6 @@ int icp_store_add_testing_root_ca(icp_store store, icp_cert cert, icp_errc **err
 	return CAStoreAddTestingRootCA(store, cert, errcs);	
 }
 
-int icp_store_add_all_cas_from_dir(icp_store store, const char *path) {
+icp_err icp_store_add_all_cas_from_dir(icp_store store, const char *path) {
 	return CAStoreAddCAsFromDir(store, (char *) path);
 }

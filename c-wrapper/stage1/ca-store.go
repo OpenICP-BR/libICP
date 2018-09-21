@@ -49,14 +49,14 @@ func CAStoreCachePathSet(ptr unsafe.Pointer, path *C.char) {
 //export NewCAStore
 func NewCAStore(AutoDownload bool) unsafe.Pointer {
 	store := libICP.NewCAStore(AutoDownload)
-	ptr := pointer.Save(store)
-	return ptr
+	return pointer.Save(store)
 }
 
 //export CAStoreAddCAsFromDir
-func CAStoreAddCAsFromDir(store_ptr unsafe.Pointer, path *C.char) C.int {
+func CAStoreAddCAsFromDir(store_ptr unsafe.Pointer, path *C.char) unsafe.Pointer {
 	store := pointer.Restore(store_ptr).(*libICP.CAStore)
-	return C.int(store.AddCAsFromDir(C.GoString(path)))
+	err := store.AddCAsFromDir(C.GoString(path))
+	return pointer.Save(err)
 }
 
 //export CAStoreVerifyCert
