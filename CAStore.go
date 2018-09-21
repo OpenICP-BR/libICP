@@ -72,7 +72,7 @@ func (store *CAStore) AddCAsFromDir(path string) int {
 		}
 		return 0
 	}
-	for new_certs != 0 {
+	for tries := 0; new_certs != 0 && tries < 5; tries++ {
 		if new_certs < 0 {
 			new_certs = 0
 		}
