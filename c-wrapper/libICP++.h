@@ -65,6 +65,7 @@ namespace ICP {
 		int AddAllCAsFromDir(std::string path);
 		std::vector<CodedError> AddCA(Cert cert);
 		std::vector<CodedError> AddTestingRootCA(Cert cert);
+		CAStore();
 		CAStore(bool AutoDownload);
 		~CAStore();	
 	};

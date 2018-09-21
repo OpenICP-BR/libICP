@@ -17,6 +17,7 @@ const ALL_CAs_ZIP_URL = "http://acraiz.icpbrasil.gov.br/credenciadas/Certificado
 type CAStore struct {
 	// If true, it will attempt to download missing CAs and CRLs
 	AutoDownload bool
+	cas_lock     *sync.RWMutex
 	cas          map[string]*Certificate
 	inited       bool
 	wg           *sync.WaitGroup
@@ -39,6 +40,7 @@ func (store *CAStore) Init() {
 		return
 	}
 	store.wg = new(sync.WaitGroup)
+	store.cas_lock = new(sync.RWMutex)
 	// Get our root certificates
 	certs, errs := NewCertificateFromBytes([]byte(ROOT_CA_BR_ICP_V1 + ROOT_CA_BR_ICP_V2 + ROOT_CA_BR_ICP_V5))
 	if errs != nil {
@@ -50,7 +52,11 @@ func (store *CAStore) Init() {
 		panic(errs)
 	}
 	// Save them
+	fmt.Println("waiting for lock")
+	store.cas_lock.Lock()
 	store.cas = make(map[string]*Certificate)
+	store.cas_lock.Unlock()
+	fmt.Println("unlocked")
 	for i, _ := range certs {
 		store.direct_add_ca(certs[i])
 	}
@@ -223,11 +229,12 @@ func (store *CAStore) direct_add_ca(cert *Certificate) {
 	if cert == nil {
 		return
 	}
+	fmt.Println("direct_add waiting for lock")
+	store.cas_lock.Lock()
+	defer store.cas_lock.Unlock()
 
 	// Attempt to download CRL
 	if store.AutoDownload {
-		store.wg.Add(1)
-		go cert.download_crl(store.wg)
 		store.wg.Add(1)
 		go cert.download_crl(store.wg)
 	}
@@ -268,11 +275,13 @@ func (store CAStore) build_path(end_cert *Certificate, max_depth int) ([]*Certif
 		return nil, merr
 	}
 
+	store.cas_lock.RLock()
 	issuer, ok := store.cas[end_cert.AuthorityKeyId]
 	if !ok {
 		// Try again
 		issuer, ok = store.cas[end_cert.Issuer]
 	}
+	store.cas_lock.RUnlock()
 	if !ok {
 		merr := NewMultiError("issuer not found", ERR_ISSUER_NOT_FOUND, nil)
 		merr.SetParam("AuthorityKeyID", end_cert.AuthorityKeyId)
@@ -339,13 +348,19 @@ func (store *CAStore) parse_CAs_zip(raw []byte, raw_len int64) CodedError {
 
 	// Try to add CAs until it is clear that no more are possible
 	last_total := -1
-	for i := 0; len(store.cas) != last_total && i < 10; i++ {
+	store.cas_lock.RLock()
+	len_cas := len(store.cas)
+	store.cas_lock.RUnlock()
+	for i := 0; len_cas != last_total && i < 10; i++ {
 		last_total = len(store.cas)
 		// For each file in the zip archive
 		for _, file := range zreader.File {
 			// Try to add its CA
 			store.add_CAs_in_zip_file(file)
 		}
+		store.cas_lock.RLock()
+		len_cas = len(store.cas)
+		store.cas_lock.RUnlock()
 	}
 
 	return nil
@@ -367,6 +382,8 @@ func (store *CAStore) DownloadAllCAs() CodedError {
 func (store CAStore) list_CRLs() map[string]bool {
 	urls_set := make(map[string]bool)
 
+	store.cas_lock.RLock()
+	defer store.cas_lock.RUnlock()
 	for _, ca := range store.cas {
 		for _, url := range ca.ext_crl_distribution_points.URLs {
 			urls_set[url] = true

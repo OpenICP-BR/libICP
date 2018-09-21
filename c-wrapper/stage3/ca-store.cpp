@@ -4,6 +4,10 @@ using std::vector;
 using std::string;
 using namespace ICP;
 
+CAStore::CAStore() {
+	_store_ptr = icp_store_new(false);
+}
+
 CAStore::CAStore(bool AutoDownload) {
 	_store_ptr = icp_store_new(AutoDownload);
 }
