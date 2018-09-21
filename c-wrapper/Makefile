@@ -107,7 +107,7 @@ clean:
 	-cd stage2 && rm *.a *.o *.so
 	-cd stage3 && rm *.a *.o *.so
 
-install: libICP.a libICP.h libICP++.a libICP++.h $(MANFILES) $(HTMLFILES)
+install: libICP.a libICP.h libICP++.a libICP++.h $(MANFILES) $(HTMLFILES) examples
 	@$(ECHO) -e $(ANSI_GREEN)"["$@"] Installing to "$(INSTALL_PATH)$(ANSI_RESET)
 	-mkdir -pv $(INSTALL_PATH)/share/man/man3/
 	-mkdir -pv $(INSTALL_PATH)/include/
