@@ -97,7 +97,9 @@ func (store *CAStore) AddCAsFromDir(path string) error {
 				// ...and try to add them
 				errs := store.AddCA(cert)
 				if errs != nil || store.Debug {
-					fmt.Printf("CAStore.AddCAsFromDir(): failed to add CA: %s\n", err.Error())
+					for _, err := range errs {
+						fmt.Printf("CAStore.AddCAsFromDir(): failed to add CA: %s\n", err.Error())
+					}
 				}
 			}
 		}
