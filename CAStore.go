@@ -21,6 +21,7 @@ type CAStore struct {
 	inited       bool
 	wg           *sync.WaitGroup
 	Debug        bool
+	CachePath    string
 }
 
 func NewCAStore(AutoDownload bool) *CAStore {
@@ -229,6 +230,20 @@ func (store *CAStore) direct_add_ca(cert *Certificate) {
 		go cert.download_crl(store.wg)
 		store.wg.Add(1)
 		go cert.download_crl(store.wg)
+	}
+
+	// Try to save the CA
+	if store.CachePath != "" {
+		fname := store.CachePath + "/"
+		fname += cert.FingerPrintAlg + "-"
+		fname += to_hex(cert.FingerPrint) + ".cert.der"
+		if store.Debug {
+			fmt.Println("[libICP-DEBUG] Trying to save CA to " + fname)
+		}
+		err := ioutil.WriteFile(fname, cert.base.RawContent, 0500)
+		if store.Debug && err != nil {
+			fmt.Println("[libICP-DEBUG] Failed to save CA: " + err.Error())
+		}
 	}
 
 	store.cas[cert.SubjectKeyId] = cert

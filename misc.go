@@ -117,6 +117,23 @@ func get_hasher(alg_id algorithm_identifier) (hash.Hash, crypto.Hash, CodedError
 	return hasher, hash_alg, nil
 }
 
+func hash2name(hash crypto.Hash) string {
+	switch hash {
+	case crypto.SHA1:
+		return "SHA1"
+	case crypto.SHA224:
+		return "SHA224"
+	case crypto.SHA256:
+		return "SHA256"
+	case crypto.SHA384:
+		return "SHA384"
+	case crypto.SHA512:
+		return "SHA512"
+	default:
+		return fmt.Sprintf("%d", hash)
+	}
+}
+
 func run_hash(hasher hash.Hash, data []byte) []byte {
 	hasher.Write(data)
 	return hasher.Sum(nil)

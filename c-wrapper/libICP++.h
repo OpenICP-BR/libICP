@@ -39,6 +39,8 @@ namespace ICP {
 	public:
 		icp_cert _cert_ptr;
 		std::string Subject, Issuer;
+		std::string FingerPrintHuman, FingerPrintAlg;
+		std::vector<uint8_t> FingerPrint;
 		std::map<std::string, std::string> SubjectMap, IssuerMap;
 		icp_time NotBefore, NotAfter;
 		bool IsSelfSigned();

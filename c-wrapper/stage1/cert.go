@@ -41,6 +41,24 @@ func CertIssuerMap(cert_ptr unsafe.Pointer) *C.icp_kvp {
 	return output
 }
 
+//export CertFingerPrintHuman
+func CertFingerPrintHuman(ptr unsafe.Pointer) *C.char {
+	cert := pointer.Restore(ptr).(*libICP.Certificate)
+	return C.CString(cert.FingerPrintHuman)
+}
+
+//export CertFingerPrintAlg
+func CertFingerPrintAlg(ptr unsafe.Pointer) *C.char {
+	cert := pointer.Restore(ptr).(*libICP.Certificate)
+	return C.CString(cert.FingerPrintAlg)
+}
+
+//export CertFingerPrint
+func CertFingerPrint(ptr unsafe.Pointer) []byte {
+	cert := pointer.Restore(ptr).(*libICP.Certificate)
+	return cert.FingerPrint
+}
+
 //export CertIssuer
 func CertIssuer(ptr unsafe.Pointer) *C.char {
 	cert := pointer.Restore(ptr).(*libICP.Certificate)

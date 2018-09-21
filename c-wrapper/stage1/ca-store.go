@@ -34,6 +34,18 @@ func CAStoreDebugSet(ptr unsafe.Pointer, val bool) {
 	store.Debug = val
 }
 
+//export CAStoreCachePath
+func CAStoreCachePath(ptr unsafe.Pointer) *C.char {
+	store := pointer.Restore(ptr).(*libICP.CAStore)
+	return C.CString(store.CachePath)
+}
+
+//export CAStoreCachePathSet
+func CAStoreCachePathSet(ptr unsafe.Pointer, path *C.char) {
+	store := pointer.Restore(ptr).(*libICP.CAStore)
+	store.CachePath = C.GoString(path)
+}
+
 //export NewCAStore
 func NewCAStore(AutoDownload bool) unsafe.Pointer {
 	store := libICP.NewCAStore(AutoDownload)

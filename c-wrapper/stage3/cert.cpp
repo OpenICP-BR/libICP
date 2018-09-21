@@ -30,6 +30,16 @@ void Cert::update() {
 
 	NotBefore = icp_cert_not_before(_cert_ptr);
 	NotAfter = icp_cert_not_after(_cert_ptr);
+
+	FingerPrintHuman = icp_cert_fingerprint_human(_cert_ptr);
+	FingerPrintAlg = icp_cert_fingerprint_alg(_cert_ptr);
+	FingerPrint.clear();
+	int n=0;
+	uint8_t *buf = icp_cert_fingerprint(_cert_ptr, &n);
+	FingerPrint.resize(n);
+	for (int i=0; buf != NULL && i < n; i++) {
+		FingerPrint.push_back(buf[i]);
+	}
 }
 
 Cert::~Cert() {

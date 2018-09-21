@@ -23,6 +23,9 @@ type Certificate struct {
 	NotAfter                    time.Time
 	SubjectKeyId                string
 	AuthorityKeyId              string
+	FingerPrintAlg              string
+	FingerPrint                 []byte
+	FingerPrintHuman            string
 	ext_key_usage               ext_key_usage
 	ext_basic_constraints       ext_basic_constraints
 	ext_crl_distribution_points ext_crl_distribution_points
@@ -241,6 +244,14 @@ func (cert *Certificate) finish_parsing() CodedError {
 	cert.IssuerMap = cert.base.TBSCertificate.Issuer.Map()
 	cert.NotBefore = cert.base.TBSCertificate.Validity.NotBeforeTime
 	cert.NotAfter = cert.base.TBSCertificate.Validity.NotAfterTime
+
+	hasher, hash_alg, merr := get_hasher(cert.base.GetSignatureAlgorithm())
+	if merr != nil {
+		return merr
+	}
+	cert.FingerPrintAlg = hash2name(hash_alg)
+	cert.FingerPrint = run_hash(hasher, cert.base.GetRawContent())
+	cert.FingerPrintHuman = hash2name(hash_alg) + " = " + nice_hex(cert.FingerPrint)
 
 	return cert.parse_extensions()
 }

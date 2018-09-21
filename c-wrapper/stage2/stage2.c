@@ -1,22 +1,6 @@
 #include "libICP.h"
 #include "stage1.h"
 
-void safe_free(void *ptr) {
-	if (ptr != NULL) {
-		free(ptr);
-	}
-}
-
-void garbage_fill(char *str) {
-	if (str == NULL) {
-		return;
-	}
-	for (int i=1; str[i] != 0; i++) {
-		str[i] ^= str[i-1];
-	}
-	str[0] = 0;
-}
-
 int icp_len(icp_any *array) {
 	int i;
 	for (i=0; array[i] != NULL; i++) {
@@ -64,6 +48,20 @@ icp_time icp_cert_not_after(icp_cert cert) {
 	return CertNotAfter(cert);
 }
 
+char* icp_cert_fingerprint_human(icp_cert cert) {
+	return CertFingerPrintHuman(cert);
+}
+
+char* icp_cert_fingerprint_alg(icp_cert cert) {
+	return CertFingerPrintAlg(cert);
+}
+
+uint8_t* icp_cert_fingerprint(icp_cert cert, int *n) {
+	GoSlice fp = CertFingerPrint(cert);
+	*n = (int) fp.len;
+	return (uint8_t*) fp.data;
+}
+
 bool icp_cert_is_self_signed(icp_cert cert) {
 	return CertIsSelfSigned(cert);
 }
@@ -80,14 +78,14 @@ void icp_free_certs(icp_cert *certs) {
 	for (int i=0; certs[i] != NULL; i++) {
 		icp_free_cert(certs[i]);
 	}
-	safe_free(certs);
+	free(certs);
 }
 
 void icp_free_errs(icp_err *errs) {
 	for (int i=0; errs[i] != NULL; i++) {
 		FreeGoStuff(errs[i]);
 	}
-	safe_free(errs);
+	free(errs);
 }
 
 void icp_free_errcs(icp_errc *errcs) {
@@ -114,12 +112,12 @@ void icp_free_kvps(icp_kvp *vec) {
 	for (int i=0; vec[i].key != NULL || vec[i].val != NULL; i++) {
 		icp_free_kvp(vec[i]);
 	}
-	safe_free(vec);
+	free(vec);
 }
 
 void icp_free_kvp(icp_kvp entry) {
-	safe_free(entry.key);
-	safe_free(entry.val);
+	free(entry.key);
+	free(entry.val);
 }
 
 int icp_new_cert_from_file(const char *path, icp_cert **certs, icp_errc **errcs) {
@@ -152,6 +150,14 @@ bool icp_store_debug(icp_store store) {
 
 void icp_store_debug_set(icp_store store, bool flag) {
 	CAStoreDebugSet(store, flag);
+}
+
+const char* icp_store_cache_path(icp_store store) {
+	return CAStoreCachePath(store);
+}
+
+void icp_store_cache_path_set(icp_store store, const char* path) {
+	CAStoreCachePathSet(store, (char*) path);
 }
 
 icp_errc icp_store_download_all(icp_store store) {
