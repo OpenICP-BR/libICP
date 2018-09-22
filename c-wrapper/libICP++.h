@@ -61,11 +61,12 @@ namespace ICP {
 		void SetAutoDownload(bool flag);
 		bool GetDebug();
 		void SetDebug(bool flag);
+		int Verify(Cert *cert, std::vector<Cert*> &chain, std::vector<CodedError*> &errcs, std::vector<CodedError*> &warns);
 		CodedError DownloadAll();
 		Error AddAllCAsFromDir(std::string path);
 		void AddAllCAsFromDirParallel(std::string path);
-		std::vector<CodedError*> AddCA(Cert cert);
-		std::vector<CodedError*> AddTestingRootCA(Cert cert);
+		std::vector<CodedError*> AddCA(Cert* cert);
+		std::vector<CodedError*> AddTestingRootCA(Cert* cert);
 		CAStore();
 		CAStore(bool AutoDownload);
 		~CAStore();	
