@@ -74,7 +74,7 @@ func GenFunc(ctx *cli.Context) error {
 		}
 
 		// Issue new certificate
-		pfx, cerr = libICP.NewCertAndKey(subject, issuer_pfx.Cert, serial, not_before, not_after)
+		pfx, cerr = libICP.NewCertAndKey(subject, *issuer_pfx.Cert, serial, not_before, not_after)
 		if cerr != nil {
 			return cerr
 		}
