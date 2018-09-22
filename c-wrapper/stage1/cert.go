@@ -54,9 +54,10 @@ func CertFingerPrintAlg(ptr unsafe.Pointer) *C.char {
 }
 
 //export CertFingerPrint
-func CertFingerPrint(ptr unsafe.Pointer) []byte {
+func CertFingerPrint(ptr unsafe.Pointer, n *C.int) unsafe.Pointer {
 	cert := pointer.Restore(ptr).(*libICP.Certificate)
-	return cert.FingerPrint
+	*n = C.int(len(cert.FingerPrint))
+	return C.CBytes(cert.FingerPrint)
 }
 
 //export CertIssuer

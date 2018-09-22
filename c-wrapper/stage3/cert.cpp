@@ -44,7 +44,7 @@ void Cert::update() {
 }
 
 Cert::~Cert() {
-	free(_cert_ptr);
+	icp_free_cert(_cert_ptr);
 }
 
 bool Cert::IsSelfSigned() {

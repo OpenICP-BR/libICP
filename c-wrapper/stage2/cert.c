@@ -34,9 +34,7 @@ char* icp_cert_fingerprint_alg(icp_cert cert) {
 }
 
 uint8_t* icp_cert_fingerprint(icp_cert cert, int *n) {
-	GoSlice fp = CertFingerPrint(cert);
-	*n = (int) fp.len;
-	return (uint8_t*) fp.data;
+	return (uint8_t*) CertFingerPrint(cert, n);
 }
 
 bool icp_cert_is_self_signed(icp_cert cert) {
