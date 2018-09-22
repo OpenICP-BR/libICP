@@ -63,6 +63,10 @@ func NewPFXFromDER(dat []byte, password string) (PFX, CodedError) {
 }
 
 // Generates a new root CA with subject and issuer TESTING_ROOT_CA_SUBJECT
+//
+// BUG: Subject Public Key Info leads to PKEY_SET_TYPE:unsupported algorithm and X509_PUBKEY_get:unsupported algorithm on openssl
+//
+// BUG: Lack of propper extensions leads the rest of the code to not consider it as a CA (key usage and extended key usage).
 func NewRootCA(not_before, not_after time.Time) (PFX, CodedError) {
 	name := nameT{
 		[]atv{atv{Type: idCountryName, Value: "BR"}},

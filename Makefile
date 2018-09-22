@@ -17,7 +17,7 @@ c-wrapper/libICP.a: c-wrapper/Makefile c-wrapper/libICP.h
 	cd c-wrapper && make
 
 docs:
-	xdg-open "http://localhost:6060/pkg/github.com/gjvnq/libICP/"
+	xdg-open "http://localhost:6060/pkg/github.com/OpenICP-BR/libICP/"
 docs-server:
 	godoc -http=:6060
 test: coverage.out
