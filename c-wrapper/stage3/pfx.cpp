@@ -1,6 +1,6 @@
 #include <libICP++.h>
 
-using namespace ICP;
+namespace ICP {
 
 PFX::PFX(icp_pfx new_pfx_ptr) : Cert(icp_pfx_cert(new_pfx_ptr)) {
 	_pfx_ptr = new_pfx_ptr;
@@ -37,4 +37,6 @@ CodedError PFX::SaveToFile(std::string path, std::string password) {
 	icp_errc errc_ptr;
 	icp_pfx_save_to_file(_pfx_ptr, path.c_str(), password.c_str(), &errc_ptr);
 	return CodedError(errc_ptr);
+}
+
 }

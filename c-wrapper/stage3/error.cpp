@@ -1,6 +1,6 @@
 #include <libICP++.h>
 
-using namespace ICP;
+namespace ICP {
 
 Error::Error(icp_errc new_err_ptr) {
 	_err_ptr = new_err_ptr;
@@ -15,4 +15,5 @@ bool Error::IsNull() {
 
 Error::~Error() {
 	icp_free_err(_err_ptr);
+}
 }

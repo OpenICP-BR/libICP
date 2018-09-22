@@ -2,7 +2,8 @@
 
 using std::string;
 using std::vector;
-using namespace ICP;
+
+namespace ICP {
 
 Cert::Cert(icp_cert new_cert_ptr) {
 	_cert_ptr = new_cert_ptr;
@@ -89,4 +90,5 @@ int LoadCertsFromBytes(uint8_t *data, int n, vector<Cert> &certs, vector<Error> 
 	}
 
 	return ans;
+}
 }

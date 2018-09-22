@@ -2,7 +2,8 @@
 
 using std::vector;
 using std::string;
-using namespace ICP;
+
+namespace ICP {
 
 CAStore::CAStore() {
 	_store_ptr = icp_store_new(false);
@@ -77,4 +78,5 @@ Error CAStore::AddAllCAsFromDir(string path) {
 
 void CAStore::AddAllCAsFromDirParallel(string path) {
 	icp_store_add_all_cas_from_dir_parallel(_store_ptr, path.c_str());
+}
 }

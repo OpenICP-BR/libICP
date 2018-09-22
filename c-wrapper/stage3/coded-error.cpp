@@ -1,6 +1,6 @@
 #include <libICP++.h>
 
-using namespace ICP;
+namespace ICP {
 
 CodedError::CodedError(icp_errc new_errc_ptr) : Error(new_errc_ptr) {
 	_errc_ptr = new_errc_ptr;
@@ -12,4 +12,5 @@ CodedError::CodedError(icp_errc new_errc_ptr) : Error(new_errc_ptr) {
 
 CodedError::~CodedError() {
 	icp_free_errc(_errc_ptr);
+}
 }
