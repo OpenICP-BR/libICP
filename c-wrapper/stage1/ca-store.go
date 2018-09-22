@@ -11,38 +11,38 @@ import (
 )
 
 //export CAStoreAutoDownload
-func CAStoreAutoDownload(ptr unsafe.Pointer) bool {
-	store := pointer.Restore(ptr).(*libICP.CAStore)
+func CAStoreAutoDownload(store_ptr unsafe.Pointer) bool {
+	store := pointer.Restore(store_ptr).(*libICP.CAStore)
 	return store.AutoDownload
 }
 
 //export CAStoreAutoDownloadSet
-func CAStoreAutoDownloadSet(ptr unsafe.Pointer, val bool) {
-	store := pointer.Restore(ptr).(*libICP.CAStore)
+func CAStoreAutoDownloadSet(store_ptr unsafe.Pointer, val bool) {
+	store := pointer.Restore(store_ptr).(*libICP.CAStore)
 	store.AutoDownload = val
 }
 
 //export CAStoreDebug
-func CAStoreDebug(ptr unsafe.Pointer) bool {
-	store := pointer.Restore(ptr).(*libICP.CAStore)
+func CAStoreDebug(store_ptr unsafe.Pointer) bool {
+	store := pointer.Restore(store_ptr).(*libICP.CAStore)
 	return store.Debug
 }
 
 //export CAStoreDebugSet
-func CAStoreDebugSet(ptr unsafe.Pointer, val bool) {
-	store := pointer.Restore(ptr).(*libICP.CAStore)
+func CAStoreDebugSet(store_ptr unsafe.Pointer, val bool) {
+	store := pointer.Restore(store_ptr).(*libICP.CAStore)
 	store.Debug = val
 }
 
 //export CAStoreCachePath
-func CAStoreCachePath(ptr unsafe.Pointer) *C.char {
-	store := pointer.Restore(ptr).(*libICP.CAStore)
+func CAStoreCachePath(store_ptr unsafe.Pointer) *C.char {
+	store := pointer.Restore(store_ptr).(*libICP.CAStore)
 	return C.CString(store.CachePath)
 }
 
 //export CAStoreCachePathSet
-func CAStoreCachePathSet(ptr unsafe.Pointer, path *C.char) {
-	store := pointer.Restore(ptr).(*libICP.CAStore)
+func CAStoreCachePathSet(store_ptr unsafe.Pointer, path *C.char) {
+	store := pointer.Restore(store_ptr).(*libICP.CAStore)
 	store.CachePath = C.GoString(path)
 }
 
@@ -100,9 +100,9 @@ func CAStoreDownloadAll(ptr unsafe.Pointer) unsafe.Pointer {
 }
 
 //export CAStoreAddCA
-func CAStoreAddCA(ptr, cert_ptr unsafe.Pointer, errs **unsafe.Pointer) C.int {
-	store := pointer.Restore(ptr).(*libICP.CAStore)
-	cert := pointer.Restore(ptr).(*libICP.Certificate)
+func CAStoreAddCA(store_ptr, cert_ptr unsafe.Pointer, errs **unsafe.Pointer) C.int {
+	store := pointer.Restore(store_ptr).(*libICP.CAStore)
+	cert := pointer.Restore(cert_ptr).(*libICP.Certificate)
 
 	ans_errs := store.AddCA(cert)
 	*errs = C.new_voids_ptr(C.int(len(ans_errs)))
@@ -116,9 +116,9 @@ func CAStoreAddCA(ptr, cert_ptr unsafe.Pointer, errs **unsafe.Pointer) C.int {
 }
 
 //export CAStoreAddTestingRootCA
-func CAStoreAddTestingRootCA(ptr, cert_ptr unsafe.Pointer, errs **unsafe.Pointer) C.int {
-	store := pointer.Restore(ptr).(*libICP.CAStore)
-	cert := pointer.Restore(ptr).(*libICP.Certificate)
+func CAStoreAddTestingRootCA(store_ptr, cert_ptr unsafe.Pointer, errs **unsafe.Pointer) C.int {
+	store := pointer.Restore(store_ptr).(*libICP.CAStore)
+	cert := pointer.Restore(cert_ptr).(*libICP.Certificate)
 
 	ans_errs := store.AddTestingRootCA(cert)
 	*errs = C.new_voids_ptr(C.int(len(ans_errs)))
