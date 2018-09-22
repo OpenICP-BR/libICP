@@ -6,7 +6,6 @@ import "C"
 
 import (
 	"encoding/hex"
-	"fmt"
 	"regexp"
 	"unsafe"
 

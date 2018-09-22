@@ -49,8 +49,8 @@ namespace ICP {
 		~Cert();	
 	};
 
-	int LoadCertsFromFile(std::string path, std::vector<Cert> &certs, std::vector<CodedError> &errs);
-	int LoadCertsFromBytes(uint8_t *data, int n, std::vector<Cert> &certs, std::vector<CodedError> &errs);
+	int LoadCertsFromFile(std::string path, std::vector<Cert*> &certs, std::vector<CodedError*> &errs);
+	int LoadCertsFromBytes(uint8_t *data, int n, std::vector<Cert*> &certs, std::vector<CodedError*> &errs);
 
 	class CAStore {
 	public:
@@ -64,8 +64,8 @@ namespace ICP {
 		CodedError DownloadAll();
 		Error AddAllCAsFromDir(std::string path);
 		void AddAllCAsFromDirParallel(std::string path);
-		std::vector<CodedError> AddCA(Cert cert);
-		std::vector<CodedError> AddTestingRootCA(Cert cert);
+		std::vector<CodedError*> AddCA(Cert cert);
+		std::vector<CodedError*> AddTestingRootCA(Cert cert);
 		CAStore();
 		CAStore(bool AutoDownload);
 		~CAStore();	

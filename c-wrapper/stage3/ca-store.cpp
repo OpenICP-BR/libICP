@@ -41,27 +41,27 @@ string CAStore::GetCachePath() {
 	return string(icp_store_cache_path(_store_ptr));
 }
 
-vector<CodedError> CAStore::AddCA(Cert cert) {
+vector<CodedError*> CAStore::AddCA(Cert cert) {
 	icp_errc *errcs_ptr;
-	vector<CodedError> errs;
+	vector<CodedError*> errs;
 
 	icp_store_add_ca(cert._cert_ptr, cert._cert_ptr, &errcs_ptr);
 	
 	for (int i=0; errcs_ptr[i] != NULL; i++) {
-		errs.push_back(CodedError(errcs_ptr[i]));
+		errs.push_back(new CodedError(errcs_ptr[i]));
 	}
 
 	return errs;
 }
 
-vector<CodedError> CAStore::AddTestingRootCA(Cert cert) {
+vector<CodedError*> CAStore::AddTestingRootCA(Cert cert) {
 	icp_errc *errcs_ptr;
-	vector<CodedError> errs;
+	vector<CodedError*> errs;
 
 	icp_store_add_testing_root_ca(cert._cert_ptr, cert._cert_ptr, &errcs_ptr);
 	
 	for (int i=0; errcs_ptr[i] != NULL; i++) {
-		errs.push_back(CodedError(errcs_ptr[i]));
+		errs.push_back(new CodedError(errcs_ptr[i]));
 	}
 
 	return errs;

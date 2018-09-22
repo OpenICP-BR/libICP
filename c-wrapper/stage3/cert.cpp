@@ -55,7 +55,7 @@ bool Cert::IsCA() {
 	return icp_cert_is_ca(_cert_ptr);
 }
 
-int LoadCertsFromFile(string path, vector<Cert> &certs, vector<CodedError> &errs) {
+int LoadCertsFromFile(string path, vector<Cert*> &certs, vector<CodedError*> &errs) {
 	int ans;
 	icp_cert *certs_ptr;
 	icp_errc *errcs_ptr;
@@ -64,17 +64,17 @@ int LoadCertsFromFile(string path, vector<Cert> &certs, vector<CodedError> &errs
 	
 	certs.clear();
 	for (int i=0; certs_ptr[i] != NULL; i++) {
-		certs.push_back(Cert(certs_ptr[i]));
+		certs.push_back(new Cert(certs_ptr[i]));
 	}
 	errs.clear();
 	for (int i=0; errcs_ptr[i] != NULL; i++) {
-		errs.push_back(CodedError(errcs_ptr[i]));
+		errs.push_back(new CodedError(errcs_ptr[i]));
 	}
 
 	return ans;
 }
 
-int LoadCertsFromBytes(uint8_t *data, int n, vector<Cert> &certs, vector<Error> &errs) {
+int LoadCertsFromBytes(uint8_t *data, int n, vector<Cert*> &certs, vector<CodedError*> &errs) {
 	icp_cert *certs_ptr;
 	icp_errc *errcs_ptr;
 
@@ -82,11 +82,11 @@ int LoadCertsFromBytes(uint8_t *data, int n, vector<Cert> &certs, vector<Error> 
 	
 	certs.clear();
 	for (int i=0; certs_ptr[i] != NULL; i++) {
-		certs.push_back(Cert(certs_ptr[i]));
+		certs.push_back(new Cert(certs_ptr[i]));
 	}
 	errs.clear();
 	for (int i=0; errcs_ptr[i] != NULL; i++) {
-		errs.push_back(CodedError(errcs_ptr[i]));
+		errs.push_back(new CodedError(errcs_ptr[i]));
 	}
 
 	return ans;
