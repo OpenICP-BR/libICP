@@ -77,7 +77,7 @@ func CAStoreVerifyCert(store_ptr unsafe.Pointer, cert_ptr unsafe.Pointer, chain 
 	*warns = C.new_voids_ptr(C.int(len(ans_warns)))
 
 	for i := range ans_chain {
-		ptr := pointer.Save(&ans_chain[i])
+		ptr := pointer.Save(ans_chain[i])
 		C.set_voids_ptr(*chain, C.int(i), ptr)
 	}
 	for i := range ans_errs {

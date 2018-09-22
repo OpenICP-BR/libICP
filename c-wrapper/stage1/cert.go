@@ -115,11 +115,8 @@ func NewCertificateFromFile(path_c *C.char, certs_ptr **unsafe.Pointer, errcs_pt
 }
 
 //export NewCertificateFromBytes
-func NewCertificateFromBytes(data_c *C.char, n C.int, certs_ptr **unsafe.Pointer, errcs_ptr **unsafe.Pointer) C.int {
-	data := make([]byte, n)
-	for i := 0; i < int(n); i++ {
-		data[i] = byte(C.char_at(data_c, C.int(i)))
-	}
+func NewCertificateFromBytes(data_c unsafe.Pointer, n C.int, certs_ptr **unsafe.Pointer, errcs_ptr **unsafe.Pointer) C.int {
+	data := C.GoBytes(data_c, n)
 
 	ans_certs, ans_errs := libICP.NewCertificateFromBytes(data)
 	return FinishNewCertificate(ans_certs, ans_errs, certs_ptr, errcs_ptr)
