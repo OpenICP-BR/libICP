@@ -1,7 +1,7 @@
 CC=gcc
 CXX=g++
 LIBTOOL = libtool
-CFLAGS=-std=c99 -fPIC -O2 -pedantic -Wall -Wextra -Wundef -Wshadow -Wunreachable-code -Wfloat-equal -Werror -Wno-unused-command-line-argument -I.
+CFLAGS=-fPIC -O2 -pedantic -Wall -Wextra -Wundef -Wshadow -Wunreachable-code -Wfloat-equal -Werror -Wno-unused-command-line-argument -I.
 CXXFLAGS=$(CFLAGS) -std=c++98
 CFLAGS+= -std=c99
 ifeq ($(OS),Windows_NT)
