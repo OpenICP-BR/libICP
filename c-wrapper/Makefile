@@ -65,15 +65,14 @@ stage3/%.o: stage3/%.cpp libICP.a libICP++.h
 
 libICP.a: stage1.a $(C_OBJS)
 	@$(ECHO) -e $(ANSI_GREEN)"["$@"] Joining libraries..."$(ANSI_RESET)
-	cp stage1.a libICP.a
-	ar cru libICP.a $(C_OBJS)
+	cd stage1 && ar -x ../stage1.a
+	ar -cr libICP.a $(C_OBJS) stage1/*.o
 	ranlib libICP.a
 	@$(ECHO) -e $(ANSI_BLUE)"["$@"] Finished target $@"$(ANSI_RESET)
 
-libICP++.a: libICP.a $(CPP_OBJS)
+libICP++.a: libICP.a $(C_OBJS) $(CPP_OBJS)
 	@$(ECHO) -e $(ANSI_GREEN)"["$@"] Joining libraries..."$(ANSI_RESET)
-	cp libICP.a libICP++.a
-	ar cru libICP++.a $(CPP_OBJS)
+	ar -cr libICP++.a stage1/*.o $(C_OBJS) $(CPP_OBJS)
 	ranlib libICP++.a
 	@$(ECHO) -e $(ANSI_BLUE)"["$@"] Finished target $@"$(ANSI_RESET)
 
@@ -102,10 +101,10 @@ docs/html/%.3.html: docs/txt/%.3.txt docs/html
 	man2html -cgiurl \$$title.\$$section.html -topm 0 < $< > $@
 
 clean:
-	-rm *.a *.o *.so
-	-cd stage1 && rm *.a *.o *.so
-	-cd stage2 && rm *.a *.o *.so
-	-cd stage3 && rm *.a *.o *.so
+	-rm *.a *.o *.so *.dll
+	-cd stage1 && rm *.a *.o *.so *.dll
+	-cd stage2 && rm *.a *.o *.so *.dll
+	-cd stage3 && rm *.a *.o *.so *.dll
 
 install: libICP.a libICP.h libICP++.a libICP++.h $(MANFILES) $(HTMLFILES) examples
 	@$(ECHO) -e $(ANSI_GREEN)"["$@"] Installing to "$(INSTALL_PATH)$(ANSI_RESET)

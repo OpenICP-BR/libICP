@@ -10,3 +10,5 @@ stage1.h
 docs/html/*
 docs/man/*
 docs/txt/*
+
+__.*
