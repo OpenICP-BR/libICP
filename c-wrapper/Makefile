@@ -50,7 +50,7 @@ stage1.a: stage1/*
 	@$(ECHO) -e $(ANSI_GREEN)"["$@"] Formatting code..."$(ANSI_RESET)
 	cd stage1 && go fmt
 	@$(ECHO) -e $(ANSI_GREEN)"["$@"] Compiling code..."$(ANSI_RESET)
-	cd stage1 && go build -v -i -o ../$@ -buildmode=c-archive
+	cd stage1 && go build -v -o ../$@ -buildmode=c-archive
 	@$(ECHO) -e $(ANSI_BLUE)"["$@"] Finished target $@"$(ANSI_RESET)
 
 stage2/%.o: stage2/%.c stage1.a
