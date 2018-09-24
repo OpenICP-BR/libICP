@@ -1,24 +1,25 @@
 CC=gcc
 CXX=g++
 LIBTOOL = libtool
-CFLAGS=-fPIC -O2 -pedantic -Wall -Wextra -Wundef -Wshadow -Wunreachable-code -Wfloat-equal -Werror -Wno-unused-command-line-argument -I.
-CXXFLAGS:=$(CFLAGS) -std=c++98
-CFLAGS+= -std=c99
+CFLAGS=-fPIC -O2 -pedantic -Wall -Wextra -Wundef -Wshadow -Wunreachable-code -Wfloat-equal -Werror -I.
+LDFLAGS=
 ifeq ($(OS),Windows_NT)
-	CFLAGS += -D WIN32
+	LDFLAGS += -l winmm -l ntdll -l Ws2_32
 else
 	UNAME_S := $(shell uname -s)
 	ifeq ($(UNAME_S),Linux)
 		LIBTOOL = libtool
-		CFLAGS += -D LINUX -pthread
-		CXXFLAGS += -D LINUX -pthread
+		LDFLAGS += -pthread
+		LDFLAGS +=  -pthread
 	endif
 	ifeq ($(UNAME_S),Darwin)
 		LIBTOOL = glibtool
-		CFLAGS += -framework CoreFoundation -framework Security
-		CXXFLAGS += -framework CoreFoundation -framework Security
+		LDFLAGS += -framework CoreFoundation -framework Security
+		LDFLAGS += -framework CoreFoundation -framework Security
 	endif
 endif
+CXXFLAGS:=$(CFLAGS) -std=gnu++98 # It was c++11, but g++ on MinGW is a bit weird
+CFLAGS+= -std=c99
 
 ANSI_RED="\033[0;31m"
 ANSI_GREEN="\033[0;32m"
@@ -55,12 +56,12 @@ stage1.a: stage1/*
 
 stage2/%.o: stage2/%.c stage1.a
 	@$(ECHO) -e $(ANSI_GREEN)"["$@"] Compiling code..."$(ANSI_RESET)
-	$(CC) $(CFLAGS) -c $< -o $@ -I. -Istage1
+	$(CC) $(CFLAGS) -c $< -o $@ -I. -Istage1 $(LDFLAGS)
 	@$(ECHO) -e $(ANSI_BLUE)"["$@"] Finished target $@"$(ANSI_RESET)
 
 stage3/%.o: stage3/%.cpp libICP.a libICP++.h
 	@$(ECHO) -e $(ANSI_GREEN)"["$@"] Compiling code..."$(ANSI_RESET)
-	$(CXX) $(CXXFLAGS) -c $< -o $@ -I. -L. -lICP.a
+	$(CXX) $(CXXFLAGS) -c $< -o $@ -I. -L. -lICP.a $(LDFLAGS)
 	@$(ECHO) -e $(ANSI_BLUE)"["$@"] Finished target $@"$(ANSI_RESET)
 
 libICP.a: stage1.a $(C_OBJS)
@@ -79,7 +80,7 @@ libICP++.a: libICP.a $(C_OBJS) $(CPP_OBJS)
 examples: $(EXAMPLES)
 
 examples/%.bin: examples/%.c libICP.a
-	$(CC) $(CFLAGS) -o $@ $^
+	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
 
 docs: $(MANFILES) $(TXTFILES) $(HTMLFILES)
 	@$(ECHO) -e $(ANSI_BLUE)"["$@"] Finished target $@"$(ANSI_RESET)
